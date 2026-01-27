@@ -1,5 +1,8 @@
 <?php
 
+require_once __DIR__ . "/../config/database.php";
+require_once __DIR__ . "/../models/ProductModel.php";
+
 class ProductController
 {
     private ProductModel $model;
@@ -7,11 +10,6 @@ class ProductController
     public function __construct()
     {
         global $pdo;
-
-        if (!isset($pdo) || !$pdo instanceof PDO) {
-            die("HIBA: PDO nem elérhető");
-        }
-
         $this->model = new ProductModel($pdo);
     }
 
@@ -20,37 +18,22 @@ class ProductController
      */
     public function index(): void
     {
-        // MINDIG definiáljuk
-        $products = [];
-
-        // gender csak akkor, ha van
-        $gender = $_GET['gender'] ?? null;
-
-        if ($gender && method_exists($this->model, 'getByGender')) {
-            $products = $this->model->getByGender($gender);
-        } else {
-            $products = $this->model->getAll();
-        }
-
+        $products = $this->model->getAll();
         require __DIR__ . "/../views/pages/home.php";
     }
 
     /**
-     * Egy termék oldala
+     * Egy termék részletei
      */
     public function show(): void
     {
-        $product = null;
-
-        $id = $_GET['product'] ?? null;
-
-        if ($id && is_numeric($id) && method_exists($this->model, 'getById')) {
-            $product = $this->model->getById((int)$id);
+        if (!isset($_GET['id'])) {
+            echo "Nincs termék ID";
+            return;
         }
 
-        if (!$product) {
-            die("A termék nem található");
-        }
+        $id = (int)$_GET['id'];
+        $product = $this->model->getById($id);
 
         require __DIR__ . "/../views/pages/product.php";
     }

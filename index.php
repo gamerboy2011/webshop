@@ -12,10 +12,9 @@ error_reporting(E_ALL);
 session_start();
 
 /* =========================
-   KONFIG / DB
-   FIGYELEM: a library mappa neve MOST MÁR HELYES
+   DB KAPCSOLAT
    ========================= */
-require_once __DIR__ . "/library/config.php";
+require_once __DIR__ . "/app/config/database.php";
 
 /* =========================
    AUTOLOAD (CONTROLLER + MODEL)
@@ -36,7 +35,6 @@ $page = $_GET['page'] ?? 'home';
 ?>
 <!DOCTYPE html>
 <html lang="hu">
-
 <head>
     <?php require_once __DIR__ . "/app/views/layouts/head.php"; ?>
 </head>
@@ -45,36 +43,29 @@ $page = $_GET['page'] ?? 'home';
 
 <?php
 /* =========================
-   MENÜ (VIEW)
+   MENÜ
    ========================= */
 require_once __DIR__ . "/app/views/layouts/menu.php";
 ?>
 
-<!-- =======================
-     FŐ TARTALOM
-     ======================= -->
 <main class="w-full">
-
 <?php
 switch ($page) {
 
     case 'product':
-        // Egy termék oldala
         (new ProductController())->show();
         break;
 
     default:
-        // Főoldal / terméklista
         (new ProductController())->index();
         break;
 }
 ?>
-
 </main>
 
 <?php
 /* =========================
-   FOOTER (VIEW)
+   FOOTER
    ========================= */
 require_once __DIR__ . "/app/views/layouts/footer.php";
 ?>

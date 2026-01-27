@@ -12,10 +12,19 @@ class ProductModel
     public function getAll(): array
     {
         $stmt = $this->pdo->query("
-            SELECT product_id, name, price
-            FROM product
-            WHERE is_active = 1
+            SELECT
+                p.product_id,
+                p.name,
+                p.price,
+                pi.src AS image
+            FROM product p
+            LEFT JOIN product_img pi
+                ON p.product_id = pi.product_id
+                AND pi.position = 1
+            WHERE p.is_active = 1
+            LIMIT 9
         ");
+
         return $stmt->fetchAll() ?: [];
     }
 
@@ -35,4 +44,11 @@ class ProductModel
     {
         return [];
     }
+
+
+
+
+    
 }
+
+
