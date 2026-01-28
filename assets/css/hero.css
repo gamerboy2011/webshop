@@ -1,0 +1,15 @@
+.hero {
+  overflow: hidden;
+}
+
+.hero-show {
+  opacity: 1;
+  transform: translateY(0);
+  max-height: 2000px;
+}
+
+.hero-hide {
+  opacity: 0;
+  transform: translateY(-40px);
+  max-height: 0;
+}

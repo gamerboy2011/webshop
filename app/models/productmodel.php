@@ -8,6 +8,30 @@ class ProductModel
     {
         $this->pdo = $pdo;
     }
+    public function getImagesByProductId(int $productId): array
+    {
+        $stmt = $this->pdo->prepare("
+        SELECT src
+        FROM product_img
+        WHERE product_id = ?
+        ORDER BY position
+    ");
+        $stmt->execute([$productId]);
+        return $stmt->fetchAll();
+    }
+    public function getSizesByProductId(int $productId): array
+    {
+        $stmt = $this->pdo->prepare("
+        SELECT s.size_id, s.name, ps.stock
+        FROM product_size ps
+        JOIN size s ON ps.size_id = s.size_id
+        WHERE ps.product_id = ?
+          AND ps.stock > 0
+        ORDER BY s.size_id
+    ");
+        $stmt->execute([$productId]);
+        return $stmt->fetchAll();
+    }
 
     public function getAll(): array
     {
@@ -77,10 +101,14 @@ class ProductModel
         /* ===== TÍPUS ===== */
         if ($type) {
             $sql .= "
-            AND p.product_type_id = (
-                SELECT product_type_id FROM product_type WHERE name = :type
-            )
-        ";
+        AND p.subtype_id IN (
+            SELECT ps.product_subtype_id
+            FROM product_subtype ps
+            JOIN product_type pt
+                ON ps.product_type_id = pt.product_type_id
+            WHERE pt.name = :type
+        )
+    ";
             $params['type'] = $type;
         }
 

@@ -1,9 +1,4 @@
 <?php
-$product = $product ?? null;
-?>
-
-
-<?php
 session_start();
 require_once __DIR__ . "/../../../library/config.php";
 
@@ -19,10 +14,6 @@ if ($productId <= 0) {
    KOSÁR LOGIKA
    ========================= */
 if (isset($_POST['add_to_cart'])) {
-    if (!isset($_SESSION['cart'])) {
-        $_SESSION['cart'] = [];
-    }
-
     $_SESSION['cart'][] = [
         'product_id' => (int)$_POST['product_id'],
         'size'       => $_POST['size'],
@@ -52,12 +43,12 @@ $stmt = $pdo->prepare("
         c.name AS color
     FROM product p
     JOIN vendor v ON p.vendor_id = v.vendor_id
-    JOIN product_type pt ON p.product_type_id = pt.product_type_id
     JOIN product_subtype ps ON p.product_subtype_id = ps.product_subtype_id
+    JOIN product_type pt ON ps.product_type_id = pt.product_type_id
     JOIN gender g ON p.gender_id = g.gender_id
     JOIN color c ON p.color_id = c.color_id
     WHERE p.product_id = :id
-    AND p.is_active = 1
+      AND p.is_active = 1
 ");
 $stmt->execute(['id' => $productId]);
 $product = $stmt->fetch();
@@ -73,31 +64,29 @@ $stmt = $pdo->prepare("
     SELECT src
     FROM product_img
     WHERE product_id = :id
-    ORDER BY position ASC
+    ORDER BY position
 ");
 $stmt->execute(['id' => $productId]);
 $images = $stmt->fetchAll();
 $mainImage = $images[0]['src'] ?? null;
 
 /* =========================
-   MÉRETEK
+   MÉRETEK + KÉSZLET
    ========================= */
-if ($product['type'] === 'ruhazat') {
+if ($product['type'] === 'Clothe') {
     $stmt = $pdo->prepare("
-        SELECT cs.size
+        SELECT cs.size, s.quantity
         FROM stock s
         JOIN clothe_size cs ON s.clothe_size_id = cs.clothe_size_id
         WHERE s.product_id = :id
-        AND s.quantity > 0
         ORDER BY cs.clothe_size_id
     ");
 } else {
     $stmt = $pdo->prepare("
-        SELECT ss.size
+        SELECT ss.size, s.quantity
         FROM stock s
         JOIN shoe_size ss ON s.shoe_size_id = ss.shoe_size_id
         WHERE s.product_id = :id
-        AND s.quantity > 0
         ORDER BY ss.size
     ");
 }
@@ -119,8 +108,8 @@ $stmt = $pdo->prepare("
         ) AS image
     FROM product p
     WHERE p.product_subtype_id = :subtype
-    AND p.product_id != :id
-    AND p.is_active = 1
+      AND p.product_id != :id
+      AND p.is_active = 1
     LIMIT 4
 ");
 $stmt->execute([
@@ -132,29 +121,35 @@ $related = $stmt->fetchAll();
 
 <div class="max-w-7xl mx-auto px-6 py-16">
 
+    <!-- BREADCRUMB -->
+    <div class="text-sm text-gray-500 mb-8">
+        <?= $product['gender'] === 'm' ? 'Férfi' : 'Női' ?>
+        / <?= ucfirst($product['type']) ?>
+        / <?= ucfirst($product['subtype']) ?>
+        / <span class="text-black"><?= htmlspecialchars($product['name']) ?></span>
+    </div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-14">
 
-        <!-- KÉPEK -->
+        <!-- KÉPGALÉRIA -->
         <div>
-            <?php if ($mainImage): ?>
-                <img id="mainImage"
-                     src="<?= htmlspecialchars($mainImage) ?>"
-                     class="w-full object-cover mb-6">
-            <?php endif; ?>
+            <img id="mainImage"
+                 src="<?= htmlspecialchars($mainImage) ?>"
+                 class="w-full object-cover mb-6 border">
 
             <div class="flex gap-3">
                 <?php foreach ($images as $img): ?>
                     <img
                         src="<?= htmlspecialchars($img['src']) ?>"
-                        class="w-20 h-20 object-cover border cursor-pointer"
-                        onclick="changeImage(this.src)"
+                        class="w-20 h-20 object-cover border cursor-pointer thumbnail"
+                        onclick="changeImage(this)"
                     >
                 <?php endforeach; ?>
             </div>
         </div>
 
-        <!-- INFO -->
-        <div>
+        <!-- INFO (STICKY) -->
+        <div class="md:sticky md:top-24">
 
             <p class="text-sm uppercase tracking-widest text-gray-500 mb-2">
                 <?= htmlspecialchars($product['vendor']) ?>
@@ -164,41 +159,46 @@ $related = $stmt->fetchAll();
                 <?= htmlspecialchars($product['name']) ?>
             </h1>
 
-            <?php if ($product['is_sale']): ?>
-                <p class="text-2xl font-bold text-red-600">
-                    <?= number_format($product['price'], 0, ',', ' ') ?> Ft
-                </p>
-            <?php else: ?>
-                <p class="text-2xl font-bold">
-                    <?= number_format($product['price'], 0, ',', ' ') ?> Ft
-                </p>
-            <?php endif; ?>
+            <p class="text-2xl font-bold mb-6">
+                <?= number_format($product['price'], 0, ',', ' ') ?> Ft
+            </p>
 
-            <div class="flex gap-2 mb-8 text-xs uppercase tracking-wide mt-4">
-                <span class="border px-2 py-1">
-                    <?= $product['gender'] === 'm' ? 'Férfi' : 'Női' ?>
-                </span>
+            <!-- TAGS -->
+            <div class="flex gap-2 mb-8 text-xs uppercase tracking-wide">
+                <span class="border px-2 py-1"><?= $product['gender'] === 'm' ? 'Férfi' : 'Női' ?></span>
                 <span class="border px-2 py-1"><?= ucfirst($product['type']) ?></span>
                 <span class="border px-2 py-1"><?= ucfirst($product['subtype']) ?></span>
                 <span class="border px-2 py-1"><?= $product['color'] ?></span>
             </div>
 
+            <!-- MÉRETEK -->
             <form method="post">
                 <input type="hidden" name="product_id" value="<?= $productId ?>">
                 <input type="hidden" name="price" value="<?= $product['price'] ?>">
 
                 <p class="font-medium mb-3">Méret</p>
                 <div class="flex gap-3 flex-wrap mb-6">
+
                     <?php foreach ($sizes as $size): ?>
                         <label class="cursor-pointer">
-                            <input type="radio" name="size"
-                                   value="<?= htmlspecialchars($size['size']) ?>"
-                                   class="hidden peer" required>
-                            <span class="border px-4 py-2 peer-checked:bg-black peer-checked:text-white">
+                            <input
+                                type="radio"
+                                name="size"
+                                value="<?= htmlspecialchars($size['size']) ?>"
+                                class="hidden peer"
+                                <?= $size['quantity'] <= 0 ? 'disabled' : '' ?>
+                                required
+                            >
+                            <span class="
+                                border px-4 py-2
+                                <?= $size['quantity'] <= 0 ? 'opacity-40 cursor-not-allowed line-through' : '' ?>
+                                peer-checked:bg-black peer-checked:text-white
+                            ">
                                 <?= htmlspecialchars($size['size']) ?>
                             </span>
                         </label>
                     <?php endforeach; ?>
+
                 </div>
 
                 <button
@@ -216,26 +216,33 @@ $related = $stmt->fetchAll();
         </div>
     </div>
 
+    <!-- AJÁNLOTT -->
     <?php if ($related): ?>
-    <div class="mt-24">
-        <h2 class="text-2xl font-semibold mb-8">You may also like</h2>
+        <div class="mt-24">
+            <h2 class="text-2xl font-semibold mb-8">You may also like</h2>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <?php foreach ($related as $r): ?>
-                <a href="?product=<?= $r['product_id'] ?>" class="block">
-                    <img src="<?= htmlspecialchars($r['image']) ?>" class="mb-3">
-                    <p class="font-medium"><?= htmlspecialchars($r['name']) ?></p>
-                    <p class="text-sm"><?= number_format($r['price'], 0, ',', ' ') ?> Ft</p>
-                </a>
-            <?php endforeach; ?>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <?php foreach ($related as $r): ?>
+                    <a href="?product=<?= $r['product_id'] ?>">
+                        <img src="<?= htmlspecialchars($r['image']) ?>" class="mb-3">
+                        <p class="font-medium"><?= htmlspecialchars($r['name']) ?></p>
+                        <p class="text-sm"><?= number_format($r['price'], 0, ',', ' ') ?> Ft</p>
+                    </a>
+                <?php endforeach; ?>
+            </div>
         </div>
-    </div>
     <?php endif; ?>
 
 </div>
 
 <script>
-function changeImage(src) {
-    document.getElementById('mainImage').src = src;
+function changeImage(el) {
+    document.getElementById('mainImage').src = el.src;
+
+    document.querySelectorAll('.thumbnail').forEach(img => {
+        img.classList.remove('ring-2', 'ring-black');
+    });
+
+    el.classList.add('ring-2', 'ring-black');
 }
 </script>

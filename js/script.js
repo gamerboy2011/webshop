@@ -27,3 +27,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
     productCards.forEach(card => observer.observe(card));
 });
+
