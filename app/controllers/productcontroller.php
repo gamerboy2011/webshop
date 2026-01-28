@@ -13,15 +13,7 @@ class ProductController
         $this->model = new ProductModel($pdo);
     }
 
-    /**
-     * Főoldal / terméklista
-     */
-    public function index(): void
-    {
-        $products = $this->model->getAll();
-        require __DIR__ . "/../views/pages/home.php";
-    }
-
+    
     /**
      * Egy termék részletei
      */
@@ -36,5 +28,15 @@ class ProductController
         $product = $this->model->getById($id);
 
         require __DIR__ . "/../views/pages/product.php";
+    }
+    public function index(): void
+    {
+        $gender = $_GET['gender'] ?? null;
+        $type   = $_GET['type'] ?? null;
+        $sale   = $_GET['sale'] ?? null;
+
+        $products = $this->model->getFiltered($gender, $type, $sale);
+
+        require __DIR__ . "/../views/pages/home.php";
     }
 }

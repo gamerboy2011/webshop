@@ -50,19 +50,47 @@
     </div>
 
     <!-- ALMENÜ (FULL WIDTH, SZÉLEKRE) -->
-    <div class="w-full border-t">
-        <div class="w-full px-8 py-3 flex justify-between text-sm font-medium">
+<?php
+$currentGender = $_GET['gender'] ?? null;
+?>
 
-            <!-- BAL -->
-            <div class="flex gap-8">
-                <a href="?category=clothes" class="hover:underline">Ruházat</a>
-                <a href="?category=shoes" class="hover:underline">Cipők</a>
-                <a href="?category=accessories" class="hover:underline">Kiegészítők</a>
-                <a href="?sale=1" class="hover:underline">Akció</a>
-                <a href="?new=1" class="hover:underline">Újdonságok</a>
-            </div>
+<div class="w-full border-t">
+    <div class="w-full px-8 py-3 flex justify-between text-sm font-medium">
+
+        <div class="flex gap-8">
+
+            <?php if ($currentGender): ?>
+
+                <a href="index.php?page=products&gender=<?= $currentGender ?>&type=clothes"
+                   class="hover:underline">
+                    Ruházat
+                </a>
+
+                <a href="index.php?page=products&gender=<?= $currentGender ?>&type=shoes"
+                   class="hover:underline">
+                    Cipők
+                </a>
+
+                <a href="index.php?page=products&gender=<?= $currentGender ?>&type=accessories"
+                   class="hover:underline">
+                    Kiegészítők
+                </a>
+
+            <?php endif; ?>
+
+            <a href="index.php?page=products&sale=1"
+               class="hover:underline">
+                Akció
+            </a>
+
+            <a href="index.php?page=products&new=1"
+               class="hover:underline">
+                Újdonságok
+            </a>
 
         </div>
+
     </div>
+</div>
 
 </nav>
