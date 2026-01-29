@@ -27,4 +27,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     productCards.forEach(card => observer.observe(card));
 });
+function changeImage(el) {
+        document.getElementById('mainImage').src = el.src;
+
+        document.querySelectorAll('.thumbnail').forEach(img => {
+            img.classList.remove('ring-2', 'ring-black');
+        });
+
+        el.classList.add('ring-2', 'ring-black');
+    }
 

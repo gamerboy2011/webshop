@@ -22,14 +22,23 @@ class ProductModel
     public function getSizesByProductId(int $productId): array
     {
         $stmt = $this->pdo->prepare("
-        SELECT s.size_id, s.name, ps.stock
-        FROM product_size ps
-        JOIN size s ON ps.size_id = s.size_id
-        WHERE ps.product_id = ?
-          AND ps.stock > 0
-        ORDER BY s.size_id
+        SELECT
+            sv.size_value_id,
+            sv.size_value,
+            st.size_type,
+            s.quantity
+        FROM stock s
+        JOIN size_value sv ON s.size_value_id = sv.size_value_id
+        JOIN size_type st ON sv.size_type_id = st.size_type_id
+        WHERE s.product_id = :product_id
+          AND s.quantity > 0
+        ORDER BY sv.size_value_id
     ");
-        $stmt->execute([$productId]);
+
+        $stmt->execute([
+            'product_id' => $productId
+        ]);
+
         return $stmt->fetchAll();
     }
 

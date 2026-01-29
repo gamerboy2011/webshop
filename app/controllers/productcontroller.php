@@ -13,30 +13,30 @@ class ProductController
         $this->model = new ProductModel($pdo);
     }
 
-    
+
     /**
      * Egy termék részletei
      */
-   public function show(): void
-{
-    if (!isset($_GET['id'])) {
-        echo "Nincs termék ID";
-        return;
+    public function show(): void
+    {
+        if (!isset($_GET['id'])) {
+            echo "Nincs termék ID";
+            return;
+        }
+
+        $productId = (int) $_GET['id'];
+
+        $product = $this->model->getById($productId);
+        if (!$product) {
+            echo "A termék nem található";
+            return;
+        }
+
+        $images = $this->model->getImagesByProductId($productId);
+        $sizes = $this->model->getSizesByProductId($productId);
+
+        require __DIR__ . "/../views/pages/product.php";
     }
-
-    $productId = (int) $_GET['id'];
-
-    $product = $this->model->getById($productId);
-    if (!$product) {
-        echo "A termék nem található";
-        return;
-    }
-
-    $images = $this->model->getImagesByProductId($productId);
-    $sizes  = $this->model->getSizesByProductId($productId);
-
-    require __DIR__ . "/../views/pages/product.php";
-}
     public function index(): void
     {
         $gender = $_GET['gender'] ?? null;
