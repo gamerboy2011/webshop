@@ -2,52 +2,114 @@
 
 class CartController
 {
+    /* ===== KOSÁR MEGJELENÍTÉSE ===== */
+    public function index(): void
+    {
+        global $pdo;
+
+        $cart = $_SESSION['cart'] ?? [];
+        $items = [];
+        $total = 0;
+
+        foreach ($cart as $item) {
+
+            // TERMÉK ADATOK
+            $stmt = $pdo->prepare("
+                SELECT
+                    p.product_id,
+                    p.name,
+                    p.price,
+                    (
+                        SELECT src
+                        FROM product_img
+                        WHERE product_id = p.product_id
+                        ORDER BY position ASC
+                        LIMIT 1
+                    ) AS image
+                FROM product p
+                WHERE p.product_id = ?
+            ");
+            $stmt->execute([$item['product_id']]);
+            $product = $stmt->fetch();
+
+            // MÉRET
+            $stmt = $pdo->prepare("
+                SELECT size_value
+                FROM size_value
+                WHERE size_value_id = ?
+            ");
+            $stmt->execute([$item['size_value_id']]);
+            $size = $stmt->fetchColumn();
+
+            if ($product && $size) {
+                $subtotal = $product['price'] * $item['quantity'];
+                $total += $subtotal;
+
+                $items[] = [
+                    'product_id'    => $product['product_id'],
+                    'name'          => $product['name'],
+                    'price'         => $product['price'],
+                    'image'         => $product['image'],
+                    'size'          => $size,
+                    'size_value_id' => $item['size_value_id'],
+                    'quantity'      => $item['quantity'],
+                    'subtotal'      => $subtotal
+                ];
+            }
+        }
+
+        require __DIR__ . '/../views/pages/cart.php';
+    }
+
+    /* ===== KOSÁRBA TÉTEL ===== */
     public function add(): void
     {
-        session_start();
-
-        $productId = (int)$_POST['product_id'];
-        $sizeId    = (int)$_POST['size_id'];
-
         if (!isset($_SESSION['cart'])) {
             $_SESSION['cart'] = [];
         }
 
-        // Ha már van ugyanaz a termék + méret → mennyiség növelés
+        $productId    = (int)($_POST['product_id'] ?? 0);
+        $sizeValueId  = (int)($_POST['size_value_id'] ?? 0);
+
+        if ($productId <= 0 || $sizeValueId <= 0) {
+            die('Hibás kosáradat');
+        }
+
         foreach ($_SESSION['cart'] as &$item) {
-            if ($item['product_id'] === $productId && $item['size_id'] === $sizeId) {
+            if (
+                $item['product_id'] === $productId &&
+                $item['size_value_id'] === $sizeValueId
+            ) {
                 $item['quantity']++;
                 header('Location: index.php?page=cart');
                 exit;
             }
         }
 
-        // Új kosártétel
         $_SESSION['cart'][] = [
-            'product_id' => $productId,
-            'size_id'    => $sizeId,
-            'quantity'   => 1
+            'product_id'     => $productId,
+            'size_value_id'  => $sizeValueId,
+            'quantity'       => 1
         ];
 
         header('Location: index.php?page=cart');
         exit;
     }
 
-    public function index(): void
-    {
-        
-        require __DIR__ . '/../views/pages/cart.php';
-    }
-
+    /* ===== MENNYISÉG FRISSÍTÉS ===== */
     public function update(): void
     {
-        session_start();
+        $productId    = (int)($_POST['product_id'] ?? 0);
+        $sizeValueId  = (int)($_POST['size_value_id'] ?? 0);
+        $quantity     = max(1, (int)($_POST['quantity'] ?? 1));
 
         foreach ($_SESSION['cart'] as &$item) {
-            if ($item['product_id'] == $_POST['product_id']
-                && $item['size_id'] == $_POST['size_id']) {
-
-                $item['quantity'] = max(1, (int)$_POST['quantity']);
+            if (
+                $item['product_id'] === $productId &&
+                $item['size_value_id'] === $sizeValueId
+            ) {
+                $item['quantity'] = $quantity;
+                break;
             }
         }
 
@@ -55,15 +117,19 @@ class CartController
         exit;
     }
 
+    /* ===== TÉTEL TÖRLÉS ===== */
     public function remove(): void
     {
-        session_start();
+        $productId   = (int)($_POST['product_id'] ?? 0);
+        $sizeValueId = (int)($_POST['size_value_id'] ?? 0);
 
         $_SESSION['cart'] = array_filter(
             $_SESSION['cart'],
-            fn($item) =>
-                !($item['product_id'] == $_POST['product_id']
-                && $item['size_id'] == $_POST['size_id'])
+            fn($i) =>
+                !(
+                    $i['product_id'] === $productId &&
+                    $i['size_value_id'] === $sizeValueId
+                )
         );
 
         header('Location: index.php?page=cart');

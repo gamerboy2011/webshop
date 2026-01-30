@@ -1,4 +1,9 @@
 <?php
+if (isset($_GET['reset_cart'])) {
+    unset($_SESSION['cart']);
+    echo "KOSÁR TÖRÖLVE";
+    exit;
+}
 /* =========================
    HIBAKIÍRÁS (FEJLESZTÉSKOR)
    ========================= */
@@ -40,6 +45,7 @@ $page = $_GET['page'] ?? 'home';
 </head>
 
 <body class="min-h-screen overflow-x-hidden bg-white text-gray-900">
+   
 
 <?php
 /* =========================

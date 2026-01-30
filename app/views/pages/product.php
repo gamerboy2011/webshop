@@ -1,34 +1,13 @@
 <?php
-
 require_once __DIR__ . "/../../../library/config.php";
 
 /* =========================
    TERMÉK ID
    ========================= */
-$productId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+$productId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($productId <= 0) {
     die("Érvénytelen termék");
 }
-
-/* =========================
-   KOSÁR LOGIKA
-   ========================= */
-foreach ($_SESSION['cart'] as &$item) {
-    if (
-        $item['product_id'] == $productId &&
-        $item['size_value_id'] == $sizeValueId
-    ) {
-        $item['quantity']++;
-        header('Location: index.php?page=cart');
-        exit;
-    }
-}
-
-$_SESSION['cart'][] = [
-    'product_id'     => $productId,
-    'size_value_id'  => $sizeValueId,
-    'quantity'       => 1
-];
 
 /* =========================
    TERMÉK ADATOK
@@ -80,17 +59,21 @@ $mainImage = $images[0]['src'] ?? null;
    ========================= */
 $stmt = $pdo->prepare("
     SELECT
-        sz.size_id,
-        sz.size_value,
-        sz.size_text,
-        st.Quantity
-    FROM Stock st
-    JOIN size sz ON st.size_id = sz.size_id
-    WHERE st.ProductID = :id
-      AND st.Quantity > 0
-    ORDER BY sz.size_id
+        sv.size_value_id,
+        sv.size_value,
+        s.quantity
+    FROM stock s
+    JOIN size_value sv ON s.size_value_id = sv.size_value_id
+    WHERE s.product_id = :id
+      AND s.quantity > 0
+    ORDER BY sv.size_value_id
 ");
+$stmt->execute(['id' => $productId]);
+$sizes = $stmt->fetchAll();
 
+/* =========================
+   AJÁNLOTT TERMÉKEK
+   ========================= */
 $stmt = $pdo->prepare("
     SELECT
         p.product_id,
@@ -109,12 +92,10 @@ $stmt = $pdo->prepare("
       AND p.is_active = 1
     LIMIT 4
 ");
-
 $stmt->execute([
     'subtype' => $product['subtype_id'],
     'id' => $productId
 ]);
-
 $related = $stmt->fetchAll();
 ?>
 
@@ -132,17 +113,24 @@ $related = $stmt->fetchAll();
 
         <!-- KÉPGALÉRIA -->
         <div>
-            <img id="mainImage" src="<?= htmlspecialchars($mainImage) ?>" class="w-full object-cover mb-6 border">
+            <?php if ($mainImage): ?>
+                <img id="mainImage"
+                     src="<?= htmlspecialchars($mainImage) ?>"
+                     class="w-full object-cover mb-6 border">
+            <?php endif; ?>
 
             <div class="flex gap-3">
                 <?php foreach ($images as $img): ?>
-                    <img src="<?= htmlspecialchars($img['src']) ?>"
-                        class="w-20 h-20 object-cover border cursor-pointer thumbnail" onclick="changeImage(this)">
+                    <img
+                        src="<?= htmlspecialchars($img['src']) ?>"
+                        class="w-20 h-20 object-cover border cursor-pointer thumbnail"
+                        onclick="changeImage(this)"
+                    >
                 <?php endforeach; ?>
             </div>
         </div>
 
-        <!-- INFO (STICKY) -->
+        <!-- INFO -->
         <div class="md:sticky md:top-24">
 
             <p class="text-sm uppercase tracking-widest text-gray-500 mb-2">
@@ -165,12 +153,9 @@ $related = $stmt->fetchAll();
                 <span class="border px-2 py-1"><?= $product['color'] ?></span>
             </div>
 
-            <!-- MÉRETEK -->
-            <!-- TERMÉK ADATOK -->
-            <h1><?= htmlspecialchars($product['name']) ?></h1>
+            <!-- MÉRET + KOSÁR -->
+            <form method="post" action="index.php?page=cart_add">
 
-            <!-- MÉRETEK – EGYSZER -->
-            <form method="post">
                 <input type="hidden" name="product_id" value="<?= $productId ?>">
 
                 <p class="font-medium mb-3">Méret</p>
@@ -181,59 +166,63 @@ $related = $stmt->fetchAll();
                     <div class="flex gap-3 flex-wrap mb-6">
                         <?php foreach ($sizes as $size): ?>
                             <label class="cursor-pointer">
-                                <input type="radio" name="size_value_id" value="<?= $size['size_value_id'] ?>"
-                                    class="hidden peer" required>
-                                <span class=" border px-4 py-2 peer-checked:bg-black peer-checked:text-white ">
+                                <input
+                                    type="radio"
+                                    name="size_value_id"
+                                    value="<?= $size['size_value_id'] ?>"
+                                    class="hidden peer"
+                                    required
+                                >
+                                <span class="border px-4 py-2 peer-checked:bg-black peer-checked:text-white">
                                     <?= htmlspecialchars($size['size_value']) ?>
                                 </span>
                             </label>
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
-        </div>
-        </form>
 
-        <button type="submit" name="add_to_cart" class="w-full bg-black text-white py-4 uppercase tracking-wider">
-            Kosárba
-        </button>
-        </form>
+                <button
+                    type="submit"
+                    class="w-full bg-black text-white py-4 uppercase tracking-wider">
+                    Kosárba
+                </button>
 
-        <p class="text-gray-600 leading-relaxed mt-8">
-            <?= nl2br(htmlspecialchars($product['description'])) ?>
-        </p>
+            </form>
 
-    </div>
-</div>
+            <p class="text-gray-600 leading-relaxed mt-8">
+                <?= nl2br(htmlspecialchars($product['description'])) ?>
+            </p>
 
-<!-- AJÁNLOTT -->
-<?php if ($related): ?>
-    <div class="mt-24">
-        <h2 class="text-2xl font-semibold mb-8">You may also like</h2>
-
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <?php foreach ($related as $r): ?>
-                <a href="?product=<?= $r['product_id'] ?>">
-                    <img src="<?= htmlspecialchars($r['image']) ?>" class="mb-3">
-                    <p class="font-medium"><?= htmlspecialchars($r['name']) ?></p>
-                    <p class="text-sm"><?= number_format($r['price'], 0, ',', ' ') ?> Ft</p>
-                </a>
-            <?php endforeach; ?>
         </div>
     </div>
-<?php endif; ?>
 
-<!-- KOSÁR -->
+    <!-- AJÁNLOTT -->
+    <?php if ($related): ?>
+        <div class="mt-24">
+            <h2 class="text-2xl font-semibold mb-8">You may also like</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <?php foreach ($related as $r): ?>
+                    <a href="index.php?page=product&id=<?= $r['product_id'] ?>">
+                        <img src="<?= htmlspecialchars($r['image']) ?>" class="mb-3">
+                        <p class="font-medium"><?= htmlspecialchars($r['name']) ?></p>
+                        <p class="text-sm"><?= number_format($r['price'], 0, ',', ' ') ?> Ft</p>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    <?php endif; ?>
 
 </div>
 
 <script>
-    function changeImage(el) {
-        document.getElementById('mainImage').src = el.src;
+function changeImage(el) {
+    document.getElementById('mainImage').src = el.src;
 
-        document.querySelectorAll('.thumbnail').forEach(img => {
-            img.classList.remove('ring-2', 'ring-black');
-        });
+    document.querySelectorAll('.thumbnail').forEach(img => {
+        img.classList.remove('ring-2', 'ring-black');
+    });
 
-        el.classList.add('ring-2', 'ring-black');
-    }
+    el.classList.add('ring-2', 'ring-black');
+}
 </script>
