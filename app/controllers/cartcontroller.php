@@ -2,10 +2,18 @@
 
 class CartController
 {
+    private function startSession(): void
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+    }
+
     /* ===== KOSÁR MEGJELENÍTÉSE ===== */
     public function index(): void
     {
         global $pdo;
+        $this->startSession();
 
         $cart = $_SESSION['cart'] ?? [];
         $items = [];
@@ -30,7 +38,7 @@ class CartController
                 WHERE p.product_id = ?
             ");
             $stmt->execute([$item['product_id']]);
-            $product = $stmt->fetch();
+            $product = $stmt->fetch(PDO::FETCH_ASSOC);
 
             // MÉRET
             $stmt = $pdo->prepare("
@@ -46,13 +54,13 @@ class CartController
                 $total += $subtotal;
 
                 $items[] = [
-                    'product_id'    => $product['product_id'],
+                    'product_id'    => (int)$product['product_id'],
                     'name'          => $product['name'],
-                    'price'         => $product['price'],
+                    'price'         => (float)$product['price'],
                     'image'         => $product['image'],
                     'size'          => $size,
-                    'size_value_id' => $item['size_value_id'],
-                    'quantity'      => $item['quantity'],
+                    'size_value_id' => (int)$item['size_value_id'],
+                    'quantity'      => (int)$item['quantity'],
                     'subtotal'      => $subtotal
                 ];
             }
@@ -64,12 +72,12 @@ class CartController
     /* ===== KOSÁRBA TÉTEL ===== */
     public function add(): void
     {
-        if (!isset($_SESSION['cart'])) {
-            $_SESSION['cart'] = [];
-        }
+        $this->startSession();
 
-        $productId    = (int)($_POST['product_id'] ?? 0);
-        $sizeValueId  = (int)($_POST['size_value_id'] ?? 0);
+        $_SESSION['cart'] ??= [];
+
+        $productId   = (int)($_POST['product_id'] ?? 0);
+        $sizeValueId = (int)($_POST['size_value_id'] ?? 0);
 
         if ($productId <= 0 || $sizeValueId <= 0) {
             die('Hibás kosáradat');
@@ -85,11 +93,12 @@ class CartController
                 exit;
             }
         }
+        unset($item); // referencia törlése
 
         $_SESSION['cart'][] = [
-            'product_id'     => $productId,
-            'size_value_id'  => $sizeValueId,
-            'quantity'       => 1
+            'product_id'    => $productId,
+            'size_value_id' => $sizeValueId,
+            'quantity'      => 1
         ];
 
         header('Location: index.php?page=cart');
@@ -99,9 +108,11 @@ class CartController
     /* ===== MENNYISÉG FRISSÍTÉS ===== */
     public function update(): void
     {
-        $productId    = (int)($_POST['product_id'] ?? 0);
-        $sizeValueId  = (int)($_POST['size_value_id'] ?? 0);
-        $quantity     = max(1, (int)($_POST['quantity'] ?? 1));
+        $this->startSession();
+
+        $productId   = (int)($_POST['product_id'] ?? 0);
+        $sizeValueId = (int)($_POST['size_value_id'] ?? 0);
+        $quantity    = max(1, (int)($_POST['quantity'] ?? 1));
 
         foreach ($_SESSION['cart'] as &$item) {
             if (
@@ -112,6 +123,7 @@ class CartController
                 break;
             }
         }
+        unset($item);
 
         header('Location: index.php?page=cart');
         exit;
@@ -120,17 +132,19 @@ class CartController
     /* ===== TÉTEL TÖRLÉS ===== */
     public function remove(): void
     {
+        $this->startSession();
+
         $productId   = (int)($_POST['product_id'] ?? 0);
         $sizeValueId = (int)($_POST['size_value_id'] ?? 0);
 
-        $_SESSION['cart'] = array_filter(
+        $_SESSION['cart'] = array_values(array_filter(
             $_SESSION['cart'],
             fn($i) =>
                 !(
                     $i['product_id'] === $productId &&
                     $i['size_value_id'] === $sizeValueId
                 )
-        );
+        ));
 
         header('Location: index.php?page=cart');
         exit;

@@ -1,93 +1,110 @@
 <?php
+
 class OrderController
 {
-    public function checkout(): void
+    /* =========================
+       CHECKOUT OLDAL (GET)
+       ========================= */
+    public function showCheckout(): void
     {
-        session_start();
-        global $pdo;
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
 
         if (empty($_SESSION['cart'])) {
             die('A kosár üres.');
         }
 
+        // a kosár megjelenítését a Model készíti elő
+        $data = ordermodel::getCartSummary($_SESSION['cart']);
+
+        $items = $data['items'];
+        $total = $data['total'];
+
+        require __DIR__ . '/../views/pages/checkout.php';
+    }
+
+    /* =========================
+       RENDELÉS MENTÉS (POST)
+       ========================= */
+    public function checkout(): void
+    {
+        global $pdo;
+
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (empty($_SESSION['cart'])) {
+            die('A kosár üres.');
+        }
+
+        /* ===== ALAP ADATOK ===== */
+        $paymentMethodId  = (int)($_POST['payment_method_id'] ?? 0);
+        $deliveryMethodId = (int)($_POST['delivery_method_id'] ?? 0);
+        $pickupPointId    = $_POST['pickup_point_id'] ?? null;
+
+        if ($paymentMethodId <= 0 || $deliveryMethodId <= 0) {
+            die('Fizetési vagy szállítási mód nincs kiválasztva.');
+        }
+
+        /* ===== SZÁMLÁZÁSI CÍM ===== */
+        $billingCityId = (int)($_POST['billing_city_id'] ?? 0);
+        $billingStreet = trim($_POST['billing_street'] ?? '');
+
+        if ($billingCityId <= 0 || $billingStreet === '') {
+            die('A számlázási cím hiányos.');
+        }
+
+        /* ===== SZÁLLÍTÁSI CÍM ===== */
+        if ($deliveryMethodId === 1) {
+            $shippingCityId = (int)($_POST['shipping_city_id'] ?? 0);
+            $shippingStreet = trim($_POST['shipping_street'] ?? '');
+
+            if ($shippingCityId <= 0 || $shippingStreet === '') {
+                die('A szállítási cím hiányos.');
+            }
+        } else {
+            $shippingCityId = null;
+            $shippingStreet = null;
+        }
+
+        /* ===== FIX USER (VIZSGA) ===== */
+        $userId = 1;
+
         $pdo->beginTransaction();
 
         try {
-            //  Összeg számítás
-            $total = 0;
+            /* ===== ORDER ===== */
+            $orderId = OrderModel::createOrder([
+                'user_id'            => $userId,
+                'payment_method_id'  => $paymentMethodId,
+                'delivery_method_id' => $deliveryMethodId,
+                'pickup_point_id'    => $pickupPointId,
+                'billing_city_id'    => $billingCityId,
+                'billing_street'     => $billingStreet,
+                'shipping_city_id'   => $shippingCityId,
+                'shipping_street'    => $shippingStreet
+            ], $pdo);
 
+            /* ===== ORDER TÉTELEK ===== */
             foreach ($_SESSION['cart'] as $item) {
-                $stmt = $pdo->prepare("
-                    SELECT price
-                    FROM product
-                    WHERE product_id = ?
-                ");
-                $stmt->execute([$item['product_id']]);
-                $price = $stmt->fetchColumn();
-
-                $total += $price * $item['quantity'];
-            }
-
-            // 2️⃣ ORDER beszúrás
-            $stmt = $pdo->prepare("
-                INSERT INTO `order` (total_price)
-                VALUES (?)
-            ");
-            $stmt->execute([$total]);
-
-            $orderId = $pdo->lastInsertId();
-
-            // 3️⃣ ORDER_ITEM + STOCK csökkentés
-            foreach ($_SESSION['cart'] as $item) {
-
-                // ár újra DB-ből
-                $stmt = $pdo->prepare("
-                    SELECT price
-                    FROM product
-                    WHERE product_id = ?
-                ");
-                $stmt->execute([$item['product_id']]);
-                $price = $stmt->fetchColumn();
-
-                // order_item
-                $stmt = $pdo->prepare("
-                    INSERT INTO order_item
-                    (order_id, product_id, size_id, quantity, price)
-                    VALUES (?, ?, ?, ?, ?)
-                ");
-                $stmt->execute([
+                OrderModel::addOrderItem(
                     $orderId,
-                    $item['product_id'],
-                    $item['size_id'],
-                    $item['quantity'],
-                    $price
-                ]);
-
-                // stock csökkentés
-                $stmt = $pdo->prepare("
-                    UPDATE stock
-                    SET quantity = quantity - ?
-                    WHERE product_id = ?
-                      AND size_id = ?
-                ");
-                $stmt->execute([
-                    $item['quantity'],
-                    $item['product_id'],
-                    $item['size_id']
-                ]);
+                    $item,
+                    $pdo
+                );
             }
 
             $pdo->commit();
-
-            // 4️⃣ Kosár ürítése
             unset($_SESSION['cart']);
 
-            header("Location: index.php?page=order_success&id=$orderId");
+            header('Location: index.php?page=home');
             exit;
 
         } catch (Exception $e) {
             $pdo->rollBack();
-            die("Hiba történt: " . $e->getMessage());
+            die('Hiba történt: ' . $e->getMessage());
         }
     }
 }

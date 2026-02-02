@@ -1,9 +1,4 @@
 <?php
-if (isset($_GET['reset_cart'])) {
-    unset($_SESSION['cart']);
-    echo "KOSÁR TÖRÖLVE";
-    exit;
-}
 /* =========================
    HIBAKIÍRÁS (FEJLESZTÉSKOR)
    ========================= */
@@ -17,12 +12,21 @@ error_reporting(E_ALL);
 session_start();
 
 /* =========================
+   RESET KOSÁR (TESZTHEZ)
+   ========================= */
+if (isset($_GET['reset_cart'])) {
+    unset($_SESSION['cart']);
+    echo "KOSÁR TÖRÖLVE";
+    exit;
+}
+
+/* =========================
    DB KAPCSOLAT
    ========================= */
 require_once __DIR__ . "/app/config/database.php";
 
 /* =========================
-   AUTOLOAD (CONTROLLER + MODEL)
+   AUTOLOAD
    ========================= */
 spl_autoload_register(function ($class) {
     foreach (['app/controllers', 'app/models'] as $dir) {
@@ -34,9 +38,33 @@ spl_autoload_register(function ($class) {
 });
 
 /* =========================
-   ROUTER
+   ROUTER LOGIKA
    ========================= */
-$page = $_GET['page'] ?? 'home';
+$page   = $_GET['page'] ?? 'home';
+$method = $_SERVER['REQUEST_METHOD'];
+
+/* =========================
+   POST AKCIÓK (NINCS HTML)
+   ========================= */
+if ($page === 'checkout' && $method === 'POST') {
+    (new OrderController())->checkout();
+    exit;
+}
+
+if ($page === 'cart_add' && $method === 'POST') {
+    (new CartController())->add();
+    exit;
+}
+
+if ($page === 'cart_update' && $method === 'POST') {
+    (new CartController())->update();
+    exit;
+}
+
+if ($page === 'cart_remove' && $method === 'POST') {
+    (new CartController())->remove();
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="hu">
@@ -45,68 +73,45 @@ $page = $_GET['page'] ?? 'home';
 </head>
 
 <body class="min-h-screen overflow-x-hidden bg-white text-gray-900">
-   
+
+<?php require_once __DIR__ . "/app/views/layouts/menu.php"; ?>
+
+<main class="w-full">
 
 <?php
 /* =========================
-   MENÜ
+   GET OLDALAK (VIEW)
    ========================= */
-require_once __DIR__ . "/app/views/layouts/menu.php";
-?>
-
-<main class="w-full">
-<?php
 switch ($page) {
 
-    /* ===== TERMÉK LISTA / FŐOLDAL ===== */
     case 'home':
         (new ProductController())->index();
         break;
 
-    /* ===== TERMÉK RÉSZLETEK ===== */
     case 'product':
         (new ProductController())->show();
         break;
 
-    /* ===== KOSÁR OLDAL ===== */
     case 'cart':
         (new CartController())->index();
         break;
 
-    /* ===== KOSÁRBA TÉTEL ===== */
-    case 'cart_add':
-        (new CartController())->add();
-        break;
-
-    /* ===== KOSÁR FRISSÍTÉS (MENNYISÉG / MÉRET) ===== */
-    case 'cart_update':
-        (new CartController())->update();
-        break;
-
-    /* ===== KOSÁR TÉTEL TÖRLÉS ===== */
-    case 'cart_remove':
-        (new CartController())->remove();
-        break;
-
-    /* ===== RENDELÉS VÉGLEGESÍTÉS ===== */
     case 'checkout':
-        (new OrderController())->checkout();
-        break;
-
-    /* ===== ALAPÉRTELMEZETT ===== */
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        (new OrderController())->checkout();      // rendelés mentés
+    } else {
+        (new OrderController())->showCheckout();  // oldal megjelenítés
+    }
+    break;
     default:
         (new ProductController())->index();
         break;
 }
 ?>
+
 </main>
 
-<?php
-/* =========================
-   FOOTER
-   ========================= */
-require_once __DIR__ . "/app/views/layouts/footer.php";
-?>
+<?php require_once __DIR__ . "/app/views/layouts/footer.php"; ?>
 
 </body>
 </html>
