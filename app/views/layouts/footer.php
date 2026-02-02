@@ -42,7 +42,7 @@
                 <a href="#" class="hover:text-white">
                     <i class="fa-brands fa-instagram"></i>
                 </a>
-                <a href="#" class="hover:text-white">
+                <a href="https://www.facebook.com/profile.php?id=61587284315953" class="hover:text-white">
                     <i class="fa-brands fa-facebook"></i>
                 </a>
                 <a href="#" class="hover:text-white">
