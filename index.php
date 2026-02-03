@@ -84,24 +84,24 @@ if ($page === 'cart_remove' && $method === 'POST') {
    ========================= */
 switch ($page) {
 
-    case 'home':
-        (new ProductController())->index();
-        break;
-
     case 'product':
-        (new ProductController())->show();
-        break;
+    (new ProductController())->show();
+    break;
 
-    case 'cart':
-        (new CartController())->index();
-        break;
+case 'cart':
+    (new CartController())->index();
+    break;
 
-    case 'checkout':
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        (new OrderController())->checkout();      // rendelés mentés
-    } else {
-        (new OrderController())->showCheckout();  // oldal megjelenítés
-    }
+case 'cart_add':
+    (new CartController())->add();
+    break;
+
+case 'cart_remove':
+    (new CartController())->remove();
+    break;
+
+case 'checkout':
+    (new OrderController())->checkout();
     break;
     default:
         (new ProductController())->index();
