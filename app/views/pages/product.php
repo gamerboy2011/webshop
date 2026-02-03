@@ -18,7 +18,6 @@ $stmt = $pdo->prepare("
         p.name,
         p.description,
         p.price,
-        p.is_sale,
         p.subtype_id,
         v.name AS vendor,
         pt.name AS type,
@@ -59,14 +58,17 @@ $mainImage = $images[0]['src'] ?? null;
    ========================= */
 $stmt = $pdo->prepare("
     SELECT
-        sv.size_value_id,
-        sv.size_value,
-        s.quantity
-    FROM stock s
-    JOIN size_value sv ON s.size_value_id = sv.size_value_id
-    WHERE s.product_id = :id
-      AND s.quantity > 0
-    ORDER BY sv.size_value_id
+        sz.size_id,
+        sz.size_value,
+        st.quantity
+    FROM stock st
+    JOIN size sz ON st.size_id = sz.size_id
+    JOIN product p ON st.product_id = p.product_id
+    JOIN product_subtype ps ON p.subtype_id = ps.product_subtype_id
+    WHERE st.product_id = :id
+      AND st.quantity > 0
+      AND sz.product_type_id = ps.product_type_id
+    ORDER BY sz.size_id
 ");
 $stmt->execute(['id' => $productId]);
 $sizes = $stmt->fetchAll();
@@ -94,7 +96,7 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([
     'subtype' => $product['subtype_id'],
-    'id' => $productId
+    'id'      => $productId
 ]);
 $related = $stmt->fetchAll();
 ?>
@@ -124,8 +126,7 @@ $related = $stmt->fetchAll();
                     <img
                         src="<?= htmlspecialchars($img['src']) ?>"
                         class="w-20 h-20 object-cover border cursor-pointer thumbnail"
-                        onclick="changeImage(this)"
-                    >
+                        onclick="changeImage(this)">
                 <?php endforeach; ?>
             </div>
         </div>
@@ -168,8 +169,8 @@ $related = $stmt->fetchAll();
                             <label class="cursor-pointer">
                                 <input
                                     type="radio"
-                                    name="size_value_id"
-                                    value="<?= $size['size_value_id'] ?>"
+                                    name="size_id"
+                                    value="<?= $size['size_id'] ?>"
                                     class="hidden peer"
                                     required
                                 >
@@ -218,11 +219,9 @@ $related = $stmt->fetchAll();
 <script>
 function changeImage(el) {
     document.getElementById('mainImage').src = el.src;
-
     document.querySelectorAll('.thumbnail').forEach(img => {
         img.classList.remove('ring-2', 'ring-black');
     });
-
     el.classList.add('ring-2', 'ring-black');
 }
 </script>
