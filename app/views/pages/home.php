@@ -1,6 +1,13 @@
 <?php
 // app/views/pages/home.php
 // EZ A VIEW FUT – ide kerül minden, ami a főoldalon látszik
+
+// BIZTONSÁGI INICIALIZÁLÁS
+// Ha a controller nem adott át termékeket,
+// akkor ne haljon el a nézet
+if (!isset($products) || !is_array($products)) {
+    $products = [];
+}
 ?>
 
 <!-- HERO -->
@@ -17,14 +24,14 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
 
             <?php if (empty($products)): ?>
-                <p class="col-span-3 text-center">
+                <p class="col-span-3 text-center text-gray-500">
                     Nincs találat.
                 </p>
             <?php endif; ?>
 
             <?php foreach ($products as $product): ?>
                 <a
-                    href="index.php?page=product&id=<?= $product['product_id'] ?>"
+                    href="index.php?page=product&id=<?= (int)$product['product_id'] ?>"
                     class="bg-white p-6 shadow hover:shadow-xl transition text-center block"
                 >
                     <div class="h-64 bg-gray-100 mb-4 flex items-center justify-center">
