@@ -1,9 +1,4 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-require_once "router.php";
-
 /* =========================
    HIBAKIÍRÁS (FEJLESZTÉSKOR)
    ========================= */
@@ -17,21 +12,12 @@ error_reporting(E_ALL);
 session_start();
 
 /* =========================
-   RESET KOSÁR (TESZTHEZ)
-   ========================= */
-if (isset($_GET['reset_cart'])) {
-    unset($_SESSION['cart']);
-    echo "KOSÁR TÖRÖLVE";
-    exit;
-}
-
-/* =========================
    DB KAPCSOLAT
    ========================= */
 require_once __DIR__ . "/app/config/database.php";
 
 /* =========================
-   AUTOLOAD
+   AUTOLOAD (MVC)
    ========================= */
 spl_autoload_register(function ($class) {
     foreach (['app/controllers', 'app/models'] as $dir) {
@@ -43,43 +29,58 @@ spl_autoload_register(function ($class) {
 });
 
 /* =========================
-   ROUTER LOGIKA
+   TESZT: KOSÁR RESET
+   ========================= */
+if (isset($_GET['reset_cart'])) {
+    unset($_SESSION['cart']);
+    header("Location: index.php");
+    exit;
+}
+
+/* =========================
+   ROUTER ALAP
    ========================= */
 $page   = $_GET['page'] ?? 'home';
 $method = $_SERVER['REQUEST_METHOD'];
 
 /* =========================
-   POST AKCIÓK (NINCS HTML)
+   POST AKCIÓK (NINCS HTML!)
    ========================= */
-if ($page === 'checkout' && $method === 'POST') {
-    (new OrderController())->checkout();
-    exit;
+if ($method === 'POST') {
+
+    switch ($page) {
+
+        case 'cart_add':
+            (new CartController())->add();
+            exit;
+
+        case 'cart_update':
+            (new CartController())->update();
+            exit;
+
+        case 'cart_remove':
+            (new CartController())->remove();
+            exit;
+
+        case 'checkout':
+            (new OrderController())->checkout();
+            exit;
+    }
 }
 
-if ($page === 'cart_add' && $method === 'POST') {
-    (new CartController())->add();
-    exit;
-}
-
-if ($page === 'cart_update' && $method === 'POST') {
-    (new CartController())->update();
-    exit;
-}
-
-if ($page === 'cart_remove' && $method === 'POST') {
-    (new CartController())->remove();
-    exit;
-}
+/* =========================
+   HTML KEZDÉS
+   ========================= */
 ?>
 <!DOCTYPE html>
 <html lang="hu">
 <head>
-    <?php require_once __DIR__ . "/app/views/layouts/head.php"; ?>
+    <?php require __DIR__ . "/app/views/layouts/head.php"; ?>
 </head>
 
 <body class="min-h-screen overflow-x-hidden bg-white text-gray-900">
 
-<?php require_once __DIR__ . "/app/views/layouts/menu.php"; ?>
+<?php require __DIR__ . "/app/views/layouts/menu.php"; ?>
 
 <main class="w-full">
 
@@ -90,24 +91,18 @@ if ($page === 'cart_remove' && $method === 'POST') {
 switch ($page) {
 
     case 'product':
-    (new ProductController())->show();
-    break;
+        (new ProductController())->show();
+        break;
 
-case 'cart':
-    (new CartController())->index();
-    break;
+    case 'cart':
+        (new CartController())->index();
+        break;
 
-case 'cart_add':
-    (new CartController())->add();
-    break;
+    case 'checkout':
+        require __DIR__ . "/app/views/pages/checkout.php";
+        break;
 
-case 'cart_remove':
-    (new CartController())->remove();
-    break;
-
-case 'checkout':
-    (new OrderController())->checkout();
-    break;
+    case 'home':
     default:
         (new ProductController())->index();
         break;
@@ -116,7 +111,7 @@ case 'checkout':
 
 </main>
 
-<?php require_once __DIR__ . "/app/views/layouts/footer.php"; ?>
+<?php require __DIR__ . "/app/views/layouts/footer.php"; ?>
 
 </body>
 </html>
