@@ -1,5 +1,10 @@
 <?php
 session_start();
+
+/* SESSION TÖRLÉS */
+session_unset();
 session_destroy();
-header("Location: login.php");
+
+/* VISSZA A FŐOLDALRA */
+header("Location: index.php");
 exit;
