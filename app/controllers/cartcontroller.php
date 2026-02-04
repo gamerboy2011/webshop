@@ -42,47 +42,55 @@ class CartController
 
         $cart = $_SESSION['cart'] ?? [];
         $items = [];
+        $total = 0;
 
         foreach ($cart as $item) {
 
-            /* TERMÉK */
+            // TERMÉK
             $stmt = $pdo->prepare("
-                SELECT
-                    p.name,
-                    p.price,
-                    (
-                        SELECT src
-                        FROM product_img
-                        WHERE product_id = p.product_id
-                        ORDER BY position ASC
-                        LIMIT 1
-                    ) AS image
-                FROM product p
-                WHERE p.product_id = ?
-            ");
+            SELECT
+                p.name,
+                p.price,
+                (
+                    SELECT src
+                    FROM product_img
+                    WHERE product_id = p.product_id
+                    ORDER BY position
+                    LIMIT 1
+                ) AS image
+            FROM product p
+            WHERE p.product_id = ?
+        ");
             $stmt->execute([$item['product_id']]);
             $product = $stmt->fetch();
 
-            /* MÉRET */
-            $stmt = $pdo->prepare("
-                SELECT size_value
-                FROM size
-                WHERE size_id = ?
-            ");
-            $stmt->execute([$item['size_id']]);
-            $size = $stmt->fetchColumn();
-
-            if ($product && $size) {
-                $items[] = [
-                    'product_id' => $item['product_id'],
-                    'name'       => $product['name'],
-                    'price'      => $product['price'],
-                    'image'      => $product['image'],
-                    'size'       => $size,
-                    'quantity'   => $item['quantity'],
-                    'subtotal'   => $product['price'] * $item['quantity']
-                ];
+            if (!$product) {
+                continue;
             }
+
+            // MÉRET (NINCS size_value TÁBLA!)
+            $stmt = $pdo->prepare("
+            SELECT size_value
+            FROM size
+            WHERE size_id = ?
+            LIMIT 1
+        ");
+            $stmt->execute([$item['size_id']]);
+            $sizeValue = $stmt->fetchColumn() ?: '–';
+
+            $subtotal = $product['price'] * $item['quantity'];
+            $total += $subtotal;
+
+            $items[] = [
+                'product_id' => $item['product_id'],
+                'size_id'    => $item['size_id'],
+                'name'       => $product['name'],
+                'price'      => $product['price'],
+                'image'      => $product['image'],
+                'size'       => $sizeValue,
+                'quantity'   => $item['quantity'],
+                'subtotal'   => $subtotal
+            ];
         }
 
         require __DIR__ . '/../views/pages/cart.php';
@@ -93,37 +101,37 @@ class CartController
         $_SESSION['cart'] = array_filter(
             $_SESSION['cart'],
             fn($i) =>
-                !(
-                    $i['product_id'] == $_POST['product_id']
-                    && $i['size_id'] == $_POST['size_id']
-                )
+            !(
+                $i['product_id'] == $_POST['product_id']
+                && $i['size_id'] == $_POST['size_id']
+            )
         );
 
         header('Location: index.php?page=cart');
         exit;
     }
     public function update(): void
-{
-    if (empty($_SESSION['cart'])) {
+    {
+        if (empty($_SESSION['cart'])) {
+            header('Location: index.php?page=cart');
+            exit;
+        }
+
+        $productId   = (int)($_POST['product_id'] ?? 0);
+        $sizeValueId = (int)($_POST['size_id'] ?? 0);
+        $quantity    = max(1, (int)($_POST['quantity'] ?? 1));
+
+        foreach ($_SESSION['cart'] as &$item) {
+            if (
+                $item['product_id'] === $productId &&
+                $item['size_id'] === $sizeValueId
+            ) {
+                $item['quantity'] = $quantity;
+                break;
+            }
+        }
+
         header('Location: index.php?page=cart');
         exit;
     }
-
-    $productId   = (int)($_POST['product_id'] ?? 0);
-    $sizeValueId = (int)($_POST['size_id'] ?? 0);
-    $quantity    = max(1, (int)($_POST['quantity'] ?? 1));
-
-    foreach ($_SESSION['cart'] as &$item) {
-        if (
-            $item['product_id'] === $productId &&
-            $item['size_id'] === $sizeValueId
-        ) {
-            $item['quantity'] = $quantity;
-            break;
-        }
-    }
-
-    header('Location: index.php?page=cart');
-    exit;
-}
 }

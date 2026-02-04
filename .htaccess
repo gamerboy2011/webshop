@@ -14,7 +14,7 @@
 
 # Hibaoldalak
 # Általános 404-es hibaoldal
-ErrorDocument 404 /app/views/pages/400.php
+ErrorDocument 404 /app/views/components/400.php
 
 # Általános hibaoldal például 500-as hibához
-ErrorDocument 500 /app/views/pages/500.php
+ErrorDocument 500 /app/views/components/500.php
