@@ -47,7 +47,6 @@ $method = $_SERVER['REQUEST_METHOD'];
    POST AKCIÓK (NINCS HTML!)
    ========================= */
 if ($method === 'POST') {
-
     switch ($page) {
 
         case 'cart_add':
@@ -67,10 +66,6 @@ if ($method === 'POST') {
             exit;
     }
 }
-
-/* =========================
-   HTML KEZDÉS
-   ========================= */
 ?>
 <!DOCTYPE html>
 <html lang="hu">
@@ -90,18 +85,39 @@ if ($method === 'POST') {
    ========================= */
 switch ($page) {
 
+    /* ===== TERMÉK RÉSZLETEK ===== */
     case 'product':
         (new ProductController())->show();
         break;
 
+    /* ===== KOSÁR ===== */
     case 'cart':
         (new CartController())->index();
         break;
 
+    /* ===== CHECKOUT ===== */
     case 'checkout':
         require __DIR__ . "/app/views/pages/checkout.php";
         break;
 
+    /* ===== FOOTER OLDALAK ===== */
+    case 'contact':
+        require __DIR__ . "/app/views/pages/contact.php";
+        break;
+
+    case 'shipping':
+        require __DIR__ . "/app/views/pages/shipping.php";
+        break;
+
+    case 'aszf':
+        require __DIR__ . "/app/views/pages/aszf.php";
+        break;
+
+    case 'privacy':
+        require __DIR__ . "/app/views/pages/privacy.php";
+        break;
+
+    /* ===== FŐOLDAL ===== */
     case 'home':
     default:
         (new ProductController())->index();
