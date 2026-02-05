@@ -8,29 +8,73 @@ require_once __DIR__ . "/../models/ProductModel.php";
 class ProductController
 {
     public function index(): void
-    {
-        global $pdo;
+{
+    global $pdo;
 
-        $stmt = $pdo->query("
-            SELECT
-                p.product_id,
-                p.name,
-                p.price,
-                (
-                    SELECT src
-                    FROM product_img
-                    WHERE product_id = p.product_id
-                    ORDER BY position ASC
-                    LIMIT 1
-                ) AS image
-            FROM product p
-            WHERE p.is_active = 1
-        ");
+    $gender = $_GET['gender'] ?? null;
+    $type   = $_GET['type']   ?? null;
+    $sale   = $_GET['sale']   ?? null;
+    $new    = $_GET['new']    ?? null;
 
-        $products = $stmt->fetchAll();
+    $sql = "
+        SELECT
+            p.product_id,
+            p.name,
+            p.price,
+            (
+                SELECT src
+                FROM product_img
+                WHERE product_id = p.product_id
+                ORDER BY position ASC
+                LIMIT 1
+            ) AS image
+        FROM product p
+        JOIN product_subtype ps ON p.subtype_id = ps.product_subtype_id
+        JOIN product_type pt ON ps.product_type_id = pt.product_type_id
+        WHERE p.is_active = 1
+    ";
 
-        require __DIR__ . '/../views/pages/home.php';
+    $params = [];
+
+    /* ===== GENDER SZŰRÉS ===== */
+    if ($gender === 'male') {
+        $sql .= "
+            AND p.gender_id IN (
+                SELECT gender_id FROM gender WHERE gender IN ('m','u')
+            )
+        ";
     }
+
+    if ($gender === 'female') {
+        $sql .= "
+            AND p.gender_id IN (
+                SELECT gender_id FROM gender WHERE gender IN ('f','u')
+            )
+        ";
+    }
+
+    /* ===== TÍPUS SZŰRÉS ===== */
+    if ($type) {
+        $sql .= " AND pt.name = :type";
+        $params['type'] = ucfirst($type); // Clothe / Shoe / Accessory
+    }
+
+    /* ===== AKCIÓ ===== */
+    if ($sale) {
+        $sql .= " AND p.is_sale = 1";
+    }
+
+    /* ===== ÚJDONSÁG ===== */
+    if ($new) {
+        $sql .= " AND p.is_new = 1";
+    }
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $products = $stmt->fetchAll();
+
+    require __DIR__ . '/../views/pages/home.php';
+}
 
     public function show(): void
     {

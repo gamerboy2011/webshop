@@ -108,31 +108,36 @@ $isLoggedIn = isset($_SESSION['user_id']);
     </div>
 
     <!-- ALMENÜ -->
-    <div class="w-full border-t bg-gray-50">
-        <div class="w-full py-3 flex gap-8 text-sm font-medium text-gray-700 px-8">
-            <a href="index.php?type=clothe">Ruházat</a>
-            <a href="index.php?type=shoe">Cipők</a>
-            <a href="index.php?type=accessory">Kiegészítők</a>
-            <a href="index.php?sale=1">Akció</a>
-            <a href="index.php?new=1">Újdonságok</a>
-        </div>
+    <?php
+$currentGender = $_GET['gender'] ?? null;
+?>
+
+<div class="w-full border-t bg-gray-50">
+    <div class="w-full py-3 flex gap-8 text-sm font-medium text-gray-700 px-8">
+
+        <a href="index.php?type=clothe<?= $currentGender ? '&gender=' . $currentGender : '' ?>">
+            Ruházat
+        </a>
+
+        <a href="index.php?type=shoe<?= $currentGender ? '&gender=' . $currentGender : '' ?>">
+            Cipők
+        </a>
+
+        <a href="index.php?type=accessory<?= $currentGender ? '&gender=' . $currentGender : '' ?>">
+            Kiegészítők
+        </a>
+
+        <a href="index.php?sale=1<?= $currentGender ? '&gender=' . $currentGender : '' ?>">
+            Akció
+        </a>
+
+        <a href="index.php?new=1<?= $currentGender ? '&gender=' . $currentGender : '' ?>">
+            Újdonságok
+        </a>
+
     </div>
+</div>
 
 </nav>
 
-<!-- USER DROPDOWN JS -->
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const btn = document.getElementById("userMenuBtn");
-    const dropdown = document.getElementById("userDropdown");
 
-    btn.addEventListener("click", function (e) {
-        e.stopPropagation();
-        dropdown.classList.toggle("hidden");
-    });
-
-    document.addEventListener("click", function () {
-        dropdown.classList.add("hidden");
-    });
-});
-</script>

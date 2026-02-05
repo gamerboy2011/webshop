@@ -11,7 +11,17 @@ if (!isset($products) || !is_array($products)) {
 ?>
 
 <!-- HERO -->
-<?php include __DIR__ . "/hero.php"; ?>
+<?php
+$hasFilter =
+    isset($_GET['type']) ||
+    isset($_GET['gender']) ||
+    isset($_GET['sale']) ||
+    isset($_GET['new']);
+
+if (!$hasFilter) {
+    require __DIR__ . '/hero.php';
+}
+?>
 
 <!-- KIEMELT TERMÉKEK -->
 <section id="products" class="py-24 bg-white">
