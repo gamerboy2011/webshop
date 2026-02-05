@@ -11,4 +11,6 @@
   <link rel="icon" href="/favicon.ico?v=2">
   <title>YoursyWear</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+  s
 </head>
