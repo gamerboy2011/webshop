@@ -59,10 +59,7 @@ class ProductController
         $params['type'] = ucfirst($type); // Clothe / Shoe / Accessory
     }
 
-    /* ===== AKCIÓ ===== */
-    if ($sale) {
-        $sql .= " AND p.is_sale = 1";
-    }
+    
 
     /* ===== ÚJDONSÁG ===== */
     if ($new) {
