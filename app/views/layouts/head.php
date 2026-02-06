@@ -12,5 +12,4 @@
   <title>YoursyWear</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
 
-  s
 </head>

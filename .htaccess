@@ -1,20 +1,10 @@
 <IfModule mod_rewrite.c>
-    # URL átírás engedélyezése
     RewriteEngine On
 
-    # Feltétel: Ha a fájl nem létezik
-    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteBase /webshop/
 
-    # Feltétel: Ha a könyvtár nem létezik
+    RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
 
-    # Átírási szabály: alias átadása index.php-nak
-    RewriteRule ^([a-zA-Z0-9-]+)/?$ index.php?alias=$1 [QSA,L]
+    RewriteRule ^ index.php [L]
 </IfModule>
-
-# Hibaoldalak
-# Általános 404-es hibaoldal
-ErrorDocument 404 /app/views/components/400.php
-
-# Általános hibaoldal például 500-as hibához
-ErrorDocument 500 /app/views/components/500.php

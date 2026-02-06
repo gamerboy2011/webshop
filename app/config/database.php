@@ -1,7 +1,7 @@
 <?php
 
 $host = 'localhost';
-$db   = 'Webshop';   // FIGYELEM: nagy W, ahogy a DB-ben van
+$db   = 'webshop';   // FIGYELEM: nagy W, ahogy a DB-ben van
 $user = 'root';
 $pass = '';
 $charset = 'utf8mb4';

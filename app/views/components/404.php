@@ -1,14 +1,13 @@
 <div class="min-h-[60vh] flex flex-col items-center justify-center text-center px-6">
 
-    <h1 class="text-6xl font-extrabold mb-4">500</h1>
+    <h1 class="text-7xl font-extrabold mb-4">404</h1>
 
     <p class="text-2xl font-semibold mb-6">
-        Szerverhiba történt
+        Az oldal nem található
     </p>
 
     <p class="text-gray-600 max-w-md mb-10">
-        Technikai hiba miatt az oldal ideiglenesen nem elérhető.
-        Kérjük, próbáld meg később.
+        A keresett oldal nem létezik, vagy eltávolításra került.
     </p>
 
     <a

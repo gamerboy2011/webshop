@@ -1,8 +1,3 @@
-<?php
-$gender = $_GET['gender'] ?? null;
-$hideHero = $gender !== null;
-?>
-
 <section
     id="hero"
     class="w-full transition-all duration-700 ease-in-out

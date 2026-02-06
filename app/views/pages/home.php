@@ -12,14 +12,14 @@ if (!isset($products) || !is_array($products)) {
 
 <!-- HERO -->
 <?php
-$hasFilter =
-    isset($_GET['type']) ||
-    isset($_GET['gender']) ||
-    isset($_GET['sale']) ||
-    isset($_GET['new']);
+$showHero =
+    empty($_GET['gender']) &&
+    empty($_GET['type']) &&
+    empty($_GET['sale']) &&
+    empty($_GET['new']);
 
-if (!$hasFilter) {
-    require __DIR__ . '/hero.php';
+if ($showHero) {
+    include __DIR__ . "/hero.php";
 }
 ?>
 

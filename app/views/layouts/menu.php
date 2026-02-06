@@ -1,5 +1,7 @@
 <?php
-/* KOSÁR DARABSZÁM */
+/* =========================
+   KOSÁR DARABSZÁM
+   ========================= */
 $cartCount = 0;
 if (!empty($_SESSION['cart'])) {
     foreach ($_SESSION['cart'] as $item) {
@@ -7,47 +9,60 @@ if (!empty($_SESSION['cart'])) {
     }
 }
 
-/* GENDER */
-$currentGender = $_GET['gender'] ?? null;
+/* =========================
+   AKTUÁLIS URL ELEMZÉS
+   ========================= */
+$uri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+$uri = str_replace('webshop/', '', $uri);
+$parts = explode('/', $uri);
 
-/* LOGIN ÁLLAPOT */
-$isLoggedIn = isset($_SESSION['user_id']);
+/* gender meghatározása URL-ből */
+$currentGender = null;
+if (in_array('ferfi', $parts)) {
+    $currentGender = 'ferfi';
+}
+if (in_array('noi', $parts)) {
+    $currentGender = 'noi';
+}
 ?>
 
 <nav class="w-full bg-white border-b">
 
-    <!-- FELSŐ SÁV -->
+    <!-- ===== FELSŐ SÁV ===== -->
     <div class="w-full py-4">
         <div class="grid grid-cols-3 items-center w-full px-8">
 
-            <!-- BAL -->
+            <!-- BAL: GENDER -->
             <div class="flex gap-6 items-center justify-start">
-                <a href="index.php?gender=female"
-                   class="<?= $currentGender === 'female'
+
+                <a href="/webshop/noi"
+                   class="<?= $currentGender === 'noi'
                        ? 'font-semibold border-b-2 border-black'
                        : 'text-gray-500 hover:text-black' ?>">
                     Női
                 </a>
-                <a href="index.php?gender=male"
-                   class="<?= $currentGender === 'male'
+
+                <a href="/webshop/ferfi"
+                   class="<?= $currentGender === 'ferfi'
                        ? 'font-semibold border-b-2 border-black'
                        : 'text-gray-500 hover:text-black' ?>">
                     Férfi
                 </a>
+
             </div>
 
-            <!-- KÖZÉP -->
+            <!-- KÖZÉP: LOGÓ -->
             <div class="flex justify-center">
-                <a href="index.php" class="text-xl font-semibold tracking-wide">
+                <a href="/webshop/" class="text-xl font-semibold tracking-wide">
                     Yoursy Wear
                 </a>
             </div>
 
-            <!-- JOBB -->
+            <!-- JOBB: IKONOK -->
             <div class="flex gap-6 items-center justify-end">
 
                 <!-- KERESÉS -->
-                <form method="get" action="index.php">
+                <form method="get" action="/webshop/">
                     <input
                         type="text"
                         name="q"
@@ -56,41 +71,8 @@ $isLoggedIn = isset($_SESSION['user_id']);
                                focus:outline-none focus:ring-1 focus:ring-black">
                 </form>
 
-                <!-- USER MENU -->
-                <div class="relative">
-                    <button id="userMenuBtn" class="text-xl focus:outline-none">
-                        <i class="fa-regular fa-user"></i>
-                    </button>
-
-                    <div
-                        id="userDropdown"
-                        class="hidden absolute right-0 mt-2 w-44
-                               bg-white border shadow-lg z-50"
-                    >
-                        <?php if (!$isLoggedIn): ?>
-                            <a href="login.php"
-                               class="block px-4 py-2 text-sm hover:bg-gray-100">
-                                Login
-                            </a>
-                            <a href="register.php"
-                               class="block px-4 py-2 text-sm hover:bg-gray-100">
-                                Register
-                            </a>
-                        <?php else: ?>
-                            <a href="index.php?page=profile"
-                               class="block px-4 py-2 text-sm hover:bg-gray-100">
-                                Profile
-                            </a>
-                            <a href="logout.php"
-                               class="block px-4 py-2 text-sm hover:bg-gray-100 text-red-600">
-                                Logout
-                            </a>
-                        <?php endif; ?>
-                    </div>
-                </div>
-
                 <!-- KOSÁR -->
-                <a href="index.php?page=cart" class="relative">
+                <a href="/webshop/kosar" class="relative">
                     <i class="fa-solid fa-bag-shopping text-xl"></i>
 
                     <?php if ($cartCount > 0): ?>
@@ -107,37 +89,38 @@ $isLoggedIn = isset($_SESSION['user_id']);
         </div>
     </div>
 
-    <!-- ALMENÜ -->
-    <?php
-$currentGender = $_GET['gender'] ?? null;
-?>
+    <!-- ===== ALMENÜ ===== -->
+    <div class="w-full border-t bg-gray-50">
+        <div class="w-full py-3 flex gap-8 text-sm font-medium text-gray-700 px-8">
 
-<div class="w-full border-t bg-gray-50">
-    <div class="w-full py-3 flex gap-8 text-sm font-medium text-gray-700 px-8">
+            <?php if ($currentGender): ?>
 
-        <a href="index.php?type=clothe<?= $currentGender ? '&gender=' . $currentGender : '' ?>">
-            Ruházat
-        </a>
+                <a href="/webshop/<?= $currentGender ?>/ruhazat"
+                   class="hover:text-black">
+                    Ruházat
+                </a>
 
-        <a href="index.php?type=shoe<?= $currentGender ? '&gender=' . $currentGender : '' ?>">
-            Cipők
-        </a>
+                <a href="/webshop/<?= $currentGender ?>/cipok"
+                   class="hover:text-black">
+                    Cipők
+                </a>
 
-        <a href="index.php?type=accessory<?= $currentGender ? '&gender=' . $currentGender : '' ?>">
-            Kiegészítők
-        </a>
+                <a href="/webshop/<?= $currentGender ?>/kiegeszitok"
+                   class="hover:text-black">
+                    Kiegészítők
+                </a>
 
-        <a href="index.php?sale=1<?= $currentGender ? '&gender=' . $currentGender : '' ?>">
-            Akció
-        </a>
+            <?php endif; ?>
 
-        <a href="index.php?new=1<?= $currentGender ? '&gender=' . $currentGender : '' ?>">
-            Újdonságok
-        </a>
+            <a href="/webshop/akcio" class="hover:text-black">
+                Akció
+            </a>
 
+            <a href="/webshop/ujdonsagok" class="hover:text-black">
+                Újdonságok
+            </a>
+
+        </div>
     </div>
-</div>
 
 </nav>
-
-
