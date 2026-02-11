@@ -1,146 +1,190 @@
 <?php
-$page = $_GET['page'] ?? 'home';
-/* =========================
-   HIBAKIÍRÁS (FEJLESZTÉSKOR)
-   ========================= */
+// Fejlesztési mód - VIZSGA ELŐTT EZEKET KIKAPCSOLNI!
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-/* =========================
-   SESSION
-   ========================= */
-session_start();
+// 1. CUSTOM FUNCTIONS BIZTONSÁGOS BETÖLTÉSE - ÚJ, JAVÍTOTT
+$customFunctionsPath = __DIR__ . '/app/library/customfunctions.php';
 
-/* =========================
-   DB KAPCSOLAT
-   ========================= */
-require_once __DIR__ . "/app/config/database.php";
+if (!file_exists($customFunctionsPath)) {
+    // Ha nem létezik, hozzuk létre automatikusan
+    $libraryDir = dirname($customFunctionsPath);
+    if (!is_dir($libraryDir)) {
+        mkdir($libraryDir, 0755, true);
+    }
+    
+    $content = '<?php
+// CSRF token generálása
+function generate_csrf_token(): string {
+    if (empty($_SESSION["csrf_token"])) {
+        $_SESSION["csrf_token"] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION["csrf_token"];
+}
 
-/* =========================
-   AUTOLOAD (MVC)
-   ========================= */
-spl_autoload_register(function ($class) {
-    foreach (['app/controllers', 'app/models'] as $dir) {
-        $file = __DIR__ . "/$dir/$class.php";
-        if (file_exists($file)) {
-            require_once $file;
+// CSRF token ellenőrzése
+function verify_csrf_token($token): bool {
+    return !empty($_SESSION["csrf_token"]) && hash_equals($_SESSION["csrf_token"], $token);
+}
+
+// Form mező generálása CSRF token számára
+function csrf_field(): string {
+    return "<input type=\"hidden\" name=\"csrf_token\" value=\"" . generate_csrf_token() . "\">";
+}
+
+// Session biztonságos indítása
+function secure_session_start(): void {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+        if (empty($_SESSION["last_regeneration"])) {
+            session_regenerate_id(true);
+            $_SESSION["last_regeneration"] = time();
         }
     }
-});
-
-// Ha van 'gender' és 'type' paraméter az URL-ben, elrejtjük a hero szakaszt
-$hideHero = isset($_GET['gender']) || isset($_GET['type']);
-
-/* =========================
-   TESZT: KOSÁR RESET
-   ========================= */
-if (isset($_GET['reset_cart'])) {
-    unset($_SESSION['cart']);
-    header("Location: index.php");
-    exit;
 }
 
-/* =========================
-   ROUTER ALAP
-   ========================= */
-$page   = $_GET['page'] ?? 'home';
-$method = $_SERVER['REQUEST_METHOD'];
+// Redirect helper
+function redirect($path) {
+    $basePath = rtrim(dirname($_SERVER["SCRIPT_NAME"]), "/") . "/";
+    if ($basePath === "//") $basePath = "/";
+    header("Location: " . $basePath . ltrim($path, "/"));
+    exit;
+}
+';
+    
+    file_put_contents($customFunctionsPath, $content);
+}
 
-/* =========================
-   POST AKCIÓK (NINCS HTML!)
-   ========================= */
-if ($method === 'POST') {
+require_once $customFunctionsPath;
 
-    switch ($page) {
+// 2. SESSION INDÍTÁS
+secure_session_start();
 
+// 3. ADATBÁZIS KAPCSOLAT
+require_once __DIR__ . '/app/config/database.php';
+
+// 4. AUTOLOADER - KIJAVÍTVA
+spl_autoload_register(function ($class) {
+    $directories = ['app/controllers', 'app/models'];
+    
+    foreach ($directories as $dir) {
+        // Először próbálkozzunk az eredeti névvel
+        $file = __DIR__ . '/' . $dir . '/' . $class . '.php';
+        if (file_exists($file)) {
+            require_once $file;
+            return;
+        }
+        
+        // Ha nem található, próbálkozzunk kisbetűs névvel
+        $file = __DIR__ . '/' . $dir . '/' . strtolower($class) . '.php';
+        if (file_exists($file)) {
+            require_once $file;
+            return;
+        }
+    }
+    
+    // Ha nem találtuk, logoljuk (csak fejlesztés közben)
+    // error_log("Autoloader: Nem található osztály: $class");
+});
+
+// 5. ROUTING
+require_once __DIR__ . '/router.php';
+
+// 6. HERO SECTION BEÁLLÍTÁSA
+// Alapértelmezett: nem rejtjük el a hero-t
+$hideHero = false;
+
+// Ha bejelentkezési vagy regisztrációs oldalon vagyunk, elrejtjük
+$currentPage = $_GET['page'] ?? 'home';
+if (in_array($currentPage, ['login', 'register', 'cart', 'checkout', 'profile', 'logout'])) {
+    $hideHero = true;
+}
+
+// 7. POST KÉRÉSEK KEZELÉSE
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    
+    // CSRF token ellenőrzés MINDEN POST kérésnél
+    if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+        http_response_code(403);
+        die('<h1>403 - CSRF token érvénytelen</h1><p>Kérjük, frissítsd az oldalt és próbáld újra.</p>');
+    }
+    
+    // Action alapján vezérlés
+    $action = $_POST['action'] ?? '';
+    
+    switch ($action) {
+        case 'login':
+        case 'register':
+            if (class_exists('AuthController')) {
+                (new AuthController($pdo))->handle();
+            } else {
+                die('AuthController nem található!');
+            }
+            exit;
+            
         case 'cart_add':
-            (new CartController())->add();
-            exit;
-
         case 'cart_update':
-            (new CartController())->update();
-            exit;
-
         case 'cart_remove':
-            (new CartController())->remove();
+            if (class_exists('CartController')) {
+                $controller = new CartController();
+                if ($action === 'cart_add' && method_exists($controller, 'add')) {
+                    $controller->add();
+                } elseif ($action === 'cart_update' && method_exists($controller, 'update')) {
+                    $controller->update();
+                } elseif ($action === 'cart_remove' && method_exists($controller, 'remove')) {
+                    $controller->remove();
+                }
+            }
             exit;
-
+            
         case 'checkout':
-            (new OrderController())->checkout();
+            if (class_exists('OrderController')) {
+                (new OrderController())->checkout();
+            }
+            exit;
+            
+        case 'logout':
+            // Kijelentkezés POST kérésként
+            session_destroy();
+            redirect('/?logout=success');
             exit;
     }
 }
-
-/* =========================
-   HTML KEZDÉS
-   ========================= */
 ?>
 <!DOCTYPE html>
 <html lang="hu">
-
 <head>
-    <?php require __DIR__ . "/app/views/layouts/head.php"; ?>
+    <?php require __DIR__ . '/app/views/layouts/head.php'; ?>
 </head>
 
-<body class="min-h-screen overflow-x-hidden bg-white text-gray-900">
+<body class="min-h-screen bg-white text-gray-900">
 
-    <?php require __DIR__ . "/app/views/layouts/menu.php"; ?>
+<?php require __DIR__ . '/app/views/layouts/menu.php'; ?>
 
-    <main class="w-full">
+<main class="w-full">
+    <!-- HERO SZAKASZ (csak ha nem rejtjük el) -->
+    <?php if (!$hideHero && $_GET['page'] === 'home'): ?>
+        <?php require __DIR__ . '/app/views/pages/hero.php'; ?>
+    <?php endif; ?>
+    
+    <!-- TARTALOM -->
+    <?php
+    $page = $_GET['page'] ?? 'home';
+    $viewPath = __DIR__ . '/app/views/pages/' . $page . '.php';
+    
+    if (file_exists($viewPath)) {
+        // Passzoljuk a $hideHero változót a view-nak, ha szükséges
+        require $viewPath;
+    } else {
+        // 404 - oldal nem található
+        http_response_code(404);
+        require __DIR__ . '/app/views/components/404.php';
+    }
+    ?>
+</main>
 
-        <?php
-        /* =========================
-   GET OLDALAK (VIEW)
-   ========================= */
-        switch ($page) {
-
-            case 'product':
-                (new ProductController())->show();
-                break;
-
-
-            case 'cart':
-                require_once __DIR__ . '/app/views/pages/cart.php';
-                break;
-
-            case 'checkout':
-                require __DIR__ . "/app/views/pages/checkout.php";
-                break;
-
-            case 'home':
-            default:
-                (new ProductController())->index();
-                break;
-            case 'terms':
-                require __DIR__ . "/app/views/pages/terms.php";
-                break;
-
-            case 'privacy':
-                require __DIR__ . "/app/views/pages/privacy.php";
-                break;
-
-            case 'shipping':
-                require __DIR__ . "/app/views/pages/shipping.php";
-                break;
-
-            case 'contact':
-                require __DIR__ . "/app/views/pages/contact.php";
-                break;
-            case '404':
-                require __DIR__ . "/app/views/components/404.php";
-                break;
-
-            case '500':
-                require __DIR__ . "/app/views/components/500.php";
-                break;
-        }
-        ?>
-
-    </main>
-
-    <?php require __DIR__ . "/app/views/layouts/footer.php"; ?>
+<?php require __DIR__ . '/app/views/layouts/footer.php'; ?>
 
 </body>
-
 </html>

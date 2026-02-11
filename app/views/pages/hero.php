@@ -1,10 +1,17 @@
+<?php
+// A $hideHero változó az index.php-ből jön.
+// Ha nincs beállítva, alapértelmezésként false (mutatjuk a hero-t)
+if (!isset($hideHero)) {
+    $hideHero = false;
+}
+?>
+
 <section
     id="hero"
     class="w-full transition-all duration-700 ease-in-out
-    <?= $hideHero
-        ? 'opacity-0 -translate-y-10 max-h-0 overflow-hidden'
-        : 'opacity-100 translate-y-0 max-h-[2000px]'
-    ?>"
+    <?php echo $hideHero 
+        ? 'opacity-0 -translate-y-10 max-h-0 overflow-hidden' 
+        : 'opacity-100 translate-y-0 max-h-[2000px]'; ?>"
 >
 
     <!-- FEHÉR FELSŐ RÉSZ -->
@@ -52,3 +59,18 @@
     </div>
 
 </section>
+
+<!-- JavaScript animáció a hero-hoz -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const heroElements = document.querySelectorAll('.hero-animate');
+    if (heroElements.length > 0) {
+        setTimeout(function() {
+            heroElements.forEach(el => {
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            });
+        }, 100);
+    }
+});
+</script>

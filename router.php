@@ -1,51 +1,92 @@
 <?php
 
-// Az URL-t lebontjuk és szétválasztjuk
-$uri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
-$uri = str_replace('webshop/', '', $uri);  // ha a webshop mappában van
-$parts = explode('/', $uri);
+// Request URI
+$requestUri = $_SERVER['REQUEST_URI'];
 
-// Alapértelmezett page
+// A projekt mappája (ahol az index.php van)
+$scriptName = $_SERVER['SCRIPT_NAME']; // pl. /webshop/index.php
+$basePath = rtrim(str_replace('index.php', '', $scriptName), '/') . '/';
+
+// Távolítsuk el a basePath-et az URI elejéről
+if (strpos($requestUri, $basePath) === 0) {
+    $requestUri = substr($requestUri, strlen($basePath));
+}
+
+// URL feldolgozása – JAVÍTVA (nem dob deprecated hibát)
+$path = parse_url($requestUri, PHP_URL_PATH) ?? '';
+$uri = trim($path, '/');
+$parts = !empty($uri) ? explode('/', $uri) : [];
+
+// Alapértelmezett oldal
 $page = 'home';
-$params = [];
 
+// Router logika
 if (!empty($parts[0])) {
-
     switch ($parts[0]) {
 
-        // Kosár oldal
+        case 'login':
+            $page = 'login';
+            break;
+
+        case 'register':
+            $page = 'register';
+            break;
+
+        case 'logout':
+            $page = 'logout';
+            break;
+
         case 'kosar':
             $page = 'cart';
             break;
 
-        // Checkout oldal
         case 'checkout':
             $page = 'checkout';
             break;
 
-        // Termék oldal
-        case 'termek':
-            $page = 'product';
-            $params['id'] = $parts[1] ?? null;  // Termék ID
+        case 'profil':
+            $page = 'profile';
             break;
 
-        // Alapértelmezett oldalak, ha nincs találat
+        case 'termek':
+            $page = 'product';
+            if (!empty($parts[1])) {
+                $_GET['id'] = $parts[1];
+            }
+            break;
+
+        case 'kategoria':
+            $page = 'category';
+            if (!empty($parts[1])) {
+                $_GET['category'] = $parts[1];
+            }
+            break;
+
         case 'noi':
-            $params['gender'] = 'female';
-            $page = 'home';
+            $page = 'category';
+            $_GET['category'] = 'noi';
             break;
 
         case 'ferfi':
-            $params['gender'] = 'male';
+            $page = 'category';
+            $_GET['category'] = 'ferfi';
+            break;
+
+        case 'home':
             $page = 'home';
             break;
 
         default:
-            $page = '404';  // Ha nem található az oldal
+            // Ha létezik ilyen PHP fájl az app/pages mappában, töltsük be
+            $possibleFile = __DIR__ . '/app/pages/' . $parts[0] . '.php';
+            if (file_exists($possibleFile) && $parts[0] !== 'index') {
+                $page = $parts[0];
+            } else {
+                $page = 'home'; // vagy 404
+            }
             break;
     }
 }
 
-// A GET paramétereket dinamikusan beállítjuk
+// Oldal beállítása GET paraméterben
 $_GET['page'] = $page;
-$_GET = array_merge($_GET, $params);
