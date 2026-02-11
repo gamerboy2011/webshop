@@ -1,97 +1,51 @@
 <?php
 
+// Az URL-t lebontjuk és szétválasztjuk
 $uri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
-$uri = str_replace('webshop/', '', $uri);
+$uri = str_replace('webshop/', '', $uri);  // ha a webshop mappában van
 $parts = explode('/', $uri);
 
-$page   = 'home';
+// Alapértelmezett page
+$page = 'home';
 $params = [];
-
-/*
-URL minták:
-/
-ferfi
-noi
-ferfi/ruhazat
-noi/cipok
-termek/12
-kosar
-checkout
-*/
 
 if (!empty($parts[0])) {
 
-    /* ===== KÉT SZINT (gender + type) ===== */
-    if (count($parts) >= 2) {
+    switch ($parts[0]) {
 
-        // gender
-        if ($parts[0] === 'ferfi') {
-            $params['gender'] = 'male';
-        }
+        // Kosár oldal
+        case 'kosar':
+            $page = 'cart';
+            break;
 
-        if ($parts[0] === 'noi') {
+        // Checkout oldal
+        case 'checkout':
+            $page = 'checkout';
+            break;
+
+        // Termék oldal
+        case 'termek':
+            $page = 'product';
+            $params['id'] = $parts[1] ?? null;  // Termék ID
+            break;
+
+        // Alapértelmezett oldalak, ha nincs találat
+        case 'noi':
             $params['gender'] = 'female';
-        }
+            $page = 'home';
+            break;
 
-        // típus
-        switch ($parts[1]) {
-            case 'ruhazat':
-                $params['type'] = 'clothe';
-                break;
+        case 'ferfi':
+            $params['gender'] = 'male';
+            $page = 'home';
+            break;
 
-            case 'cipok':
-                $params['type'] = 'shoe';
-                break;
-
-            case 'kiegeszitok':
-                $params['type'] = 'accessory';
-                break;
-        }
-
-        $page = 'home';
-    }
-
-    /* ===== EGY SZINT ===== */
-    else {
-
-        switch ($parts[0]) {
-
-            case 'ferfi':
-                $params['gender'] = 'male';
-                $page = 'home';
-                break;
-
-            case 'noi':
-                $params['gender'] = 'female';
-                $page = 'home';
-                break;
-
-            case 'kosar':
-                $page = 'cart';
-                break;
-
-            case 'checkout':
-                $page = 'checkout';
-                break;
-
-            case 'akcio':
-                $params['sale'] = 1;
-                $page = 'home';
-                break;
-
-            case 'ujdonsagok':
-                $params['new'] = 1;
-                $page = 'home';
-                break;
-
-            case 'termek':
-                $page = 'product';
-                $params['id'] = $parts[1] ?? null;
-                break;
-        }
+        default:
+            $page = '404';  // Ha nem található az oldal
+            break;
     }
 }
 
-/* ===== PARAMÉTEREK BETÖLTÉSE ===== */
-$_GET = array_merge($_GET, $params);
+// A GET paramétereket dinamikusan beállítjuk
 $_GET['page'] = $page;
+$_GET = array_merge($_GET, $params);

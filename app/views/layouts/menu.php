@@ -36,16 +36,16 @@ if (in_array('noi', $parts)) {
             <div class="flex gap-6 items-center justify-start">
 
                 <a href="/webshop/noi"
-                   class="<?= $currentGender === 'noi'
-                       ? 'font-semibold border-b-2 border-black'
-                       : 'text-gray-500 hover:text-black' ?>">
+                    class="<?= $currentGender === 'noi'
+                                ? 'font-semibold border-b-2 border-black'
+                                : 'text-gray-500 hover:text-black' ?>">
                     Női
                 </a>
 
                 <a href="/webshop/ferfi"
-                   class="<?= $currentGender === 'ferfi'
-                       ? 'font-semibold border-b-2 border-black'
-                       : 'text-gray-500 hover:text-black' ?>">
+                    class="<?= $currentGender === 'ferfi'
+                                ? 'font-semibold border-b-2 border-black'
+                                : 'text-gray-500 hover:text-black' ?>">
                     Férfi
                 </a>
 
@@ -77,9 +77,9 @@ if (in_array('noi', $parts)) {
 
                     <?php if ($cartCount > 0): ?>
                         <span class="absolute -top-2 -right-2
-                                     bg-black text-white text-xs
-                                     w-5 h-5 rounded-full
-                                     flex items-center justify-center">
+                     bg-black text-white text-xs
+                     w-5 h-5 rounded-full
+                     flex items-center justify-center">
                             <?= $cartCount ?>
                         </span>
                     <?php endif; ?>
@@ -96,17 +96,17 @@ if (in_array('noi', $parts)) {
             <?php if ($currentGender): ?>
 
                 <a href="/webshop/<?= $currentGender ?>/ruhazat"
-                   class="hover:text-black">
+                    class="hover:text-black">
                     Ruházat
                 </a>
 
                 <a href="/webshop/<?= $currentGender ?>/cipok"
-                   class="hover:text-black">
+                    class="hover:text-black">
                     Cipők
                 </a>
 
                 <a href="/webshop/<?= $currentGender ?>/kiegeszitok"
-                   class="hover:text-black">
+                    class="hover:text-black">
                     Kiegészítők
                 </a>
 

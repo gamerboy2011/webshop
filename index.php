@@ -29,9 +29,8 @@ spl_autoload_register(function ($class) {
     }
 });
 
-$gender = $_GET['gender'] ?? null;
-$hideHero = $gender !== null;
-$hideHero = true; // Itt mindenképp eltüntetjük a herot
+// Ha van 'gender' és 'type' paraméter az URL-ben, elrejtjük a hero szakaszt
+$hideHero = isset($_GET['gender']) || isset($_GET['type']);
 
 /* =========================
    TESZT: KOSÁR RESET
@@ -100,8 +99,9 @@ if ($method === 'POST') {
                 (new ProductController())->show();
                 break;
 
+
             case 'cart':
-                (new CartController())->index();
+                require_once __DIR__ . '/app/views/pages/cart.php';
                 break;
 
             case 'checkout':

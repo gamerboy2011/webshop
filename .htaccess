@@ -1,10 +1,18 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
-
     RewriteBase /webshop/
 
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
+    # Ha fájl vagy könyvtár létezik, ne végezze el az átírást
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
 
-    RewriteRule ^ index.php [L]
+    # Szép URL átírási szabályok
+    RewriteRule ^kosar$ index.php?page=cart [QSA,L]
+    RewriteRule ^checkout$ index.php?page=checkout [QSA,L]
+    RewriteRule ^termek/([0-9]+)$ index.php?page=product&id=$1 [QSA,L]
 </IfModule>
+
+# Hibaoldalak
+ErrorDocument 404 /webshop/app/views/components/400.php
+ErrorDocument 500 /webshop/app/views/components/500.php
