@@ -163,10 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php require __DIR__ . '/app/views/layouts/menu.php'; ?>
 
 <main class="w-full">
-    <!-- HERO SZAKASZ (csak ha nem rejtjük el) -->
-    <?php if (!$hideHero && $_GET['page'] === 'home'): ?>
-        <?php require __DIR__ . '/app/views/pages/hero.php'; ?>
-    <?php endif; ?>
+   
     
     <!-- TARTALOM -->
     <?php
