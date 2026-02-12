@@ -23,8 +23,11 @@ class User
     {
         $stmt = $this->pdo->prepare("
             INSERT INTO users
-            (username, email, password_hash, phone, role_id, is_active, activation_token, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+            (username, email, password_hash, phone, role_id,
+             billing_country, billing_city, billing_postcode, billing_street,
+             shipping_country, shipping_city, shipping_postcode, shipping_street,
+             is_active, activation_token, created_at)
+            VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, ?, ?, NOW())
         ");
 
         try {
@@ -34,26 +37,31 @@ class User
                 $data['password_hash'],
                 $data['phone'] ?? null,
                 $data['role_id'] ?? 1,
-                $data['is_active'] ?? 1,
+                $data['is_active'] ?? 0,
                 $data['activation_token'] ?? null
             ]);
         } catch (PDOException $e) {
-            // Naplózáshoz: error_log($e->getMessage());
-            return false;
+            die("SQL HIBA: " . $e->getMessage());
         }
     }
-    
-    /**
-     * Új: Felhasználó keresése ID alapján (profil oldalhoz)
-     */
-    public function findById(int $userId): ?array
+
+    public function findByToken(string $token): ?array
     {
         $stmt = $this->pdo->prepare(
-            "SELECT user_id, username, email, phone, role_id, created_at 
-             FROM users WHERE user_id = ? LIMIT 1"
+            "SELECT * FROM users WHERE activation_token = ? LIMIT 1"
         );
-        $stmt->execute([$userId]);
+        $stmt->execute([$token]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result ?: null;
+    }
+
+    public function activateUser(int $userId): bool
+    {
+        $stmt = $this->pdo->prepare("
+            UPDATE users
+            SET is_active = 1, activation_token = NULL
+            WHERE user_id = ?
+        ");
+        return $stmt->execute([$userId]);
     }
 }

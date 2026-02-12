@@ -76,6 +76,11 @@ if (!empty($parts[0])) {
             $page = 'home';
             break;
 
+        case 'activate':
+            $controller = new ActivationController($pdo);
+            $controller->activate();
+            exit;
+
         default:
             // Ha létezik ilyen PHP fájl az app/pages mappában, töltsük be
             $possibleFile = __DIR__ . '/app/pages/' . $parts[0] . '.php';
