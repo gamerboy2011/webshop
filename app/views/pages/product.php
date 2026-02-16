@@ -1,41 +1,18 @@
 <?php
-require_once __DIR__ . "/../../../library/config.php";
+require_once __DIR__ . "/../../library/config.php";
+require_once __DIR__ . "/../../models/ProductModel.php";
 
-/* =========================
-   TERMÉK ID
-   ========================= */
 $productId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($productId <= 0) {
     die("Érvénytelen termék");
 }
 
+$model = new ProductModel($pdo);
+
 /* =========================
    TERMÉK ADATOK
    ========================= */
-$stmt = $pdo->prepare("
-    SELECT
-        p.product_id,
-        p.name,
-        p.description,
-        p.price,
-        p.subtype_id,
-        v.name AS vendor,
-        pt.name AS type,
-        ps.name AS subtype,
-        g.gender,
-        c.name AS color
-    FROM product p
-    JOIN vendor v ON p.vendor_id = v.vendor_id
-    JOIN product_subtype ps ON p.subtype_id = ps.product_subtype_id
-    JOIN product_type pt ON ps.product_type_id = pt.product_type_id
-    JOIN gender g ON p.gender_id = g.gender_id
-    JOIN color c ON p.color_id = c.color_id
-    WHERE p.product_id = :id
-      AND p.is_active = 1
-");
-$stmt->execute(['id' => $productId]);
-$product = $stmt->fetch();
-
+$product = $model->getProductById($productId);
 if (!$product) {
     die("A termék nem található");
 }
@@ -43,62 +20,26 @@ if (!$product) {
 /* =========================
    KÉPEK
    ========================= */
-$stmt = $pdo->prepare("
-    SELECT src
-    FROM product_img
-    WHERE product_id = :id
-    ORDER BY position
-");
-$stmt->execute(['id' => $productId]);
-$images = $stmt->fetchAll();
+$images = $model->getImages($productId);
 $mainImage = $images[0]['src'] ?? null;
 
 /* =========================
-   MÉRETEK + KÉSZLET
+   MÉRETEK
    ========================= */
-$stmt = $pdo->prepare("
-    SELECT
-        sz.size_id,
-        sz.size_value,
-        st.quantity
-    FROM stock st
-    JOIN size sz ON st.size_id = sz.size_id
-    JOIN product p ON st.product_id = p.product_id
-    JOIN product_subtype ps ON p.subtype_id = ps.product_subtype_id
-    WHERE st.product_id = :id
-      AND st.quantity > 0
-      AND sz.product_type_id = ps.product_type_id
-    ORDER BY sz.size_id
-");
-$stmt->execute(['id' => $productId]);
-$sizes = $stmt->fetchAll();
+$sizes = $model->getSizes($productId);
 
 /* =========================
    AJÁNLOTT TERMÉKEK
    ========================= */
-$stmt = $pdo->prepare("
-    SELECT
-        p.product_id,
-        p.name,
-        p.price,
-        (
-            SELECT src
-            FROM product_img
-            WHERE product_id = p.product_id
-            ORDER BY position ASC
-            LIMIT 1
-        ) AS image
-    FROM product p
-    WHERE p.subtype_id = :subtype
-      AND p.product_id != :id
-      AND p.is_active = 1
-    LIMIT 4
-");
-$stmt->execute([
-    'subtype' => $product['subtype_id'],
-    'id'      => $productId
-]);
-$related = $stmt->fetchAll();
+$related = $model->getRelated($product['subtype_id'], $productId);
+
+/* =========================
+   KEDVENC-E
+   ========================= */
+$isFavorite = false;
+if (isset($_SESSION['user_id'])) {
+    $isFavorite = $model->isFavorite($_SESSION['user_id'], $productId);
+}
 ?>
 
 <div class="max-w-7xl mx-auto px-6 py-16">
@@ -138,9 +79,21 @@ $related = $stmt->fetchAll();
                 <?= htmlspecialchars($product['vendor']) ?>
             </p>
 
-            <h1 class="text-3xl font-semibold mb-4">
-                <?= htmlspecialchars($product['name']) ?>
-            </h1>
+            <div class="flex items-center justify-between gap-4 mb-4">
+                <h1 class="text-3xl font-semibold">
+                    <?= htmlspecialchars($product['name']) ?>
+                </h1>
+
+                <!-- KEDVENC GOMB -->
+                <button
+                    class="favorite-btn flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 text-lg transition
+                           <?= $isFavorite ? 'text-red-500 border-red-400' : 'text-gray-400 hover:text-gray-600' ?>"
+                    data-product="<?= $productId ?>"
+                    data-logged="<?= isset($_SESSION['user_id']) ? '1' : '0' ?>"
+                    aria-label="Kedvencekhez adás">
+                    ♥
+                </button>
+            </div>
 
             <p class="text-2xl font-bold mb-6">
                 <?= number_format($product['price'], 0, ',', ' ') ?> Ft
@@ -155,7 +108,7 @@ $related = $stmt->fetchAll();
             </div>
 
             <!-- MÉRET + KOSÁR -->
-            <form method="post" action="index.php?page=cart_add">
+            <form method="post" action="/webshop/index.php?page=cart_add">
 
                 <input type="hidden" name="product_id" value="<?= $productId ?>">
 
@@ -204,7 +157,7 @@ $related = $stmt->fetchAll();
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <?php foreach ($related as $r): ?>
-                    <a href="index.php?page=product&id=<?= $r['product_id'] ?>">
+                    <a href="/webshop/termek/<?= $r['product_id'] ?>">
                         <img src="<?= htmlspecialchars($r['image']) ?>" class="mb-3">
                         <p class="font-medium"><?= htmlspecialchars($r['name']) ?></p>
                         <p class="text-sm"><?= number_format($r['price'], 0, ',', ' ') ?> Ft</p>
