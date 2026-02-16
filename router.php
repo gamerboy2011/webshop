@@ -1,26 +1,46 @@
 <?php
 
-// Request URI
 $requestUri = $_SERVER['REQUEST_URI'];
-
-// A projekt mappája (ahol az index.php van)
-$scriptName = $_SERVER['SCRIPT_NAME']; // pl. /webshop/index.php
+$scriptName = $_SERVER['SCRIPT_NAME'];
 $basePath = rtrim(str_replace('index.php', '', $scriptName), '/') . '/';
 
-// Távolítsuk el a basePath-et az URI elejéről
 if (strpos($requestUri, $basePath) === 0) {
     $requestUri = substr($requestUri, strlen($basePath));
 }
 
-// URL feldolgozása – JAVÍTVA (nem dob deprecated hibát)
 $path = parse_url($requestUri, PHP_URL_PATH) ?? '';
 $uri = trim($path, '/');
 $parts = !empty($uri) ? explode('/', $uri) : [];
 
-// Alapértelmezett oldal
 $page = 'home';
 
-// Router logika
+/* =========================
+   1) KERESŐ KEZELÉSE
+   ========================= */
+if (isset($_GET['q']) && $_GET['q'] !== '') {
+    $controller = new ProductController();
+    $controller->search();
+    exit;
+}
+
+/* =========================
+   2) KATEGÓRIA + GENDER KEZELÉSE
+   /noi/ruhazat
+   /ferfi/cipok
+   ========================= */
+if (!empty($parts[0]) && ($parts[0] === 'noi' || $parts[0] === 'ferfi')) {
+
+    $gender = $parts[0];
+    $category = $parts[1] ?? null;
+
+    $controller = new ProductController();
+    $controller->category($gender, $category);
+    exit;
+}
+
+/* =========================
+   3) ALAP ROUTING
+   ========================= */
 if (!empty($parts[0])) {
     switch ($parts[0]) {
 
@@ -55,43 +75,20 @@ if (!empty($parts[0])) {
             }
             break;
 
-        case 'kategoria':
-            $page = 'category';
-            if (!empty($parts[1])) {
-                $_GET['category'] = $parts[1];
-            }
-            break;
-
-        case 'noi':
-            $page = 'category';
-            $_GET['category'] = 'noi';
-            break;
-
-        case 'ferfi':
-            $page = 'category';
-            $_GET['category'] = 'ferfi';
-            break;
-
-        case 'home':
-            $page = 'home';
-            break;
-
         case 'activate':
             $controller = new ActivationController($pdo);
             $controller->activate();
             exit;
 
         default:
-            // Ha létezik ilyen PHP fájl az app/pages mappában, töltsük be
             $possibleFile = __DIR__ . '/app/pages/' . $parts[0] . '.php';
             if (file_exists($possibleFile) && $parts[0] !== 'index') {
                 $page = $parts[0];
             } else {
-                $page = 'home'; // vagy 404
+                $page = 'home';
             }
             break;
     }
 }
 
-// Oldal beállítása GET paraméterben
 $_GET['page'] = $page;

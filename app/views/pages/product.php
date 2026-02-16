@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . "/../../../library/config.php";
+// $pdo is available from index.php
 
 /* =========================
    TERMÉK ID
