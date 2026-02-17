@@ -1,9 +1,7 @@
 <?php
-// $pdo is available from index.php
+require_once __DIR__ . "/../../library/config.php";
+require_once __DIR__ . "/../../models/ProductModel.php";
 
-/* =========================
-   TERMÉK ID
-   ========================= */
 $productId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($productId <= 0) {
     http_response_code(404);
@@ -11,33 +9,12 @@ if ($productId <= 0) {
     return;
 }
 
+$model = new ProductModel($pdo);
+
 /* =========================
    TERMÉK ADATOK
    ========================= */
-$stmt = $pdo->prepare("
-    SELECT
-        p.product_id,
-        p.name,
-        p.description,
-        p.price,
-        p.subtype_id,
-        v.name AS vendor,
-        pt.name AS type,
-        ps.name AS subtype,
-        g.gender,
-        c.name AS color
-    FROM product p
-    JOIN vendor v ON p.vendor_id = v.vendor_id
-    JOIN product_subtype ps ON p.subtype_id = ps.product_subtype_id
-    JOIN product_type pt ON ps.product_type_id = pt.product_type_id
-    JOIN gender g ON p.gender_id = g.gender_id
-    JOIN color c ON p.color_id = c.color_id
-    WHERE p.product_id = :id
-      AND p.is_active = 1
-");
-$stmt->execute(['id' => $productId]);
-$product = $stmt->fetch();
-
+$product = $model->getProductById($productId);
 if (!$product) {
     http_response_code(404);
     require __DIR__ . '/../components/404.php';
@@ -52,64 +29,26 @@ $genderUrl = $product['gender'] === 'm' ? 'ferfi' : 'noi';
 /* =========================
    KÉPEK
    ========================= */
-$stmt = $pdo->prepare("
-    SELECT src
-    FROM product_img
-    WHERE product_id = :id
-    ORDER BY position
-");
-$stmt->execute(['id' => $productId]);
-$images = $stmt->fetchAll();
+$images = $model->getImages($productId);
 $mainImage = $images[0]['src'] ?? null;
 
 /* =========================
-   MÉRETEK + KÉSZLET
+   MÉRETEK
    ========================= */
-$stmt = $pdo->prepare("
-    SELECT
-        sz.size_id,
-        sz.size_value,
-        st.quantity
-    FROM stock st
-    JOIN size sz ON st.size_id = sz.size_id
-    JOIN product p ON st.product_id = p.product_id
-    JOIN product_subtype ps ON p.subtype_id = ps.product_subtype_id
-    WHERE st.product_id = :id
-      AND st.quantity > 0
-      AND sz.product_type_id = ps.product_type_id
-    ORDER BY sz.size_id
-");
-$stmt->execute(['id' => $productId]);
-$sizes = $stmt->fetchAll();
+$sizes = $model->getSizes($productId);
 
 /* =========================
    AJÁNLOTT TERMÉKEK
    ========================= */
-$stmt = $pdo->prepare("
-    SELECT
-        p.product_id,
-        p.name,
-        p.price,
-        v.name AS vendor,
-        (
-            SELECT src
-            FROM product_img
-            WHERE product_id = p.product_id
-            ORDER BY position ASC
-            LIMIT 1
-        ) AS image
-    FROM product p
-    JOIN vendor v ON p.vendor_id = v.vendor_id
-    WHERE p.subtype_id = :subtype
-      AND p.product_id != :id
-      AND p.is_active = 1
-    LIMIT 4
-");
-$stmt->execute([
-    'subtype' => $product['subtype_id'],
-    'id'      => $productId
-]);
-$related = $stmt->fetchAll();
+$related = $model->getRelated($product['subtype_id'], $productId);
+
+/* =========================
+   KEDVENC-E
+   ========================= */
+$isFavorite = false;
+if (isset($_SESSION['user_id'])) {
+    $isFavorite = $model->isFavorite($_SESSION['user_id'], $productId);
+}
 ?>
 
 <div class="bg-gray-50 min-h-screen">
@@ -171,10 +110,21 @@ $related = $stmt->fetchAll();
                             <?= htmlspecialchars($product['vendor']) ?>
                         </a>
 
-                        <!-- Terméknév -->
-                        <h1 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-4">
-                            <?= htmlspecialchars($product['name']) ?>
-                        </h1>
+            <div class="flex items-center justify-between gap-4 mb-4">
+                <h1 class="text-3xl font-semibold">
+                    <?= htmlspecialchars($product['name']) ?>
+                </h1>
+
+                <!-- KEDVENC GOMB -->
+                <button
+                    class="favorite-btn flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 text-lg transition
+                           <?= $isFavorite ? 'text-red-500 border-red-400' : 'text-gray-400 hover:text-gray-600' ?>"
+                    data-product="<?= $productId ?>"
+                    data-logged="<?= isset($_SESSION['user_id']) ? '1' : '0' ?>"
+                    aria-label="Kedvencekhez adás">
+                    ♥
+                </button>
+            </div>
 
                         <!-- Ár -->
                         <div class="flex items-baseline gap-3 mb-6">
@@ -188,18 +138,12 @@ $related = $stmt->fetchAll();
                             <p class="text-sm font-medium text-gray-700 mb-2">Szín: <span class="font-normal"><?= htmlspecialchars($product['color']) ?></span></p>
                         </div>
 
-                        <!-- MÉRET + KOSÁR FORM -->
-                        <form method="post" action="/webshop/index.php">
-                            <input type="hidden" name="action" value="cart_add">
-                            <input type="hidden" name="product_id" value="<?= $productId ?>">
-                            <?= csrf_field() ?>
+            <!-- MÉRET + KOSÁR -->
+            <form method="post" action="/webshop/index.php?page=cart_add">
 
-                            <!-- Méret választó -->
-                            <div class="mb-6">
-                                <div class="flex items-center justify-between mb-3">
-                                    <p class="text-sm font-medium text-gray-700">Méret kiválasztása</p>
-                                    <button type="button" class="text-sm text-gray-500 hover:text-black underline">Mérettáblázat</button>
-                                </div>
+                <input type="hidden" name="product_id" value="<?= $productId ?>">
+
+                <p class="font-medium mb-3">Méret</p>
 
                                 <?php if (empty($sizes)): ?>
                                     <p class="text-sm text-red-500 bg-red-50 rounded-lg p-3">
@@ -305,26 +249,17 @@ $related = $stmt->fetchAll();
             <div class="mt-12">
                 <h2 class="text-xl font-bold text-gray-900 mb-6">Hasonló termékek</h2>
 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
-                    <?php foreach ($related as $r): ?>
-                        <a href="/webshop/termek/<?= $r['product_id'] ?>" class="group bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                            <div class="aspect-[3/4] bg-gray-100 overflow-hidden">
-                                <?php if (!empty($r['image'])): ?>
-                                    <img src="/webshop/<?= htmlspecialchars($r['image']) ?>"
-                                         alt="<?= htmlspecialchars($r['name']) ?>"
-                                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                                <?php endif; ?>
-                            </div>
-                            <div class="p-4">
-                                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1"><?= htmlspecialchars($r['vendor']) ?></p>
-                                <h3 class="text-sm font-medium text-gray-900 line-clamp-2 mb-2"><?= htmlspecialchars($r['name']) ?></h3>
-                                <p class="text-sm font-bold"><?= number_format($r['price'], 0, ',', ' ') ?> Ft</p>
-                            </div>
-                        </a>
-                    <?php endforeach; ?>
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <?php foreach ($related as $r): ?>
+                    <a href="/webshop/termek/<?= $r['product_id'] ?>">
+                        <img src="<?= htmlspecialchars($r['image']) ?>" class="mb-3">
+                        <p class="font-medium"><?= htmlspecialchars($r['name']) ?></p>
+                        <p class="text-sm"><?= number_format($r['price'], 0, ',', ' ') ?> Ft</p>
+                    </a>
+                <?php endforeach; ?>
             </div>
-        <?php endif; ?>
+        </div>
+    <?php endif; ?>
 
     </div>
 </div>

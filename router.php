@@ -8,6 +8,7 @@ if (strpos($requestUri, $basePath) === 0) {
     $requestUri = substr($requestUri, strlen($basePath));
 }
 
+// URL feldolgozása
 $path = parse_url($requestUri, PHP_URL_PATH) ?? '';
 $uri = trim($path, '/');
 $parts = !empty($uri) ? explode('/', $uri) : [];
@@ -38,6 +39,9 @@ if (!empty($parts[0]) && ($parts[0] === 'noi' || $parts[0] === 'ferfi')) {
 if (!empty($parts[0])) {
     switch ($parts[0]) {
 
+        /* ============================
+           AUTH
+        ============================ */
         case 'login':
             $page = 'login';
             break;
@@ -50,6 +54,9 @@ if (!empty($parts[0])) {
             $page = 'logout';
             break;
 
+        /* ============================
+           KOSÁR / CHECKOUT
+        ============================ */
         case 'kosar':
             $page = 'cart';
             break;
@@ -58,18 +65,17 @@ if (!empty($parts[0])) {
             $page = 'checkout';
             break;
 
+        /* ============================
+           PROFIL
+        ============================ */
         case 'profil':
             $page = 'profile';
             break;
 
-        case 'akcio':
-            $_GET['page'] = 'sale';
-            break;
-
-        case 'ujdonsagok':
-            $_GET['page'] = 'new';
-            break;
-
+        /* ============================
+           TERMÉK OLDAL
+           /termek/123
+        ============================ */
         case 'termek':
             $page = 'product';
             if (!empty($parts[1])) {
@@ -77,13 +83,49 @@ if (!empty($parts[0])) {
             }
             break;
 
+        /* ============================
+           KATEGÓRIÁK
+        ============================ */
+        case 'kategoria':
+            $page = 'category';
+            if (!empty($parts[1])) {
+                $_GET['category'] = $parts[1];
+            }
+            break;
+
+        case 'noi':
+            $page = 'category';
+            $_GET['category'] = 'noi';
+            break;
+
+        case 'ferfi':
+            $page = 'category';
+            $_GET['category'] = 'ferfi';
+            break;
+
+        /* ============================
+           FIÓK AKTIVÁLÁS
+        ============================ */
         case 'activate':
+            require_once __DIR__ . '/app/controllers/ActivationController.php';
             $controller = new ActivationController($pdo);
             $controller->activate();
             exit;
 
+        /* ============================
+           KEDVENCEK TOGGLE (AJAX)
+        ============================ */
+        case 'favorite-toggle':
+            require_once __DIR__ . '/app/controllers/FavouriteController.php';
+            $controller = new FavouriteController($pdo);
+            $controller->toggle();
+            exit;
+
+        /* ============================
+           ALAPÉRTELMEZETT
+        ============================ */
         default:
-            $possibleFile = __DIR__ . '/app/pages/' . $parts[0] . '.php';
+            $possibleFile = __DIR__ . '/app/views/pages/' . $parts[0] . '.php';
             if (file_exists($possibleFile) && $parts[0] !== 'index') {
                 $page = $parts[0];
             } else {
