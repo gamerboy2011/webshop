@@ -134,7 +134,7 @@ class ProductModel
     }
 
     /* =========================
-       KERESÉS – márka, típus, név
+       KERESÉS – márka, típus, név, szín
        ========================= */
     public function search(string $q): array
     {
@@ -148,29 +148,44 @@ class ProductModel
                 p.name,
                 p.price,
                 pi.src AS image,
-                v.name AS vendor_name
+                v.name AS vendor_name,
+                c.name AS color_name,
+                pt.name AS type_name,
+                ps.name AS subtype_name
             FROM product p
             LEFT JOIN product_img pi
                 ON p.product_id = pi.product_id
                 AND pi.position = 1
             LEFT JOIN vendor v
                 ON p.vendor_id = v.vendor_id
+            LEFT JOIN color c
+                ON p.color_id = c.color_id
             LEFT JOIN product_subtype ps
                 ON p.subtype_id = ps.product_subtype_id
             LEFT JOIN product_type pt
                 ON ps.product_type_id = pt.product_type_id
             WHERE p.is_active = 1
               AND (
-                    p.name LIKE :q
-                    OR p.description LIKE :q
-                    OR v.name LIKE :q
-                    OR pt.name LIKE :q
-                    OR ps.name LIKE :q
+                    p.name LIKE :q1
+                    OR p.description LIKE :q2
+                    OR v.name LIKE :q3
+                    OR pt.name LIKE :q4
+                    OR ps.name LIKE :q5
+                    OR c.name LIKE :q6
                   )
+            ORDER BY p.product_id DESC
         ";
 
+        $searchTerm = "%$q%";
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['q' => "%$q%"]);
+        $stmt->execute([
+            'q1' => $searchTerm,
+            'q2' => $searchTerm,
+            'q3' => $searchTerm,
+            'q4' => $searchTerm,
+            'q5' => $searchTerm,
+            'q6' => $searchTerm
+        ]);
 
         return $stmt->fetchAll() ?: [];
     }
@@ -222,7 +237,7 @@ class ProductModel
 
         /* ===== KATEGÓRIA (pl. Ruházat, Cipők) – product_type vagy subtype alapján ===== */
         if (!empty($category)) {
-            $sql .= " AND (pt.name = :category OR ps.name = :category)";
+            $sql .= " AND (LOWER(pt.name) = LOWER(:category) OR LOWER(ps.name) = LOWER(:category))";
             $params['category'] = $category;
         }
 
@@ -259,6 +274,91 @@ class ProductModel
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
+
+        return $stmt->fetchAll() ?: [];
+    }
+
+    /* =========================
+       KATEGÓRIÁK ÉS ALKATEGÓRIÁK
+       ========================= */
+    public function getCategories(): array
+    {
+        $stmt = $this->pdo->query("
+            SELECT 
+                pt.product_type_id,
+                pt.name AS type_name,
+                ps.product_subtype_id,
+                ps.name AS subtype_name
+            FROM product_type pt
+            LEFT JOIN product_subtype ps ON pt.product_type_id = ps.product_type_id
+            ORDER BY pt.name, ps.name
+        ");
+        
+        $rows = $stmt->fetchAll();
+        $categories = [];
+        
+        foreach ($rows as $row) {
+            $typeId = $row['product_type_id'];
+            if (!isset($categories[$typeId])) {
+                $categories[$typeId] = [
+                    'id' => $typeId,
+                    'name' => $row['type_name'],
+                    'subtypes' => []
+                ];
+            }
+            if ($row['product_subtype_id']) {
+                $categories[$typeId]['subtypes'][] = [
+                    'id' => $row['product_subtype_id'],
+                    'name' => $row['subtype_name']
+                ];
+            }
+        }
+        
+        return array_values($categories);
+    }
+
+    /* =========================
+       AKCIÓS TERMÉKEK
+       ========================= */
+    public function getSaleProducts(): array
+    {
+        $stmt = $this->pdo->query("
+            SELECT
+                p.product_id,
+                p.name,
+                p.price,
+                pi.src AS image
+            FROM product p
+            LEFT JOIN product_img pi
+                ON p.product_id = pi.product_id
+                AND pi.position = 1
+            WHERE p.is_active = 1
+              AND p.is_sale = 1
+            ORDER BY p.created_at DESC
+        ");
+
+        return $stmt->fetchAll() ?: [];
+    }
+
+    /* =========================
+       ÚCONSÁGOK (legutóbbi 30 nap)
+       ========================= */
+    public function getNewProducts(): array
+    {
+        $stmt = $this->pdo->query("
+            SELECT
+                p.product_id,
+                p.name,
+                p.price,
+                pi.src AS image
+            FROM product p
+            LEFT JOIN product_img pi
+                ON p.product_id = pi.product_id
+                AND pi.position = 1
+            WHERE p.is_active = 1
+              AND p.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            ORDER BY p.created_at DESC
+        ");
 
         return $stmt->fetchAll() ?: [];
     }

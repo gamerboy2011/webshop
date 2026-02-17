@@ -6,7 +6,9 @@
    ========================= */
 $productId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($productId <= 0) {
-    die("Érvénytelen termék");
+    http_response_code(404);
+    require __DIR__ . '/../components/404.php';
+    return;
 }
 
 /* =========================
@@ -37,8 +39,15 @@ $stmt->execute(['id' => $productId]);
 $product = $stmt->fetch();
 
 if (!$product) {
-    die("A termék nem található");
+    http_response_code(404);
+    require __DIR__ . '/../components/404.php';
+    return;
 }
+
+// Gender megjelenítés
+$genderLabels = ['m' => 'Férfi', 'f' => 'Női', 'u' => 'Uniszex'];
+$genderLabel = $genderLabels[$product['gender']] ?? 'Uniszex';
+$genderUrl = $product['gender'] === 'm' ? 'ferfi' : 'noi';
 
 /* =========================
    KÉPEK
@@ -81,6 +90,7 @@ $stmt = $pdo->prepare("
         p.product_id,
         p.name,
         p.price,
+        v.name AS vendor,
         (
             SELECT src
             FROM product_img
@@ -89,6 +99,7 @@ $stmt = $pdo->prepare("
             LIMIT 1
         ) AS image
     FROM product p
+    JOIN vendor v ON p.vendor_id = v.vendor_id
     WHERE p.subtype_id = :subtype
       AND p.product_id != :id
       AND p.is_active = 1
@@ -101,127 +112,231 @@ $stmt->execute([
 $related = $stmt->fetchAll();
 ?>
 
-<div class="max-w-7xl mx-auto px-6 py-16">
+<div class="bg-gray-50 min-h-screen">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-    <!-- BREADCRUMB -->
-    <div class="text-sm text-gray-500 mb-8">
-        <?= $product['gender'] === 'm' ? 'Férfi' : 'Női' ?>
-        / <?= ucfirst($product['type']) ?>
-        / <?= ucfirst($product['subtype']) ?>
-        / <span class="text-black"><?= htmlspecialchars($product['name']) ?></span>
-    </div>
+        <!-- BREADCRUMB -->
+        <nav class="flex items-center gap-2 text-sm mb-6">
+            <a href="/webshop/" class="text-gray-500 hover:text-black">Főoldal</a>
+            <span class="text-gray-300">/</span>
+            <a href="/webshop/<?= $genderUrl ?>" class="text-gray-500 hover:text-black"><?= $genderLabel ?></a>
+            <span class="text-gray-300">/</span>
+            <a href="/webshop/<?= $genderUrl ?>/<?= strtolower($product['type']) ?>" class="text-gray-500 hover:text-black"><?= htmlspecialchars($product['type']) ?></a>
+            <span class="text-gray-300">/</span>
+            <span class="text-gray-900"><?= htmlspecialchars($product['name']) ?></span>
+        </nav>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-14">
+        <div class="bg-white rounded-lg shadow-sm">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-0">
 
-        <!-- KÉPGALÉRIA -->
-        <div>
-            <?php if ($mainImage): ?>
-                <img id="mainImage"
-                     src="<?= htmlspecialchars($mainImage) ?>"
-                     class="w-full object-cover mb-6 border">
-            <?php endif; ?>
-
-            <div class="flex gap-3">
-                <?php foreach ($images as $img): ?>
-                    <img
-                        src="<?= htmlspecialchars($img['src']) ?>"
-                        class="w-20 h-20 object-cover border cursor-pointer thumbnail"
-                        onclick="changeImage(this)">
-                <?php endforeach; ?>
-            </div>
-        </div>
-
-        <!-- INFO -->
-        <div class="md:sticky md:top-24">
-
-            <p class="text-sm uppercase tracking-widest text-gray-500 mb-2">
-                <?= htmlspecialchars($product['vendor']) ?>
-            </p>
-
-            <h1 class="text-3xl font-semibold mb-4">
-                <?= htmlspecialchars($product['name']) ?>
-            </h1>
-
-            <p class="text-2xl font-bold mb-6">
-                <?= number_format($product['price'], 0, ',', ' ') ?> Ft
-            </p>
-
-            <!-- TAGS -->
-            <div class="flex gap-2 mb-8 text-xs uppercase tracking-wide">
-                <span class="border px-2 py-1"><?= $product['gender'] === 'm' ? 'Férfi' : 'Női' ?></span>
-                <span class="border px-2 py-1"><?= ucfirst($product['type']) ?></span>
-                <span class="border px-2 py-1"><?= ucfirst($product['subtype']) ?></span>
-                <span class="border px-2 py-1"><?= $product['color'] ?></span>
-            </div>
-
-            <!-- MÉRET + KOSÁR -->
-            <form method="post" action="index.php?page=cart_add">
-
-                <input type="hidden" name="product_id" value="<?= $productId ?>">
-
-                <p class="font-medium mb-3">Méret</p>
-
-                <?php if (empty($sizes)): ?>
-                    <p class="text-sm text-gray-500">Nincs elérhető méret.</p>
-                <?php else: ?>
-                    <div class="flex gap-3 flex-wrap mb-6">
-                        <?php foreach ($sizes as $size): ?>
-                            <label class="cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="size_id"
-                                    value="<?= $size['size_id'] ?>"
-                                    class="hidden peer"
-                                    required
-                                >
-                                <span class="border px-4 py-2 peer-checked:bg-black peer-checked:text-white">
-                                    <?= htmlspecialchars($size['size_value']) ?>
-                                </span>
-                            </label>
-                        <?php endforeach; ?>
+                <!-- KÉPGALÉRIA -->
+                <div class="p-6 lg:p-8">
+                    <!-- Fő kép -->
+                    <div class="aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden mb-4">
+                        <?php if ($mainImage): ?>
+                            <img id="mainImage"
+                                 src="/webshop/<?= htmlspecialchars($mainImage) ?>"
+                                 alt="<?= htmlspecialchars($product['name']) ?>"
+                                 class="w-full h-full object-cover">
+                        <?php else: ?>
+                            <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                <i class="fas fa-image text-6xl"></i>
+                            </div>
+                        <?php endif; ?>
                     </div>
-                <?php endif; ?>
 
-                <button
-                    type="submit"
-                    class="w-full bg-black text-white py-4 uppercase tracking-wider">
-                    Kosárba
-                </button>
+                    <!-- Thumbnail galéria -->
+                    <?php if (count($images) > 1): ?>
+                        <div class="flex gap-3 overflow-x-auto pb-2">
+                            <?php foreach ($images as $index => $img): ?>
+                                <button
+                                    type="button"
+                                    onclick="changeImage('/webshop/<?= htmlspecialchars($img['src']) ?>', this)"
+                                    class="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden border-2 transition-all thumbnail <?= $index === 0 ? 'border-black' : 'border-transparent hover:border-gray-300' ?>">
+                                    <img src="/webshop/<?= htmlspecialchars($img['src']) ?>"
+                                         alt=""
+                                         class="w-full h-full object-cover">
+                                </button>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
 
-            </form>
+                <!-- TERMÉK INFO -->
+                <div class="p-6 lg:p-8 lg:border-l border-gray-100">
+                    <div class="lg:sticky lg:top-8">
+                        
+                        <!-- Márka -->
+                        <a href="#" class="inline-block text-sm font-medium text-gray-500 hover:text-black uppercase tracking-wider mb-2">
+                            <?= htmlspecialchars($product['vendor']) ?>
+                        </a>
 
-            <p class="text-gray-600 leading-relaxed mt-8">
-                <?= nl2br(htmlspecialchars($product['description'])) ?>
-            </p>
+                        <!-- Terméknév -->
+                        <h1 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-4">
+                            <?= htmlspecialchars($product['name']) ?>
+                        </h1>
 
-        </div>
-    </div>
+                        <!-- Ár -->
+                        <div class="flex items-baseline gap-3 mb-6">
+                            <span class="text-2xl lg:text-3xl font-bold text-gray-900">
+                                <?= number_format($product['price'], 0, ',', ' ') ?> Ft
+                            </span>
+                        </div>
 
-    <!-- AJÁNLOTT -->
-    <?php if ($related): ?>
-        <div class="mt-24">
-            <h2 class="text-2xl font-semibold mb-8">You may also like</h2>
+                        <!-- Szín -->
+                        <div class="mb-6">
+                            <p class="text-sm font-medium text-gray-700 mb-2">Szín: <span class="font-normal"><?= htmlspecialchars($product['color']) ?></span></p>
+                        </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <?php foreach ($related as $r): ?>
-                    <a href="index.php?page=product&id=<?= $r['product_id'] ?>">
-                        <img src="<?= htmlspecialchars($r['image']) ?>" class="mb-3">
-                        <p class="font-medium"><?= htmlspecialchars($r['name']) ?></p>
-                        <p class="text-sm"><?= number_format($r['price'], 0, ',', ' ') ?> Ft</p>
-                    </a>
-                <?php endforeach; ?>
+                        <!-- MÉRET + KOSÁR FORM -->
+                        <form method="post" action="/webshop/index.php">
+                            <input type="hidden" name="action" value="cart_add">
+                            <input type="hidden" name="product_id" value="<?= $productId ?>">
+                            <?= csrf_field() ?>
+
+                            <!-- Méret választó -->
+                            <div class="mb-6">
+                                <div class="flex items-center justify-between mb-3">
+                                    <p class="text-sm font-medium text-gray-700">Méret kiválasztása</p>
+                                    <button type="button" class="text-sm text-gray-500 hover:text-black underline">Mérettáblázat</button>
+                                </div>
+
+                                <?php if (empty($sizes)): ?>
+                                    <p class="text-sm text-red-500 bg-red-50 rounded-lg p-3">
+                                        <i class="fas fa-exclamation-circle mr-2"></i>
+                                        Jelenleg nincs elérhető méret
+                                    </p>
+                                <?php else: ?>
+                                    <div class="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                                        <?php foreach ($sizes as $size): ?>
+                                            <label class="relative cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="size_id"
+                                                    value="<?= $size['size_id'] ?>"
+                                                    class="peer sr-only"
+                                                    required>
+                                                <div class="border-2 border-gray-200 rounded-md py-3 text-center text-sm font-medium 
+                                                            peer-checked:border-black peer-checked:bg-black peer-checked:text-white
+                                                            hover:border-gray-400 transition-all">
+                                                    <?= htmlspecialchars($size['size_value']) ?>
+                                                </div>
+                                                <?php if ($size['quantity'] <= 3): ?>
+                                                    <span class="absolute -top-1 -right-1 bg-orange-500 text-white text-xs px-1 rounded">
+                                                        <?= $size['quantity'] ?>
+                                                    </span>
+                                                <?php endif; ?>
+                                            </label>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+
+                            <!-- Kosárba gomb -->
+                            <button
+                                type="submit"
+                                <?= empty($sizes) ? 'disabled' : '' ?>
+                                class="w-full bg-black text-white py-4 px-6 rounded-lg font-medium text-lg
+                                       hover:bg-gray-800 transition-colors
+                                       disabled:bg-gray-300 disabled:cursor-not-allowed
+                                       flex items-center justify-center gap-2">
+                                <i class="fas fa-shopping-bag"></i>
+                                Kosárba teszem
+                            </button>
+                        </form>
+
+                        <!-- Kívánságlista gomb -->
+                        <button type="button" class="w-full mt-3 border-2 border-gray-200 text-gray-700 py-3 px-6 rounded-lg font-medium
+                                       hover:border-gray-400 transition-colors flex items-center justify-center gap-2">
+                            <i class="far fa-heart"></i>
+                            Kívánságlistára
+                        </button>
+
+                        <!-- Termékleírás -->
+                        <?php if (!empty($product['description'])): ?>
+                            <div class="mt-8 pt-8 border-t border-gray-100">
+                                <details class="group" open>
+                                    <summary class="flex items-center justify-between cursor-pointer list-none">
+                                        <h3 class="text-sm font-medium text-gray-900">Termékleírás</h3>
+                                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                                    </summary>
+                                    <div class="mt-4 text-sm text-gray-600 leading-relaxed">
+                                        <?= nl2br(htmlspecialchars($product['description'])) ?>
+                                    </div>
+                                </details>
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- Termék részletek -->
+                        <div class="mt-4 pt-4 border-t border-gray-100">
+                            <details class="group">
+                                <summary class="flex items-center justify-between cursor-pointer list-none">
+                                    <h3 class="text-sm font-medium text-gray-900">Részletek</h3>
+                                    <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                                </summary>
+                                <div class="mt-4 text-sm text-gray-600 space-y-2">
+                                    <p><span class="font-medium">Márka:</span> <?= htmlspecialchars($product['vendor']) ?></p>
+                                    <p><span class="font-medium">Kategória:</span> <?= htmlspecialchars($product['type']) ?> / <?= htmlspecialchars($product['subtype']) ?></p>
+                                    <p><span class="font-medium">Szín:</span> <?= htmlspecialchars($product['color']) ?></p>
+                                    <p><span class="font-medium">Nem:</span> <?= $genderLabel ?></p>
+                                    <p><span class="font-medium">Cikkszám:</span> #<?= $product['product_id'] ?></p>
+                                </div>
+                            </details>
+                        </div>
+
+                        <!-- Szállítás info -->
+                        <div class="mt-4 pt-4 border-t border-gray-100">
+                            <div class="flex items-start gap-3 text-sm text-gray-600">
+                                <i class="fas fa-truck text-gray-400 mt-0.5"></i>
+                                <div>
+                                    <p class="font-medium text-gray-900">Ingyenes szállítás 15.000 Ft felett</p>
+                                    <p>Várható szállítás: 2-4 munkanap</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
             </div>
         </div>
-    <?php endif; ?>
 
+        <!-- AJÁNLOTT TERMÉKEK -->
+        <?php if (!empty($related)): ?>
+            <div class="mt-12">
+                <h2 class="text-xl font-bold text-gray-900 mb-6">Hasonló termékek</h2>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+                    <?php foreach ($related as $r): ?>
+                        <a href="/webshop/termek/<?= $r['product_id'] ?>" class="group bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                            <div class="aspect-[3/4] bg-gray-100 overflow-hidden">
+                                <?php if (!empty($r['image'])): ?>
+                                    <img src="/webshop/<?= htmlspecialchars($r['image']) ?>"
+                                         alt="<?= htmlspecialchars($r['name']) ?>"
+                                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                <?php endif; ?>
+                            </div>
+                            <div class="p-4">
+                                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1"><?= htmlspecialchars($r['vendor']) ?></p>
+                                <h3 class="text-sm font-medium text-gray-900 line-clamp-2 mb-2"><?= htmlspecialchars($r['name']) ?></h3>
+                                <p class="text-sm font-bold"><?= number_format($r['price'], 0, ',', ' ') ?> Ft</p>
+                            </div>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+
+    </div>
 </div>
 
 <script>
-function changeImage(el) {
-    document.getElementById('mainImage').src = el.src;
-    document.querySelectorAll('.thumbnail').forEach(img => {
-        img.classList.remove('ring-2', 'ring-black');
+function changeImage(src, btn) {
+    document.getElementById('mainImage').src = src;
+    document.querySelectorAll('.thumbnail').forEach(el => {
+        el.classList.remove('border-black');
+        el.classList.add('border-transparent');
     });
-    el.classList.add('ring-2', 'ring-black');
+    btn.classList.remove('border-transparent');
+    btn.classList.add('border-black');
 }
 </script>

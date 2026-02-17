@@ -31,7 +31,7 @@ if ($showHero) {
             Kiemelt termékek
         </h2>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
 
             <?php if (empty($products)): ?>
                 <p class="col-span-3 text-center text-gray-500">
@@ -41,20 +41,29 @@ if ($showHero) {
 
             <?php foreach ($products as $product): ?>
                 <a
-                    href="index.php?page=product&id=<?= (int)$product['product_id'] ?>"
-                    class="bg-white p-6 shadow hover:shadow-xl transition text-center block"
+                    href="/webshop/termek/<?= (int)$product['product_id'] ?>"
+                    class="group bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow overflow-hidden block"
                 >
-                    <div class="h-64 bg-gray-100 mb-4 flex items-center justify-center">
-                        Kép helye
+                    <div class="aspect-square bg-gray-100 overflow-hidden">
+                        <?php if (!empty($product['image'])): ?>
+                            <img src="/webshop/<?= htmlspecialchars($product['image']) ?>" 
+                                 alt="<?= htmlspecialchars($product['name']) ?>"
+                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                        <?php else: ?>
+                            <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                <i class="fas fa-image text-4xl"></i>
+                            </div>
+                        <?php endif; ?>
                     </div>
 
-                    <h3 class="text-xl font-semibold">
-                        <?= htmlspecialchars($product['name']) ?>
-                    </h3>
-
-                    <span class="font-bold text-lg">
-                        <?= number_format($product['price'], 0, ',', ' ') ?> Ft
-                    </span>
+                    <div class="p-4">
+                        <h3 class="text-lg font-semibold text-gray-900 group-hover:text-gray-600 transition-colors">
+                            <?= htmlspecialchars($product['name']) ?>
+                        </h3>
+                        <p class="font-bold text-lg mt-2">
+                            <?= number_format($product['price'], 0, ',', ' ') ?> Ft
+                        </p>
+                    </div>
                 </a>
             <?php endforeach; ?>
 

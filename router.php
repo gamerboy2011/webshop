@@ -18,9 +18,7 @@ $page = 'home';
    1) KERESŐ KEZELÉSE
    ========================= */
 if (isset($_GET['q']) && $_GET['q'] !== '') {
-    $controller = new ProductController();
-    $controller->search();
-    exit;
+    $_GET['page'] = 'search';
 }
 
 /* =========================
@@ -29,13 +27,9 @@ if (isset($_GET['q']) && $_GET['q'] !== '') {
    /ferfi/cipok
    ========================= */
 if (!empty($parts[0]) && ($parts[0] === 'noi' || $parts[0] === 'ferfi')) {
-
-    $gender = $parts[0];
-    $category = $parts[1] ?? null;
-
-    $controller = new ProductController();
-    $controller->category($gender, $category);
-    exit;
+    $_GET['page'] = 'category';
+    $_GET['gender'] = $parts[0];
+    $_GET['category'] = $parts[1] ?? null;
 }
 
 /* =========================
@@ -68,6 +62,14 @@ if (!empty($parts[0])) {
             $page = 'profile';
             break;
 
+        case 'akcio':
+            $_GET['page'] = 'sale';
+            break;
+
+        case 'ujdonsagok':
+            $_GET['page'] = 'new';
+            break;
+
         case 'termek':
             $page = 'product';
             if (!empty($parts[1])) {
@@ -91,4 +93,7 @@ if (!empty($parts[0])) {
     }
 }
 
-$_GET['page'] = $page;
+// Csak akkor állítjuk be, ha még nincs beállítva (pl. search, category, sale, new)
+if (!isset($_GET['page'])) {
+    $_GET['page'] = $page;
+}

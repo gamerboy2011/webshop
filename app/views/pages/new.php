@@ -1,20 +1,19 @@
 <?php
-// $products, $gender, $category változók az index.php-ból jönnek
-$gender = $gender ?? $_GET['gender'] ?? null;
-$category = $category ?? $_GET['category'] ?? null;
 $products = $products ?? [];
 ?>
 
 <div class="max-w-7xl mx-auto px-6 py-12">
 
     <!-- OLDAL CÍM -->
-    <h1 class="text-3xl font-bold mb-2">
-        <?= $gender === 'ferfi' ? 'Férfi' : ($gender === 'noi' ? 'Női' : 'Termékek') ?>
-        <?= $category ? ' – ' . ucfirst($category) : '' ?>
-    </h1>
-    <p class="text-gray-500 mb-8">
-        <?= count($products) ?> termék
-    </p>
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold mb-2">
+            <i class="fas fa-sparkles text-yellow-500 mr-2"></i>
+            Újdonságok
+        </h1>
+        <p class="text-gray-500">
+            <?= count($products) ?> új termék az elmúlt 30 napból
+        </p>
+    </div>
 
     <!-- TERMÉKEK -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -22,7 +21,12 @@ $products = $products ?? [];
         <?php if (!empty($products)): ?>
             <?php foreach ($products as $product): ?>
                 <a href="/webshop/termek/<?= $product['product_id'] ?>" 
-                   class="group bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow overflow-hidden block">
+                   class="group bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow overflow-hidden block relative">
+                    
+                    <!-- Új badge -->
+                    <span class="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded z-10">
+                        ÚJ
+                    </span>
                     
                     <div class="aspect-square bg-gray-100 overflow-hidden">
                         <?php if (!empty($product['image'])): ?>
@@ -50,7 +54,7 @@ $products = $products ?? [];
             <div class="col-span-full text-center py-12">
                 <i class="fas fa-box-open text-gray-300 text-6xl mb-4"></i>
                 <p class="text-gray-500 text-lg">
-                    Nincs találat ebben a kategóriában.
+                    Jelenleg nincs új termék.
                 </p>
                 <a href="/webshop/" class="inline-block mt-4 text-black underline hover:no-underline">
                     Vissza a főoldalra

@@ -24,6 +24,15 @@ if (in_array('ferfi', $parts)) {
 if (in_array('noi', $parts)) {
     $currentGender = 'noi';
 }
+
+/* =========================
+   KATEGÓRIÁK BETÖLTÉSE
+   ========================= */
+$menuCategories = [];
+if (isset($pdo)) {
+    $productModel = new ProductModel($pdo);
+    $menuCategories = $productModel->getCategories();
+}
 ?>
 
 <nav class="w-full bg-white border-b">
@@ -136,30 +145,46 @@ if (in_array('noi', $parts)) {
     <div class="w-full border-t bg-gray-50">
         <div class="w-full py-3 flex gap-8 text-sm font-medium text-gray-700 px-8">
 
-            <?php if ($currentGender): ?>
-
-                <a href="/webshop/<?= $currentGender ?>/ruhazat"
-                    class="hover:text-black">
-                    Ruházat
-                </a>
-
-                <a href="/webshop/<?= $currentGender ?>/cipok"
-                    class="hover:text-black">
-                    Cipők
-                </a>
-
-                <a href="/webshop/<?= $currentGender ?>/kiegeszitok"
-                    class="hover:text-black">
-                    Kiegészítők
-                </a>
-
+            <?php if ($currentGender && !empty($menuCategories)): ?>
+                <?php foreach ($menuCategories as $category): ?>
+                    <div class="relative group/cat">
+                        <a href="/webshop/<?= $currentGender ?>/<?= urlencode(strtolower($category['name'])) ?>"
+                           class="hover:text-black flex items-center gap-1 py-1">
+                            <?= htmlspecialchars($category['name']) ?>
+                            <?php if (!empty($category['subtypes'])): ?>
+                                <i class="fas fa-chevron-down text-xs text-gray-400 group-hover/cat:text-black transition"></i>
+                            <?php endif; ?>
+                        </a>
+                        
+                        <?php if (!empty($category['subtypes'])): ?>
+                            <div class="absolute left-0 top-full pt-2 opacity-0 invisible 
+                                        group-hover/cat:opacity-100 group-hover/cat:visible 
+                                        transition-all duration-200 z-50">
+                                <div class="bg-white border rounded-lg shadow-lg py-2 min-w-48">
+                                    <a href="/webshop/<?= $currentGender ?>/<?= urlencode(strtolower($category['name'])) ?>"
+                                       class="block px-4 py-2 hover:bg-gray-50 font-medium border-b mb-1">
+                                        Összes <?= htmlspecialchars($category['name']) ?>
+                                    </a>
+                                    <?php foreach ($category['subtypes'] as $subtype): ?>
+                                        <a href="/webshop/<?= $currentGender ?>/<?= urlencode(strtolower($subtype['name'])) ?>"
+                                           class="block px-4 py-2 hover:bg-gray-50 text-gray-600 hover:text-black">
+                                            <?= htmlspecialchars($subtype['name']) ?>
+                                        </a>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
             <?php endif; ?>
 
-            <a href="/webshop/akcio" class="hover:text-black">
+            <a href="/webshop/akcio" class="hover:text-black py-1">
+                <i class="fas fa-percent text-red-500 mr-1"></i>
                 Akció
             </a>
 
-            <a href="/webshop/ujdonsagok" class="hover:text-black">
+            <a href="/webshop/ujdonsagok" class="hover:text-black py-1">
+                <i class="fas fa-sparkles text-yellow-500 mr-1"></i>
                 Újdonságok
             </a>
 

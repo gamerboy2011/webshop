@@ -170,8 +170,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $page = $_GET['page'] ?? 'home';
     $viewPath = __DIR__ . '/app/views/pages/' . $page . '.php';
     
+    // Főoldal esetén termékek betöltése
+    if ($page === 'home') {
+        $productModel = new ProductModel($pdo);
+        $products = $productModel->getAll();
+    }
+    
+    // Kategória oldal esetén termékek betöltése
+    if ($page === 'category') {
+        $gender = $_GET['gender'] ?? null;
+        $category = $_GET['category'] ?? null;
+        $filters = [
+            'brand' => $_GET['brand'] ?? null,
+            'color' => $_GET['color'] ?? null,
+            'size'  => $_GET['size'] ?? null,
+            'min'   => $_GET['min'] ?? null,
+            'max'   => $_GET['max'] ?? null,
+        ];
+        $productModel = new ProductModel($pdo);
+        $products = $productModel->filter($gender, $category, $filters);
+    }
+    
+    // Keresés oldal esetén
+    if ($page === 'search') {
+        $q = trim($_GET['q'] ?? '');
+        $productModel = new ProductModel($pdo);
+        $products = $productModel->search($q);
+        $searchQuery = $q;
+    }
+    
+    // Akciós termékek
+    if ($page === 'sale') {
+        $productModel = new ProductModel($pdo);
+        $products = $productModel->getSaleProducts();
+    }
+    
+    // Újdonságok
+    if ($page === 'new') {
+        $productModel = new ProductModel($pdo);
+        $products = $productModel->getNewProducts();
+    }
+    
     if (file_exists($viewPath)) {
-        // Passzoljuk a $hideHero változót a view-nak, ha szükséges
         require $viewPath;
     } else {
         // 404 - oldal nem található
