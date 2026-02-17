@@ -1,6 +1,5 @@
 <?php
-require_once __DIR__ . "/../../library/config.php";
-require_once __DIR__ . "/../../models/ProductModel.php";
+// $pdo és az autoloader már az index.php-ból elérhető
 
 $productId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($productId <= 0) {
@@ -139,8 +138,9 @@ if (isset($_SESSION['user_id'])) {
                         </div>
 
             <!-- MÉRET + KOSÁR -->
-            <form method="post" action="/webshop/index.php?page=cart_add">
-
+            <form method="post" action="/webshop/index.php">
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="cart_add">
                 <input type="hidden" name="product_id" value="<?= $productId ?>">
 
                 <p class="font-medium mb-3">Méret</p>
@@ -174,7 +174,6 @@ if (isset($_SESSION['user_id'])) {
                                         <?php endforeach; ?>
                                     </div>
                                 <?php endif; ?>
-                            </div>
 
                             <!-- Kosárba gomb -->
                             <button

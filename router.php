@@ -73,6 +73,17 @@ if (!empty($parts[0])) {
             break;
 
         /* ============================
+           AKCIÓ / ÚDONSÁGOK
+        ============================ */
+        case 'akcio':
+            $page = 'sale';
+            break;
+
+        case 'ujdonsagok':
+            $page = 'new';
+            break;
+
+        /* ============================
            TERMÉK OLDAL
            /termek/123
         ============================ */
@@ -81,26 +92,6 @@ if (!empty($parts[0])) {
             if (!empty($parts[1])) {
                 $_GET['id'] = $parts[1];
             }
-            break;
-
-        /* ============================
-           KATEGÓRIÁK
-        ============================ */
-        case 'kategoria':
-            $page = 'category';
-            if (!empty($parts[1])) {
-                $_GET['category'] = $parts[1];
-            }
-            break;
-
-        case 'noi':
-            $page = 'category';
-            $_GET['category'] = 'noi';
-            break;
-
-        case 'ferfi':
-            $page = 'category';
-            $_GET['category'] = 'ferfi';
             break;
 
         /* ============================

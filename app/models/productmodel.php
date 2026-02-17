@@ -196,8 +196,9 @@ class ProductModel
 
         // Kategória szűrés (típus vagy altípus)
         if (!empty($category)) {
-            $sql .= " AND (LOWER(pt.name) = LOWER(:category) OR LOWER(ps.name) = LOWER(:category))";
-            $params['category'] = $category;
+            $sql .= " AND (LOWER(pt.name) = LOWER(:cat1) OR LOWER(ps.name) = LOWER(:cat2))";
+            $params['cat1'] = $category;
+            $params['cat2'] = $category;
         }
 
         // Márka szűrés
