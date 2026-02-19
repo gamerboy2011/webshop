@@ -17,14 +17,19 @@ $stmt = $pdo->prepare("
     SELECT
         username,
         email,
-        billing_country,
-        billing_city,
-        billing_postcode,
-        billing_street,
-        shipping_country,
-        shipping_city,
+
         shipping_postcode,
-        shipping_street,
+        shipping_city,
+        shipping_street_name,
+        shipping_street_type,
+        shipping_house_number,
+
+        billing_postcode,
+        billing_city,
+        billing_street_name,
+        billing_street_type,
+        billing_house_number,
+
         phone
     FROM users
     WHERE user_id = ?
@@ -35,41 +40,63 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 /* ===== MENTÉS ===== */
 if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
 
-    $billingCountry  = trim($_POST['billing_country'] ?? '');
-    $billingCity     = trim($_POST['billing_city'] ?? '');
-    $billingPostcode = trim($_POST['billing_postcode'] ?? '');
-    $billingStreet   = trim($_POST['billing_street'] ?? '');
+    // Szállítási cím (mindig kötelező)
+    $shipping_postcode      = trim($_POST['shipping_postcode'] ?? '');
+    $shipping_city          = trim($_POST['shipping_city'] ?? '');
+    $shipping_street_name   = trim($_POST['shipping_street_name'] ?? '');
+    $shipping_street_type   = trim($_POST['shipping_street_type'] ?? '');
+    $shipping_house_number  = trim($_POST['shipping_house_number'] ?? '');
 
-    $shippingCountry  = trim($_POST['shipping_country'] ?? '');
-    $shippingCity     = trim($_POST['shipping_city'] ?? '');
-    $shippingPostcode = trim($_POST['shipping_postcode'] ?? '');
-    $shippingStreet   = trim($_POST['shipping_street'] ?? '');
+    // Számlázási cím (pipálható)
+    $sameBilling = isset($_POST['sameBilling']);
+
+    if ($sameBilling) {
+        $billing_postcode      = $shipping_postcode;
+        $billing_city          = $shipping_city;
+        $billing_street_name   = $shipping_street_name;
+        $billing_street_type   = $shipping_street_type;
+        $billing_house_number  = $shipping_house_number;
+    } else {
+        $billing_postcode      = trim($_POST['billing_postcode'] ?? '');
+        $billing_city          = trim($_POST['billing_city'] ?? '');
+        $billing_street_name   = trim($_POST['billing_street_name'] ?? '');
+        $billing_street_type   = trim($_POST['billing_street_type'] ?? '');
+        $billing_house_number  = trim($_POST['billing_house_number'] ?? '');
+    }
 
     $phone = trim($_POST['phone'] ?? '');
 
     $stmt = $pdo->prepare("
         UPDATE users SET
-            billing_country = ?,
-            billing_city = ?,
-            billing_postcode = ?,
-            billing_street = ?,
-            shipping_country = ?,
-            shipping_city = ?,
             shipping_postcode = ?,
-            shipping_street = ?,
+            shipping_city = ?,
+            shipping_street_name = ?,
+            shipping_street_type = ?,
+            shipping_house_number = ?,
+
+            billing_postcode = ?,
+            billing_city = ?,
+            billing_street_name = ?,
+            billing_street_type = ?,
+            billing_house_number = ?,
+
             phone = ?
         WHERE user_id = ?
     ");
 
     $stmt->execute([
-        $billingCountry,
-        $billingCity,
-        $billingPostcode,
-        $billingStreet,
-        $shippingCountry,
-        $shippingCity,
-        $shippingPostcode,
-        $shippingStreet,
+        $shipping_postcode,
+        $shipping_city,
+        $shipping_street_name,
+        $shipping_street_type,
+        $shipping_house_number,
+
+        $billing_postcode,
+        $billing_city,
+        $billing_street_name,
+        $billing_street_type,
+        $billing_house_number,
+
         $phone,
         $userId
     ]);
@@ -84,31 +111,31 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
         <nav class="space-y-3 text-sm">
 
             <a href="profil?section=favorites"
-               class="block px-4 py-2 rounded-lg font-medium 
+                class="block px-4 py-2 rounded-lg font-medium 
                <?= $section === 'favorites' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
                 Kedvencek
             </a>
 
             <a href="profil?section=orders"
-               class="block px-4 py-2 rounded-lg font-medium 
+                class="block px-4 py-2 rounded-lg font-medium 
                <?= $section === 'orders' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
                 Rendeléseid
             </a>
 
             <a href="profil?section=security"
-               class="block px-4 py-2 rounded-lg font-medium 
+                class="block px-4 py-2 rounded-lg font-medium 
                <?= $section === 'security' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
                 Profil &amp; Biztonság
             </a>
 
             <a href="profil?section=settings"
-               class="block px-4 py-2 rounded-lg font-medium 
+                class="block px-4 py-2 rounded-lg font-medium 
                <?= $section === 'settings' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
                 Beállítások
             </a>
 
             <a href="profil?section=returns"
-               class="block px-4 py-2 rounded-lg font-medium 
+                class="block px-4 py-2 rounded-lg font-medium 
                <?= $section === 'returns' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
                 Visszaküldött termékek
             </a>
@@ -118,146 +145,217 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
 
     <main class="md:col-span-3 bg-white p-8 rounded-xl shadow-md">
 
-<?php if ($section === 'favorites'): ?>
+        <?php if ($section === 'security'): ?>
 
-    <h2 class="text-2xl font-semibold mb-6">Kedvenceid</h2>
+            <h2 class="text-2xl font-semibold mb-6">Profil &amp; Biztonság</h2>
 
-    <?php
-    $stmt = $pdo->prepare("
-        SELECT 
-            p.product_id,
-            p.name,
-            p.price,
-            (
-                SELECT src 
-                FROM product_img 
-                WHERE product_id = p.product_id 
-                ORDER BY position ASC 
-                LIMIT 1
-            ) AS image
-        FROM favorites f
-        JOIN product p ON p.product_id = f.product_id
-        WHERE f.user_id = :uid
-        ORDER BY f.created_at DESC
-    ");
-    $stmt->execute(['uid' => $userId]);
-    $favorites = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    ?>
-
-    <?php if (empty($favorites)): ?>
-        <p class="text-gray-600">Még nincs kedvenc terméked.</p>
-    <?php else: ?>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <?php foreach ($favorites as $product): ?>
-                <a href="/webshop/termek/<?= $product['product_id'] ?>" class="block border rounded-lg p-4 shadow-sm hover:shadow-md transition">
-                    <?php if (!empty($product['image'])): ?>
-                        <img src="<?= htmlspecialchars($product['image']) ?>" class="w-full mb-3 rounded">
-                    <?php endif; ?>
-                    <p class="font-medium mb-1"><?= htmlspecialchars($product['name']) ?></p>
-                    <p class="text-sm text-gray-700">
-                        <?= number_format($product['price'], 0, ',', ' ') ?> Ft
-                    </p>
-                </a>
-            <?php endforeach; ?>
-        </div>
-    <?php endif; ?>
-
-<?php elseif ($section === 'orders'): ?>
-
-    <h2 class="text-2xl font-semibold mb-6">Rendeléseid</h2>
-    <p class="text-gray-600">Itt fognak megjelenni a rendeléseid.</p>
-
-<?php elseif ($section === 'security'): ?>
-
-    <h2 class="text-2xl font-semibold mb-6">Profil &amp; Biztonság</h2>
-
-    <?php if ($success): ?>
-        <div class="bg-green-100 text-green-700 p-4 rounded mb-6 text-sm">
-            <?= htmlspecialchars($success) ?>
-        </div>
-    <?php endif; ?>
-
-    <form method="post" class="space-y-10">
-
-        <div>
-            <h3 class="text-lg font-medium mb-4">Személyes adatok</h3>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm mb-1">Felhasználónév</label>
-                    <input class="border p-2 rounded w-full bg-gray-50"
-                           value="<?= htmlspecialchars($user['username'] ?? '') ?>" disabled>
+            <?php if ($success): ?>
+                <div class="bg-green-100 text-green-700 p-4 rounded mb-6 text-sm">
+                    <?= htmlspecialchars($success) ?>
                 </div>
+            <?php endif; ?>
+
+            <form method="post" class="space-y-10">
+
+                <!-- SZÁLLÍTÁSI CÍM -->
                 <div>
-                    <label class="block text-sm mb-1">Email cím</label>
-                    <input class="border p-2 rounded w-full bg-gray-50"
-                           value="<?= htmlspecialchars($user['email'] ?? '') ?>" disabled>
+                    <h3 class="text-lg font-medium mb-4">Szállítási cím</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                        <!-- 1. sor -->
+                        <input class="border p-2 rounded"
+                            name="shipping_postcode"
+                            placeholder="Irányítószám"
+                            value="<?= htmlspecialchars($user['shipping_postcode'] ?? '') ?>">
+
+                        <input class="border p-2 rounded"
+                            name="shipping_city"
+                            id="shipping_city"
+                            placeholder="Város"
+                            value="<?= htmlspecialchars($user['shipping_city'] ?? '') ?>">
+
+                        <!-- 2. sor -->
+                        <input class="border p-2 rounded"
+                            name="shipping_street_name"
+                            placeholder="Utca neve"
+                            value="<?= htmlspecialchars($user['shipping_street_name'] ?? '') ?>">
+
+                        <input class="border p-2 rounded"
+                            name="shipping_street_type"
+                            placeholder="Utca típusa (utca, út, tér...)"
+                            value="<?= htmlspecialchars($user['shipping_street_type'] ?? '') ?>">
+
+                        <!-- 3. sor -->
+                        <input class="border p-2 rounded"
+                            name="shipping_house_number"
+                            placeholder="Házszám"
+                            value="<?= htmlspecialchars($user['shipping_house_number'] ?? '') ?>">
+
+                        <div></div>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <div>
-            <h3 class="text-lg font-medium mb-4">Számlázási cím</h3>
+                <!-- SZÁMLÁZÁSI CÍM -->
+                <div>
+                    <h3 class="text-lg font-medium mb-4">Számlázási cím</h3>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input class="border p-2 rounded" name="billing_country" value="<?= htmlspecialchars($user['billing_country'] ?? '') ?>">
-                <input class="border p-2 rounded" name="billing_city" value="<?= htmlspecialchars($user['billing_city'] ?? '') ?>">
-                <input class="border p-2 rounded" name="billing_postcode" value="<?= htmlspecialchars($user['billing_postcode'] ?? '') ?>">
-                <input class="border p-2 rounded md:col-span-2" name="billing_street" value="<?= htmlspecialchars($user['billing_street'] ?? '') ?>">
-            </div>
-        </div>
+                    <label class="flex items-center gap-2 mb-3 text-sm">
+                        <input type="checkbox" id="sameBilling" name="sameBilling">
+                        <span>A számlázási cím megegyezik a szállítási címmel</span>
+                    </label>
 
-        <div>
-            <h3 class="text-lg font-medium mb-4">Szállítási cím</h3>
+                    <div id="billingFields" class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-            <label class="flex items-center gap-2 mb-3 text-sm">
-                <input type="checkbox" id="sameAddress" checked>
-                <span>Megegyezik a számlázási címmel</span>
-            </label>
+                        <!-- 1. sor -->
+                        <input class="border p-2 rounded"
+                            name="billing_postcode"
+                            placeholder="Irányítószám"
+                            value="<?= htmlspecialchars($user['billing_postcode'] ?? '') ?>">
 
-            <div id="shippingFields" class="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-50 pointer-events-none">
-                <input class="border p-2 rounded" name="shipping_country" value="<?= htmlspecialchars($user['shipping_country'] ?? '') ?>">
-                <input class="border p-2 rounded" name="shipping_city" value="<?= htmlspecialchars($user['shipping_city'] ?? '') ?>">
-                <input class="border p-2 rounded" name="shipping_postcode" value="<?= htmlspecialchars($user['shipping_postcode'] ?? '') ?>">
-                <input class="border p-2 rounded md:col-span-2" name="shipping_street" value="<?= htmlspecialchars($user['shipping_street'] ?? '') ?>">
-            </div>
-        </div>
+                        <input class="border p-2 rounded"
+                            name="billing_city"
+                            id="billing_city"
+                            placeholder="Város"
+                            value="<?= htmlspecialchars($user['billing_city'] ?? '') ?>">
 
-        <div>
-            <h3 class="text-lg font-medium mb-4">Kapcsolat</h3>
-            <input class="border p-2 rounded w-full" name="phone" value="<?= htmlspecialchars($user['phone'] ?? '') ?>">
-        </div>
+                        <!-- 2. sor -->
+                        <input class="border p-2 rounded"
+                            name="billing_street_name"
+                            placeholder="Utca neve"
+                            value="<?= htmlspecialchars($user['billing_street_name'] ?? '') ?>">
 
-        <button class="bg-black text-white px-8 py-2 rounded hover:bg-gray-800 text-sm">
-            Változtatások mentése
-        </button>
+                        <input class="border p-2 rounded"
+                            name="billing_street_type"
+                            placeholder="Utca típusa (utca, út, tér...)"
+                            value="<?= htmlspecialchars($user['billing_street_type'] ?? '') ?>">
 
-    </form>
+                        <!-- 3. sor -->
+                        <input class="border p-2 rounded"
+                            name="billing_house_number"
+                            placeholder="Házszám"
+                            value="<?= htmlspecialchars($user['billing_house_number'] ?? '') ?>">
 
-    <script>
-    const sameAddress = document.getElementById('sameAddress');
-    const shippingFields = document.getElementById('shippingFields');
+                        <div></div>
+                    </div>
+                </div>
 
-    sameAddress.addEventListener('change', () => {
-        if (sameAddress.checked) {
-            shippingFields.classList.add('opacity-50', 'pointer-events-none');
-        } else {
-            shippingFields.classList.remove('opacity-50', 'pointer-events-none');
-        }
-    });
-    </script>
+                <!-- TELEFON -->
+                <div>
+                    <h3 class="text-lg font-medium mb-4">Kapcsolat</h3>
+                    <input class="border p-2 rounded w-full"
+                        name="phone"
+                        placeholder="Telefonszám"
+                        value="<?= htmlspecialchars($user['phone'] ?? '') ?>">
+                </div>
 
-<?php elseif ($section === 'settings'): ?>
+                <button class="bg-black text-white px-8 py-2 rounded hover:bg-gray-800 text-sm">
+                    Változtatások mentése
+                </button>
 
-    <h2 class="text-2xl font-semibold mb-6">Beállítások</h2>
-    <p class="text-gray-600">Később ide kerülnek a fiókbeállítások.</p>
+            </form>
 
-<?php elseif ($section === 'returns'): ?>
-
-    <h2 class="text-2xl font-semibold mb-6">Visszaküldött termékek</h2>
-    <p class="text-gray-600">Még nem küldtél vissza terméket.</p>
-
-<?php endif; ?>
+        <?php endif; ?>
 
     </main>
 </div>
+
+<!-- ===== JAVÍTOTT, VÉGLEGES SCRIPT BLOKK ===== -->
+<script>
+
+/* ===== AUTOMATIKUS VÁROSKITÖLTÉS (ZIP → CITY) ===== */
+function autoFillCity(zipInputName, cityInputId) {
+    const zipInput = document.querySelector(`input[name='${zipInputName}']`);
+    const cityInput = document.getElementById(cityInputId);
+
+    if (!zipInput || !cityInput) {
+        console.log("Hiányzó mező:", zipInputName, cityInputId);
+        return;
+    }
+
+    zipInput.addEventListener("keyup", function () {
+        const zip = this.value.trim();
+        console.log("ZIP input:", zip);
+
+        if (zip.length === 4) {
+            fetch("/webshop/app/api/getcity.php?zip=" + zip)
+                .then(res => res.json())
+                .then(data => {
+                    console.log("City API válasz:", data);
+                    cityInput.value = data.city || "";
+                    cityInput.readOnly = true;
+                })
+                .catch(err => console.error("AJAX hiba:", err));
+        } else {
+            cityInput.value = "";
+            cityInput.readOnly = false;
+        }
+    });
+}
+
+/* ===== AUTOMATIKUS IRÁNYÍTÓSZÁM KITÖLTÉS (CITY → ZIP) ===== */
+function autoFillZip(cityInputName, zipInputName) {
+    const cityInput = document.querySelector(`input[name='${cityInputName}']`);
+    const zipInput  = document.querySelector(`input[name='${zipInputName}']`);
+
+    if (!cityInput || !zipInput) {
+        console.log("Hiányzó mező:", cityInputName, zipInputName);
+        return;
+    }
+
+    cityInput.addEventListener("keyup", function () {
+        const city = this.value.trim();
+
+        // Csak akkor kérdezünk az API-tól, ha legalább 3 karakter van
+        if (city.length >= 3) {
+            fetch("/webshop/app/api/postcode.php?city=" + city)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.postcode) {
+                        zipInput.value = data.postcode;
+                    } else {
+                        zipInput.value = "";
+                    }
+                })
+                .catch(err => console.error("AJAX hiba:", err));
+        } else {
+            zipInput.value = "";
+        }
+    });
+}
+
+
+
+/* ===== FUNKCIÓK AKTIVÁLÁSA ===== */
+autoFillCity("shipping_postcode", "shipping_city");
+autoFillCity("billing_postcode", "billing_city");
+
+autoFillZip("shipping_city", "shipping_postcode");
+autoFillZip("billing_city", "billing_postcode");
+
+/* ===== ENTER TILTÁSA ===== */
+document.querySelectorAll("input").forEach(input => {
+    input.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") e.preventDefault();
+    });
+});
+
+/* ===== SZÁMLÁZÁSI CÍM MÁSOLÁSA ===== */
+document.getElementById('sameBilling').addEventListener('change', function() {
+    const fields = ['postcode', 'city', 'street_name', 'street_type', 'house_number'];
+
+    fields.forEach(f => {
+        const ship = document.querySelector(`[name='shipping_${f}']`);
+        const bill = document.querySelector(`[name='billing_${f}']`);
+
+        if (this.checked) {
+            bill.value = ship.value;
+            bill.readOnly = true;
+        } else {
+            bill.readOnly = false;
+        }
+    });
+});
+
+</script>
+

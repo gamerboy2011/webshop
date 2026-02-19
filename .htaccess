@@ -2,6 +2,9 @@
     RewriteEngine On
     RewriteBase /webshop/
 
+    # API mappa kivétele a router alól
+    RewriteRule ^app/api/(.*)$ app/api/$1 [L]
+
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
 

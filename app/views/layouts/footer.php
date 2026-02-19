@@ -1,4 +1,3 @@
-    <script src="./assets/js/main.js"></script>
     <footer class="bg-black text-gray-300 mt-24">
         <div class="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-4 gap-10">
 
