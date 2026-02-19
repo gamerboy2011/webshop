@@ -21,7 +21,7 @@ class CartController
                 $item['size_id'] === $sizeValueId
             ) {
                 $item['quantity']++;
-                header('Location: index.php?page=cart');
+                header('Location: /webshop/kosar');
                 exit;
             }
         }
@@ -32,11 +32,11 @@ class CartController
             'quantity'      => 1
         ];
 
-        header('Location: index.php?page=cart');
+        header('Location: /webshop/kosar');
         exit;
     }
 
-    public function index(): void
+    public function index()
     {
         global $pdo;
 
@@ -107,10 +107,11 @@ class CartController
             )
         );
 
-        header('Location: index.php?page=cart');
+        header('Location: /webshop/kosar');
         exit;
     }
-    public function update(): void
+    
+    public function update()
     {
         if (empty($_SESSION['cart'])) {
             header('Location: index.php?page=cart');
@@ -131,7 +132,7 @@ class CartController
             }
         }
 
-        header('Location: index.php?page=cart');
+        header('Location: /webshop/kosar');
         exit;
     }
 }

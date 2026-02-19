@@ -3,10 +3,19 @@
 require_once __DIR__ . "/../config/database.php";
 require_once __DIR__ . "/../models/ProductModel.php";
 
-
-
 class ProductController
 {
+    private ProductModel $productModel;
+
+    public function __construct()
+    {
+        global $pdo;
+        $this->productModel = new ProductModel($pdo);
+    }
+
+    /* =========================
+       FŐOLDAL
+       ========================= */
     public function index(): void
     {
         global $pdo;
@@ -32,6 +41,9 @@ class ProductController
         require __DIR__ . '/../views/pages/home.php';
     }
 
+    /* =========================
+       TERMÉKOLDAL
+       ========================= */
     public function show(): void
     {
         global $pdo;
@@ -79,24 +91,54 @@ class ProductController
         $stmt->execute([$productId]);
         $images = $stmt->fetchAll();
 
-        /* ===== MÉRETEK (ÚJ LOGIKA) ===== */
+        /* ===== MÉRETEK ===== */
         $stmt = $pdo->prepare("
-    SELECT
-        sz.size_id,
-        sz.size_value,
-        st.quantity
-    FROM stock st
-    JOIN size sz ON st.size_id = sz.size_id
-    JOIN product p ON st.product_id = p.product_id
-    JOIN product_subtype ps ON p.subtype_id = ps.product_subtype_id
-    WHERE st.product_id = :id
-      AND st.quantity > 0
-      AND sz.product_type_id = ps.product_type_id
-    ORDER BY sz.size_id
-");
+            SELECT
+                sz.size_id,
+                sz.size_value,
+                st.quantity
+            FROM stock st
+            JOIN size sz ON st.size_id = sz.size_id
+            JOIN product p ON st.product_id = p.product_id
+            JOIN product_subtype ps ON p.subtype_id = ps.product_subtype_id
+            WHERE st.product_id = :id
+              AND st.quantity > 0
+              AND sz.product_type_id = ps.product_type_id
+            ORDER BY sz.size_id
+        ");
         $stmt->execute(['id' => $productId]);
         $sizes = $stmt->fetchAll();
 
         require __DIR__ . '/../views/pages/product.php';
+    }
+
+    /* =========================
+       KERESÉS
+       ========================= */
+    public function search(): void
+    {
+        $q = trim($_GET['q'] ?? '');
+        $products = $this->productModel->search($q);
+
+        require __DIR__ . '/../views/pages/category.php';
+    }
+
+
+    /* =========================
+       KATEGÓRIA + SZŰRŐK
+       ========================= */
+    public function category(string $gender, ?string $category): void
+    {
+        $filters = [
+            'brand' => $_GET['brand'] ?? null,
+            'color' => $_GET['color'] ?? null,
+            'size'  => $_GET['size'] ?? null,
+            'min'   => $_GET['min'] ?? null,
+            'max'   => $_GET['max'] ?? null,
+        ];
+
+        $products = $this->productModel->filter($gender, $category, $filters);
+
+        require __DIR__ . '/../views/pages/category.php';
     }
 }
