@@ -23,11 +23,8 @@ class User
     {
         $stmt = $this->pdo->prepare("
             INSERT INTO users
-            (username, email, password_hash, phone, role_id,
-             billing_country, billing_city, billing_postcode, billing_street,
-             shipping_country, shipping_city, shipping_postcode, shipping_street,
-             is_active, activation_token, created_at)
-            VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, ?, ?, NOW())
+            (username, email, password_hash, phone, role_id, is_active, activation_token)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         ");
 
         try {
@@ -41,7 +38,8 @@ class User
                 $data['activation_token'] ?? null
             ]);
         } catch (PDOException $e) {
-            die("SQL HIBA: " . $e->getMessage());
+            error_log("SQL HIBA: " . $e->getMessage());
+            return false;
         }
     }
 

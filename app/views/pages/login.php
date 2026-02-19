@@ -30,7 +30,7 @@ $success = $_GET['success'] ?? null;
         </div>
     <?php endif; ?>
 
-    <form method="POST" action="">
+    <form method="POST" action="/webshop/index.php">
         <input type="hidden" name="action" value="login">
         <?php echo csrf_field(); ?>
 
