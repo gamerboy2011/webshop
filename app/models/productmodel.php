@@ -141,6 +141,8 @@ class ProductModel
                 p.product_id,
                 p.name,
                 p.price,
+                ROUND(p.price * 0.8) AS sale_price,
+                p.is_sale,
                 pi.src AS image
             FROM product p
             LEFT JOIN product_img pi
@@ -163,6 +165,8 @@ class ProductModel
                 p.product_id,
                 p.name,
                 p.price,
+                ROUND(p.price * 0.8) AS sale_price,
+                p.is_sale,
                 pi.src AS image
             FROM product p
             LEFT JOIN product_img pi
@@ -251,6 +255,8 @@ class ProductModel
                 p.product_id,
                 p.name,
                 p.price,
+                ROUND(p.price * 0.8) AS sale_price,
+                p.is_sale,
                 pi.src AS image,
                 v.name AS vendor_name
             FROM product p
@@ -331,7 +337,7 @@ class ProductModel
     }
 
     /**
-     * Akciós termékek
+     * Akciós termékek (20% kedvezmény)
      */
     public function getSaleProducts(): array
     {
@@ -340,6 +346,8 @@ class ProductModel
                 p.product_id,
                 p.name,
                 p.price,
+                ROUND(p.price * 0.8) AS sale_price,
+                p.is_sale,
                 pi.src AS image
             FROM product p
             LEFT JOIN product_img pi
@@ -363,6 +371,8 @@ class ProductModel
                 p.product_id,
                 p.name,
                 p.price,
+                ROUND(p.price * 0.8) AS sale_price,
+                p.is_sale,
                 pi.src AS image
             FROM product p
             LEFT JOIN product_img pi
