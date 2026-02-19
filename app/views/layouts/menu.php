@@ -26,13 +26,40 @@ if (in_array('noi', $parts)) {
 }
 
 /* =========================
-   KATEGÓRIÁK BETÖLTÉSE
+   KATEGÓRIÁK (FIX MAGYAR)
    ========================= */
-$menuCategories = [];
-if (isset($pdo)) {
-    $productModel = new ProductModel($pdo);
-    $menuCategories = $productModel->getCategories();
-}
+$menuCategories = [
+    [
+        'name' => 'Ruházat',
+        'slug' => 'clothe',
+        'subtypes' => [
+            ['name' => 'Pólók', 'slug' => 't-shirt'],
+            ['name' => 'Pulcsik', 'slug' => 'hoodie'],
+            ['name' => 'Pulóverek', 'slug' => 'sweater'],
+            ['name' => 'Farmerek', 'slug' => 'jeans'],
+            ['name' => 'Kabátok', 'slug' => 'jacket'],
+            ['name' => 'Télikabátok', 'slug' => 'winter coat'],
+            ['name' => 'Legginsk', 'slug' => 'leggings'],
+        ]
+    ],
+    [
+        'name' => 'Cipők',
+        'slug' => 'shoe',
+        'subtypes' => [
+            ['name' => 'Cipők', 'slug' => 'shoes'],
+            ['name' => 'Szandálok', 'slug' => 'sandals'],
+        ]
+    ],
+    [
+        'name' => 'Kiegészítők',
+        'slug' => 'accessory',
+        'subtypes' => [
+            ['name' => 'Sapkák', 'slug' => 'cap'],
+            ['name' => 'Kalapok', 'slug' => 'hat'],
+            ['name' => 'Táskák', 'slug' => 'bag'],
+        ]
+    ],
+];
 ?>
 
 <nav class="w-full bg-white border-b">
@@ -145,12 +172,12 @@ if (isset($pdo)) {
     <div class="w-full border-t bg-gray-50">
         <div class="w-full py-3 flex gap-8 text-sm font-medium text-gray-700 px-8">
 
-            <?php if ($currentGender && !empty($menuCategories)): ?>
+            <?php if ($currentGender): ?>
                 <?php foreach ($menuCategories as $category): ?>
                     <div class="relative group/cat">
-                        <a href="/webshop/<?= $currentGender ?>/<?= urlencode(strtolower($category['name'])) ?>"
+                        <a href="/webshop/<?= $currentGender ?>/<?= $category['slug'] ?>"
                            class="hover:text-black flex items-center gap-1 py-1">
-                            <?= htmlspecialchars($category['name']) ?>
+                            <?= $category['name'] ?>
                             <?php if (!empty($category['subtypes'])): ?>
                                 <i class="fas fa-chevron-down text-xs text-gray-400 group-hover/cat:text-black transition"></i>
                             <?php endif; ?>
@@ -161,14 +188,14 @@ if (isset($pdo)) {
                                         group-hover/cat:opacity-100 group-hover/cat:visible 
                                         transition-all duration-200 z-50">
                                 <div class="bg-white border rounded-lg shadow-lg py-2 min-w-48">
-                                    <a href="/webshop/<?= $currentGender ?>/<?= urlencode(strtolower($category['name'])) ?>"
+                                    <a href="/webshop/<?= $currentGender ?>/<?= $category['slug'] ?>"
                                        class="block px-4 py-2 hover:bg-gray-50 font-medium border-b mb-1">
-                                        Összes <?= htmlspecialchars($category['name']) ?>
+                                        Összes <?= $category['name'] ?>
                                     </a>
                                     <?php foreach ($category['subtypes'] as $subtype): ?>
-                                        <a href="/webshop/<?= $currentGender ?>/<?= urlencode(strtolower($subtype['name'])) ?>"
+                                        <a href="/webshop/<?= $currentGender ?>/<?= $subtype['slug'] ?>"
                                            class="block px-4 py-2 hover:bg-gray-50 text-gray-600 hover:text-black">
-                                            <?= htmlspecialchars($subtype['name']) ?>
+                                            <?= $subtype['name'] ?>
                                         </a>
                                     <?php endforeach; ?>
                                 </div>
