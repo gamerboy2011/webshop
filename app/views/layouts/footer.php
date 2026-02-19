@@ -39,13 +39,13 @@
                 <h4 class="text-white font-medium mb-4">Kövess minket</h4>
                 <div class="flex gap-4 text-xl">
                     <a href="#" class="hover:text-white">
-                        <i class="fa-brands fa-instagram"></i>
+                        <i class="lab la-instagram"></i>
                     </a>
                     <a href="https://www.facebook.com/profile.php?id=61587284315953" class="hover:text-white">
-                        <i class="fa-brands fa-facebook"></i>
+                        <i class="lab la-facebook"></i>
                     </a>
                     <a href="#" class="hover:text-white">
-                        <i class="fa-brands fa-tiktok"></i>
+                        <i class="lab la-tiktok"></i>
                     </a>
                 </div>
             </div>
@@ -57,7 +57,7 @@
             <div class="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row justify-between text-sm">
                 <span>© <?= date('Y') ?> Yoursy Wear. Minden jog fenntartva.</span>
                 <span class="mt-2 md:mt-0">
-                    <i class="fa-solid fa-lock mr-1"></i> Biztonságos fizetés
+                    <i class="las la-lock mr-1"></i> Biztonságos fizetés
                 </span>
             </div>
         </div>

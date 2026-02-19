@@ -7,7 +7,7 @@ $products = $products ?? [];
     <!-- OLDAL CÍM -->
     <div class="mb-8">
         <h1 class="text-3xl font-bold mb-2">
-            <i class="fas fa-percent text-red-500 mr-2"></i>
+            <i class="las la-percent text-red-500 mr-2"></i>
             Akciós termékek
         </h1>
         <p class="text-gray-500">
@@ -25,7 +25,7 @@ $products = $products ?? [];
                     
                     <!-- Akció badge -->
                     <span class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded z-10">
-                        AKCIÓ
+                        -20%
                     </span>
                     
                     <div class="aspect-square bg-gray-100 overflow-hidden">
@@ -35,7 +35,7 @@ $products = $products ?? [];
                                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                         <?php else: ?>
                             <div class="w-full h-full flex items-center justify-center text-gray-400">
-                                <i class="fas fa-image text-4xl"></i>
+                                <i class="las la-image text-4xl"></i>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -44,15 +44,20 @@ $products = $products ?? [];
                         <h2 class="font-semibold text-gray-900 group-hover:text-gray-600 transition-colors line-clamp-2">
                             <?= htmlspecialchars($product['name']) ?>
                         </h2>
-                        <p class="text-red-600 font-bold mt-2">
-                            <?= number_format($product['price'], 0, ',', ' ') ?> Ft
-                        </p>
+                        <div class="mt-2">
+                            <span class="text-gray-400 line-through text-sm">
+                                <?= number_format($product['price'], 0, ',', ' ') ?> Ft
+                            </span>
+                            <span class="text-red-600 font-bold ml-2">
+                                <?= number_format($product['sale_price'], 0, ',', ' ') ?> Ft
+                            </span>
+                        </div>
                     </div>
                 </a>
             <?php endforeach; ?>
         <?php else: ?>
             <div class="col-span-full text-center py-12">
-                <i class="fas fa-tag text-gray-300 text-6xl mb-4"></i>
+                <i class="las la-tag text-gray-300 text-6xl mb-4"></i>
                 <p class="text-gray-500 text-lg">
                     Jelenleg nincs akciós termék.
                 </p>

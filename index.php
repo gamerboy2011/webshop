@@ -180,15 +180,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($page === 'category') {
         $gender = $_GET['gender'] ?? null;
         $category = $_GET['category'] ?? null;
+        
+        // Szűrők feldolgozása
         $filters = [
-            'brand' => $_GET['brand'] ?? null,
-            'color' => $_GET['color'] ?? null,
-            'size'  => $_GET['size'] ?? null,
-            'min'   => $_GET['min'] ?? null,
-            'max'   => $_GET['max'] ?? null,
+            'sale' => isset($_GET['sale']) ? true : false,
+            'brands' => isset($_GET['brands']) ? (array)$_GET['brands'] : [],
+            'colors' => isset($_GET['colors']) ? (array)$_GET['colors'] : [],
+            'sizes' => isset($_GET['sizes']) ? (array)$_GET['sizes'] : [],
+            'min_price' => $_GET['min_price'] ?? null,
+            'max_price' => $_GET['max_price'] ?? null,
+            'sort' => $_GET['sort'] ?? 'newest',
         ];
+        
         $productModel = new ProductModel($pdo);
-        $products = $productModel->filter($gender, $category, $filters);
+        $products = $productModel->filterAdvanced($gender, $category, $filters);
+        $filterOptions = $productModel->getFilterOptions($gender, $category);
+        $activeFilters = $filters;
     }
     
     // Keresés oldal esetén

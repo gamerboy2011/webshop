@@ -44,14 +44,19 @@ if ($showHero) {
                     href="/webshop/termek/<?= (int)$product['product_id'] ?>"
                     class="group bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow overflow-hidden block"
                 >
-                    <div class="aspect-square bg-gray-100 overflow-hidden">
+                    <div class="aspect-square bg-gray-100 overflow-hidden relative">
+                        <?php if (!empty($product['is_sale'])): ?>
+                            <span class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded z-10">
+                                -20%
+                            </span>
+                        <?php endif; ?>
                         <?php if (!empty($product['image'])): ?>
                             <img src="/webshop/<?= htmlspecialchars($product['image']) ?>" 
                                  alt="<?= htmlspecialchars($product['name']) ?>"
                                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                         <?php else: ?>
                             <div class="w-full h-full flex items-center justify-center text-gray-400">
-                                <i class="fas fa-image text-4xl"></i>
+                                <i class="las la-image text-4xl"></i>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -60,9 +65,20 @@ if ($showHero) {
                         <h3 class="text-lg font-semibold text-gray-900 group-hover:text-gray-600 transition-colors">
                             <?= htmlspecialchars($product['name']) ?>
                         </h3>
-                        <p class="font-bold text-lg mt-2">
-                            <?= number_format($product['price'], 0, ',', ' ') ?> Ft
-                        </p>
+                        <?php if (!empty($product['is_sale'])): ?>
+                            <div class="mt-2">
+                                <span class="text-gray-400 line-through text-sm">
+                                    <?= number_format($product['price'], 0, ',', ' ') ?> Ft
+                                </span>
+                                <span class="text-red-600 font-bold ml-2">
+                                    <?= number_format($product['sale_price'], 0, ',', ' ') ?> Ft
+                                </span>
+                            </div>
+                        <?php else: ?>
+                            <p class="font-bold text-lg mt-2">
+                                <?= number_format($product['price'], 0, ',', ' ') ?> Ft
+                            </p>
+                        <?php endif; ?>
                     </div>
                 </a>
             <?php endforeach; ?>

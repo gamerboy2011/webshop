@@ -43,12 +43,12 @@ foreach ($cart as $cartItem) {
 
 <div class="max-w-4xl mx-auto px-4 py-12">
     <h1 class="text-3xl font-bold mb-8">
-        <i class="fas fa-shopping-bag mr-3"></i>Kosár
+        <i class="las la-shopping-bag mr-3"></i>Kosár
     </h1>
 
     <?php if (empty($items)): ?>
         <div class="bg-gray-50 rounded-lg p-12 text-center">
-            <i class="fas fa-shopping-cart text-gray-300 text-6xl mb-4"></i>
+            <i class="las la-shopping-cart text-gray-300 text-6xl mb-4"></i>
             <p class="text-gray-500 text-xl mb-6">A kosarad üres</p>
             <a href="/webshop/" class="inline-block bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition">
                 Vásárlás folytatása
@@ -66,7 +66,7 @@ foreach ($cart as $cartItem) {
                                  class="w-24 h-24 object-cover rounded-lg">
                         <?php else: ?>
                             <div class="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-image text-gray-400"></i>
+                                <i class="las la-image text-gray-400"></i>
                             </div>
                         <?php endif; ?>
                     </a>
@@ -94,7 +94,7 @@ foreach ($cart as $cartItem) {
                             <input type="hidden" name="quantity" value="<?= max(1, $item['quantity'] - 1) ?>">
                             <button type="submit" class="w-8 h-8 border rounded-lg hover:bg-gray-100 transition"
                                     <?= $item['quantity'] <= 1 ? 'disabled' : '' ?>>
-                                <i class="fas fa-minus text-xs"></i>
+                                <i class="las la-minus text-xs"></i>
                             </button>
                         </form>
                         
@@ -107,7 +107,7 @@ foreach ($cart as $cartItem) {
                             <input type="hidden" name="size_id" value="<?= $item['size_id'] ?>">
                             <input type="hidden" name="quantity" value="<?= $item['quantity'] + 1 ?>">
                             <button type="submit" class="w-8 h-8 border rounded-lg hover:bg-gray-100 transition">
-                                <i class="fas fa-plus text-xs"></i>
+                                <i class="las la-plus text-xs"></i>
                             </button>
                         </form>
                     </div>
@@ -125,7 +125,7 @@ foreach ($cart as $cartItem) {
                             <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
                             <input type="hidden" name="size_id" value="<?= $item['size_id'] ?>">
                             <button type="submit" class="text-red-500 text-sm hover:text-red-700 transition">
-                                <i class="fas fa-trash-alt mr-1"></i>Törlés
+                                <i class="las la-trash-alt mr-1"></i>Törlés
                             </button>
                         </form>
                     </div>
@@ -154,13 +154,13 @@ foreach ($cart as $cartItem) {
                 <?= csrf_field() ?>
                 <input type="hidden" name="action" value="checkout">
                 <button type="submit" class="w-full bg-black text-white py-4 rounded-lg font-medium text-lg hover:bg-gray-800 transition flex items-center justify-center gap-2">
-                    <i class="fas fa-lock"></i>
+                    <i class="las la-lock"></i>
                     Tovább a fizetéshez
                 </button>
             </form>
             
             <a href="/webshop/" class="block text-center mt-4 text-gray-600 hover:text-black transition">
-                <i class="fas fa-arrow-left mr-2"></i>Vásárlás folytatása
+                <i class="las la-arrow-left mr-2"></i>Vásárlás folytatása
             </a>
         </div>
     <?php endif; ?>

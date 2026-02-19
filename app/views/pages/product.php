@@ -78,7 +78,7 @@ if (isset($_SESSION['user_id'])) {
                                  class="w-full h-full object-cover">
                         <?php else: ?>
                             <div class="w-full h-full flex items-center justify-center text-gray-400">
-                                <i class="fas fa-image text-6xl"></i>
+                                <i class="las la-image text-6xl"></i>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -104,6 +104,13 @@ if (isset($_SESSION['user_id'])) {
                 <div class="p-6 lg:p-8 lg:border-l border-gray-100">
                     <div class="lg:sticky lg:top-8">
                         
+                        <!-- Akció badge -->
+                        <?php if (!empty($product['is_sale'])): ?>
+                            <span class="inline-block bg-red-500 text-white text-sm font-bold px-3 py-1 rounded mb-3">
+                                -20% AKCIÓ
+                            </span>
+                        <?php endif; ?>
+                        
                         <!-- Márka -->
                         <a href="#" class="inline-block text-sm font-medium text-gray-500 hover:text-black uppercase tracking-wider mb-2">
                             <?= htmlspecialchars($product['vendor']) ?>
@@ -127,9 +134,18 @@ if (isset($_SESSION['user_id'])) {
 
                         <!-- Ár -->
                         <div class="flex items-baseline gap-3 mb-6">
-                            <span class="text-2xl lg:text-3xl font-bold text-gray-900">
-                                <?= number_format($product['price'], 0, ',', ' ') ?> Ft
-                            </span>
+                            <?php if (!empty($product['is_sale'])): ?>
+                                <span class="text-xl text-gray-400 line-through">
+                                    <?= number_format($product['price'], 0, ',', ' ') ?> Ft
+                                </span>
+                                <span class="text-2xl lg:text-3xl font-bold text-red-600">
+                                    <?= number_format($product['sale_price'], 0, ',', ' ') ?> Ft
+                                </span>
+                            <?php else: ?>
+                                <span class="text-2xl lg:text-3xl font-bold text-gray-900">
+                                    <?= number_format($product['price'], 0, ',', ' ') ?> Ft
+                                </span>
+                            <?php endif; ?>
                         </div>
 
                         <!-- Szín -->
@@ -147,7 +163,7 @@ if (isset($_SESSION['user_id'])) {
 
                                 <?php if (empty($sizes)): ?>
                                     <p class="text-sm text-red-500 bg-red-50 rounded-lg p-3">
-                                        <i class="fas fa-exclamation-circle mr-2"></i>
+                                        <i class="las la-exclamation-circle mr-2"></i>
                                         Jelenleg nincs elérhető méret
                                     </p>
                                 <?php else: ?>
@@ -183,7 +199,7 @@ if (isset($_SESSION['user_id'])) {
                                        hover:bg-gray-800 transition-colors
                                        disabled:bg-gray-300 disabled:cursor-not-allowed
                                        flex items-center justify-center gap-2">
-                                <i class="fas fa-shopping-bag"></i>
+                                <i class="las la-shopping-bag"></i>
                                 Kosárba teszem
                             </button>
                         </form>
@@ -191,7 +207,7 @@ if (isset($_SESSION['user_id'])) {
                         <!-- Kívánságlista gomb -->
                         <button type="button" class="w-full mt-3 border-2 border-gray-200 text-gray-700 py-3 px-6 rounded-lg font-medium
                                        hover:border-gray-400 transition-colors flex items-center justify-center gap-2">
-                            <i class="far fa-heart"></i>
+                            <i class="lar la-heart"></i>
                             Kívánságlistára
                         </button>
 
@@ -201,7 +217,7 @@ if (isset($_SESSION['user_id'])) {
                                 <details class="group" open>
                                     <summary class="flex items-center justify-between cursor-pointer list-none">
                                         <h3 class="text-sm font-medium text-gray-900">Termékleírás</h3>
-                                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                                        <i class="las la-angle-down text-gray-400 group-open:rotate-180 transition-transform"></i>
                                     </summary>
                                     <div class="mt-4 text-sm text-gray-600 leading-relaxed">
                                         <?= nl2br(htmlspecialchars($product['description'])) ?>
@@ -215,7 +231,7 @@ if (isset($_SESSION['user_id'])) {
                             <details class="group">
                                 <summary class="flex items-center justify-between cursor-pointer list-none">
                                     <h3 class="text-sm font-medium text-gray-900">Részletek</h3>
-                                    <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                                    <i class="las la-angle-down text-gray-400 group-open:rotate-180 transition-transform"></i>
                                 </summary>
                                 <div class="mt-4 text-sm text-gray-600 space-y-2">
                                     <p><span class="font-medium">Márka:</span> <?= htmlspecialchars($product['vendor']) ?></p>
@@ -230,7 +246,7 @@ if (isset($_SESSION['user_id'])) {
                         <!-- Szállítás info -->
                         <div class="mt-4 pt-4 border-t border-gray-100">
                             <div class="flex items-start gap-3 text-sm text-gray-600">
-                                <i class="fas fa-truck text-gray-400 mt-0.5"></i>
+                                <i class="las la-truck text-gray-400 mt-0.5"></i>
                                 <div>
                                     <p class="font-medium text-gray-900">Ingyenes szállítás 15.000 Ft felett</p>
                                     <p>Várható szállítás: 2-4 munkanap</p>

@@ -109,11 +109,11 @@ $menuCategories = [
 
                 <!-- KOSÁR -->
                 <a href="/webshop/kosar" class="relative">
-                    <i class="fa-solid fa-bag-shopping text-xl"></i>
+                    <i class="las la-shopping-bag text-2xl"></i>
 
                     <?php if ($cartCount > 0): ?>
                         <span class="absolute -top-2 -right-2
-                                     bg-black text-white text-xs
+                                     bg-red-500 text-white text-xs
                                      w-5 h-5 rounded-full
                                      flex items-center justify-center">
                             <?= $cartCount ?>
@@ -124,7 +124,7 @@ $menuCategories = [
                 <!-- Felhasználói menü -->
                 <div class="relative group">
                     <button class="cursor-pointer text-gray-700 hover:text-black transition focus:outline-none">
-                        <i class="fa-regular fa-user text-xl"></i>
+                        <i class="lar la-user text-2xl"></i>
                     </button>
 
                     <div class="absolute right-0 top-full mt-2 w-48 bg-white border rounded-lg shadow-lg
@@ -134,11 +134,11 @@ $menuCategories = [
                         <?php if (empty($_SESSION['logged_in'])): ?>
 
                             <a href="/webshop/login" class="block px-4 py-3 hover:bg-gray-50 transition">
-                                <i class="fas fa-sign-in-alt mr-2"></i> Bejelentkezés
+                                <i class="las la-sign-in-alt mr-2"></i> Bejelentkezés
                             </a>
 
                             <a href="/webshop/register" class="block px-4 py-3 hover:bg-gray-50 transition">
-                                <i class="fas fa-user-plus mr-2"></i> Regisztráció
+                                <i class="las la-user-plus mr-2"></i> Regisztráció
                             </a>
 
                         <?php else: ?>
@@ -149,14 +149,14 @@ $menuCategories = [
                             </div>
 
                             <a href="/webshop/profil" class="block px-4 py-3 hover:bg-gray-50 transition">
-                                <i class="fas fa-user mr-2"></i> Profil
+                                <i class="las la-user mr-2"></i> Profil
                             </a>
 
                             <form method="POST" action="/webshop/logout" class="border-t">
                                 <?= csrf_field(); ?>
                                 <input type="hidden" name="action" value="logout">
                                 <button type="submit" class="w-full text-left px-4 py-3 text-red-600 hover:bg-gray-50 transition">
-                                    <i class="fas fa-sign-out-alt mr-2"></i> Kijelentkezés
+                                    <i class="las la-sign-out-alt mr-2"></i> Kijelentkezés
                                 </button>
                             </form>
 
@@ -179,7 +179,7 @@ $menuCategories = [
                            class="hover:text-black flex items-center gap-1 py-1">
                             <?= $category['name'] ?>
                             <?php if (!empty($category['subtypes'])): ?>
-                                <i class="fas fa-chevron-down text-xs text-gray-400 group-hover/cat:text-black transition"></i>
+                                <i class="las la-angle-down text-xs text-gray-400 group-hover/cat:text-black transition"></i>
                             <?php endif; ?>
                         </a>
                         
@@ -206,12 +206,12 @@ $menuCategories = [
             <?php endif; ?>
 
             <a href="/webshop/akcio" class="hover:text-black py-1">
-                <i class="fas fa-percent text-red-500 mr-1"></i>
+                <i class="las la-percent text-red-500 mr-1"></i>
                 Akció
             </a>
 
             <a href="/webshop/ujdonsagok" class="hover:text-black py-1">
-                <i class="fas fa-sparkles text-yellow-500 mr-1"></i>
+                <i class="las la-star text-yellow-500 mr-1"></i>
                 Újdonságok
             </a>
 
