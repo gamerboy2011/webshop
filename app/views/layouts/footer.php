@@ -1,3 +1,61 @@
+<!-- BEJELENTKEZÉS SZÜKSÉGES MODAL -->
+<div id="loginRequiredModal" class="fixed inset-0 z-[200] hidden">
+    <div class="absolute inset-0 bg-black/50" onclick="closeLoginModal()"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center transform scale-95 opacity-0 transition-all duration-300" id="loginModalContent">
+            <!-- Szomorú ikon -->
+            <div class="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+                <i class="lar la-sad-tear text-5xl text-gray-400"></i>
+            </div>
+            
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Hoppá!</h3>
+            <p class="text-gray-500 mb-6">
+                A kedvencek használatához be kell jelentkezned.
+            </p>
+            
+            <div class="flex flex-col gap-3">
+                <a href="/webshop/login" 
+                   class="w-full bg-black text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-800 transition">
+                    Bejelentkezés
+                </a>
+                <button onclick="closeLoginModal()" 
+                        class="w-full border border-gray-300 py-3 px-6 rounded-lg font-medium text-gray-600 hover:bg-gray-50 transition">
+                    Később
+                </button>
+            </div>
+            
+            <p class="mt-4 text-sm text-gray-400">
+                Még nincs fiókod? 
+                <a href="/webshop/register" class="text-black underline hover:no-underline">Regisztrálj!</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+function showLoginModal() {
+    const modal = document.getElementById('loginRequiredModal');
+    const content = document.getElementById('loginModalContent');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => {
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+    }, 10);
+}
+
+function closeLoginModal() {
+    const modal = document.getElementById('loginRequiredModal');
+    const content = document.getElementById('loginModalContent');
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }, 300);
+}
+</script>
+
     <footer class="bg-black text-gray-300 mt-24">
         <div class="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-4 gap-10">
 

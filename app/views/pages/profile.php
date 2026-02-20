@@ -9,6 +9,13 @@ require_once __DIR__ . "/../../library/config.php";
 $userId  = $_SESSION['user_id'];
 $section = $_GET['section'] ?? 'favorites';
 
+/* ===== KEDVENCEK BETÖLTÉSE ===== */
+$favorites = [];
+if ($section === 'favorites') {
+    $favModel = new FavouriteModel($pdo);
+    $favorites = $favModel->getUserFavorites($userId);
+}
+
 $success = "";
 $error   = "";
 
@@ -145,7 +152,86 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
 
     <main class="md:col-span-3 bg-white p-8 rounded-xl shadow-md">
 
-        <?php if ($section === 'security'): ?>
+        <?php if ($section === 'favorites'): ?>
+
+            <h2 class="text-2xl font-semibold mb-6">
+                <i class="lar la-heart text-red-500 mr-2"></i>
+                Kedvenceim
+            </h2>
+
+            <?php if (empty($favorites)): ?>
+                <div class="text-center py-12">
+                    <i class="lar la-heart text-gray-300 text-6xl mb-4"></i>
+                    <p class="text-gray-500 text-lg mb-2">Még nincs kedvenc terméked</p>
+                    <p class="text-gray-400 text-sm mb-6">Böngészd a termékeket és kattints a szív ikonra!</p>
+                    <a href="/webshop/" class="inline-block bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition">
+                        Termékek böngészése
+                    </a>
+                </div>
+            <?php else: ?>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <?php foreach ($favorites as $product): ?>
+                        <div class="group relative bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                            
+                            <!-- TÖRLÉS GOMB -->
+                            <button onclick="removeFavorite(<?= $product['product_id'] ?>, this)"
+                                    class="absolute top-2 right-2 z-10 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition">
+                                <i class="las la-times"></i>
+                            </button>
+                            
+                            <a href="/webshop/termek/<?= $product['product_id'] ?>" class="block">
+                                <div class="aspect-[3/4] bg-gray-100 overflow-hidden relative">
+                                    <?php if (!empty($product['is_sale'])): ?>
+                                        <span class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                                            -20%
+                                        </span>
+                                    <?php endif; ?>
+                                    <?php if (!empty($product['image'])): ?>
+                                        <img src="/webshop/<?= htmlspecialchars($product['image']) ?>" 
+                                             alt="<?= htmlspecialchars($product['name']) ?>"
+                                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                    <?php else: ?>
+                                        <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                            <i class="las la-image text-4xl"></i>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                
+                                <div class="p-3">
+                                    <?php if (!empty($product['vendor_name'])): ?>
+                                        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                                            <?= htmlspecialchars($product['vendor_name']) ?>
+                                        </p>
+                                    <?php endif; ?>
+                                    <h3 class="font-medium text-gray-900 group-hover:text-gray-600 transition-colors line-clamp-2 text-sm">
+                                        <?= htmlspecialchars($product['name']) ?>
+                                    </h3>
+                                    <?php if (!empty($product['is_sale'])): ?>
+                                        <div class="mt-2 flex items-center gap-2">
+                                            <span class="text-gray-400 line-through text-xs">
+                                                <?= number_format($product['price'], 0, ',', ' ') ?> Ft
+                                            </span>
+                                            <span class="text-red-600 font-bold text-sm">
+                                                <?= number_format($product['sale_price'], 0, ',', ' ') ?> Ft
+                                            </span>
+                                        </div>
+                                    <?php else: ?>
+                                        <p class="text-gray-900 font-bold mt-2 text-sm">
+                                            <?= number_format($product['price'], 0, ',', ' ') ?> Ft
+                                        </p>
+                                    <?php endif; ?>
+                                </div>
+                            </a>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                
+                <p class="text-center text-gray-400 text-sm mt-6">
+                    <?= count($favorites) ?> termék a kedvenceid között
+                </p>
+            <?php endif; ?>
+
+        <?php elseif ($section === 'security'): ?>
 
             <h2 class="text-2xl font-semibold mb-6">Profil &amp; Biztonság</h2>
 
@@ -341,21 +427,54 @@ document.querySelectorAll("input").forEach(input => {
 });
 
 /* ===== SZÁMLÁZÁSI CÍM MÁSOLÁSA ===== */
-document.getElementById('sameBilling').addEventListener('change', function() {
-    const fields = ['postcode', 'city', 'street_name', 'street_type', 'house_number'];
+const sameBillingCheckbox = document.getElementById('sameBilling');
+if (sameBillingCheckbox) {
+    sameBillingCheckbox.addEventListener('change', function() {
+        const fields = ['postcode', 'city', 'street_name', 'street_type', 'house_number'];
 
-    fields.forEach(f => {
-        const ship = document.querySelector(`[name='shipping_${f}']`);
-        const bill = document.querySelector(`[name='billing_${f}']`);
+        fields.forEach(f => {
+            const ship = document.querySelector(`[name='shipping_${f}']`);
+            const bill = document.querySelector(`[name='billing_${f}']`);
 
-        if (this.checked) {
-            bill.value = ship.value;
-            bill.readOnly = true;
-        } else {
-            bill.readOnly = false;
-        }
+            if (ship && bill) {
+                if (this.checked) {
+                    bill.value = ship.value;
+                    bill.readOnly = true;
+                } else {
+                    bill.readOnly = false;
+                }
+            }
+        });
     });
-});
+}
+
+/* ===== KEDVENC ELTÁVOLÍTÁSA ===== */
+function removeFavorite(productId, btn) {
+    fetch('/webshop/favorite-toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'product_id=' + productId
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            // Eltávolítjuk a kártyát animációval
+            const card = btn.closest('.group');
+            card.style.transition = 'opacity 0.3s, transform 0.3s';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                card.remove();
+                // Ha nincs több kedvenc, frissítsük az oldalt
+                const remaining = document.querySelectorAll('.group.relative');
+                if (remaining.length === 0) {
+                    location.reload();
+                }
+            }, 300);
+        }
+    })
+    .catch(err => console.error('Hiba:', err));
+}
 
 </script>
 

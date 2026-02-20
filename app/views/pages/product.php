@@ -36,6 +36,37 @@ $mainImage = $images[0]['src'] ?? null;
    ========================= */
 $sizes = $model->getSizes($productId);
 
+// Cipők esetén dinamikus méretek gender alapján
+$isShoe = in_array(strtolower($product['type']), ['shoe', 'cipők', 'cipő', 'shoes']);
+if ($isShoe) {
+    // Méret tartományok gender alapján
+    if ($product['gender'] === 'f') {
+        // Női: 35-42
+        $minSize = 35;
+        $maxSize = 42;
+    } elseif ($product['gender'] === 'm') {
+        // Férfi: 39-47
+        $minSize = 39;
+        $maxSize = 47;
+    } else {
+        // Uniszex: teljes tartomány 35-47
+        $minSize = 35;
+        $maxSize = 47;
+    }
+    
+    // Dinamikus méretek generálása félméretekkel
+    $dynamicSizes = [];
+    for ($s = $minSize; $s <= $maxSize; $s += 0.5) {
+        $sizeValue = ($s == floor($s)) ? (string)(int)$s : number_format($s, 1, '.', '');
+        $dynamicSizes[] = [
+            'size_id' => $s * 10, // Virtuális ID
+            'size_value' => $sizeValue,
+            'quantity' => 5 // Alapértelmezett készlet
+        ];
+    }
+    $sizes = $dynamicSizes;
+}
+
 /* =========================
    AJÁNLOTT TERMÉKEK
    ========================= */
@@ -195,7 +226,7 @@ if (isset($_SESSION['user_id'])) {
                             <button
                                 type="submit"
                                 <?= empty($sizes) ? 'disabled' : '' ?>
-                                class="w-full bg-black text-white py-4 px-6 rounded-lg font-medium text-lg
+                                class="mt-6 w-full bg-black text-white py-4 px-6 rounded-lg font-medium text-lg
                                        hover:bg-gray-800 transition-colors
                                        disabled:bg-gray-300 disabled:cursor-not-allowed
                                        flex items-center justify-center gap-2">
@@ -205,10 +236,14 @@ if (isset($_SESSION['user_id'])) {
                         </form>
 
                         <!-- Kívánságlista gomb -->
-                        <button type="button" class="w-full mt-3 border-2 border-gray-200 text-gray-700 py-3 px-6 rounded-lg font-medium
-                                       hover:border-gray-400 transition-colors flex items-center justify-center gap-2">
-                            <i class="lar la-heart"></i>
-                            Kívánságlistára
+                        <button type="button" 
+                                id="wishlistBtn"
+                                onclick="toggleWishlist(<?= $productId ?>)"
+                                class="wishlist-btn w-full mt-3 border-2 py-3 px-6 rounded-lg font-medium
+                                       transition-colors flex items-center justify-center gap-2
+                                       <?= $isFavorite ? 'border-red-400 text-red-500 bg-red-50' : 'border-gray-200 text-gray-700 hover:border-gray-400' ?>">
+                            <i class="<?= $isFavorite ? 'las' : 'lar' ?> la-heart text-xl"></i>
+                            <span><?= $isFavorite ? 'Eltávolítás a kedvencekből' : 'Kívánságlistára' ?></span>
                         </button>
 
                         <!-- Termékleírás -->
@@ -289,4 +324,63 @@ function changeImage(src, btn) {
     btn.classList.remove('border-transparent');
     btn.classList.add('border-black');
 }
+
+/* ===== KÍVÁNSÁGLISTA TOGGLE ===== */
+function toggleWishlist(productId) {
+    const isLoggedIn = '<?= isset($_SESSION['user_id']) ? '1' : '0' ?>' === '1';
+    
+    if (!isLoggedIn) {
+        showLoginModal();
+        return;
+    }
+    
+    fetch('/webshop/favorite-toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'product_id=' + productId
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const btn = document.getElementById('wishlistBtn');
+            const icon = btn.querySelector('i');
+            const text = btn.querySelector('span');
+            const heartBtn = document.querySelector('.favorite-btn');
+            
+            // Toggle állapot
+            const isNowFavorite = btn.classList.contains('border-gray-200');
+            
+            if (isNowFavorite) {
+                // Hozzáadva
+                btn.classList.remove('border-gray-200', 'text-gray-700', 'hover:border-gray-400');
+                btn.classList.add('border-red-400', 'text-red-500', 'bg-red-50');
+                icon.classList.remove('lar');
+                icon.classList.add('las');
+                text.textContent = 'Eltávolítás a kedvencekből';
+                if (heartBtn) {
+                    heartBtn.classList.remove('text-gray-400');
+                    heartBtn.classList.add('text-red-500', 'border-red-400');
+                }
+            } else {
+                // Eltávolítva
+                btn.classList.remove('border-red-400', 'text-red-500', 'bg-red-50');
+                btn.classList.add('border-gray-200', 'text-gray-700', 'hover:border-gray-400');
+                icon.classList.remove('las');
+                icon.classList.add('lar');
+                text.textContent = 'Kívánságlistára';
+                if (heartBtn) {
+                    heartBtn.classList.remove('text-red-500', 'border-red-400');
+                    heartBtn.classList.add('text-gray-400');
+                }
+            }
+        }
+    })
+    .catch(err => console.error('Hiba:', err));
+}
+
+/* ===== SZÍV GOMB KATTINTÁS ===== */
+document.querySelector('.favorite-btn')?.addEventListener('click', function() {
+    const productId = this.dataset.product;
+    toggleWishlist(parseInt(productId));
+});
 </script>

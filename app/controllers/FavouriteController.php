@@ -11,6 +11,8 @@ class FavouriteController
 
     public function toggle(): void
     {
+        header('Content-Type: application/json');
+        
         if (!isset($_SESSION['user_id'])) {
             echo json_encode(['error' => 'not_logged_in']);
             return;

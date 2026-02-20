@@ -49,6 +49,9 @@ class FavouriteModel
                 p.product_id,
                 p.name,
                 p.price,
+                ROUND(p.price * 0.8) AS sale_price,
+                p.is_sale,
+                v.name AS vendor_name,
                 (
                     SELECT src 
                     FROM product_img 
@@ -58,11 +61,37 @@ class FavouriteModel
                 ) AS image
             FROM favorites f
             JOIN product p ON p.product_id = f.product_id
+            LEFT JOIN vendor v ON p.vendor_id = v.vendor_id
             WHERE f.user_id = ?
-            ORDER BY f.id DESC
+            ORDER BY f.created_at DESC
         ");
 
         $stmt->execute([$userId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Ellenőrzi, hogy egy termék kedvenc-e
+     */
+    public function isFavorite(int $userId, int $productId): bool
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT id FROM favorites 
+            WHERE user_id = ? AND product_id = ?
+        ");
+        $stmt->execute([$userId, $productId]);
+        return (bool)$stmt->fetch();
+    }
+
+    /**
+     * Kedvenc eltávolítása
+     */
+    public function remove(int $userId, int $productId): bool
+    {
+        $stmt = $this->pdo->prepare("
+            DELETE FROM favorites 
+            WHERE user_id = ? AND product_id = ?
+        ");
+        return $stmt->execute([$userId, $productId]);
     }
 }

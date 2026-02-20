@@ -291,52 +291,62 @@ $colorCodes = [
             <?php if (!empty($products)): ?>
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <?php foreach ($products as $product): ?>
-                        <a href="/webshop/termek/<?= $product['product_id'] ?>" 
-                           class="group bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow overflow-hidden block">
+                        <div class="group bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow overflow-hidden relative">
                             
-                            <div class="aspect-[3/4] bg-gray-100 overflow-hidden relative">
-                                <?php if (!empty($product['is_sale'])): ?>
-                                    <span class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded z-10">
-                                        -20%
-                                    </span>
-                                <?php endif; ?>
-                                <?php if (!empty($product['image'])): ?>
-                                    <img src="/webshop/<?= htmlspecialchars($product['image']) ?>" 
-                                         alt="<?= htmlspecialchars($product['name']) ?>"
-                                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                         loading="lazy">
-                                <?php else: ?>
-                                    <div class="w-full h-full flex items-center justify-center text-gray-400">
-                                        <i class="las la-image text-4xl"></i>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
+                            <!-- SZÍV GOMB -->
+                            <?php $isFav = in_array($product['product_id'], $userFavoriteIds ?? []); ?>
+                            <button type="button" 
+                                    onclick="toggleFavorite(<?= $product['product_id'] ?>, this, event)"
+                                    class="favorite-heart absolute top-2 right-2 z-20 w-8 h-8 <?= $isFav ? 'bg-red-50' : 'bg-white/80' ?> backdrop-blur rounded-full shadow flex items-center justify-center transition hover:scale-110"
+                                    data-product="<?= $product['product_id'] ?>">
+                                <i class="<?= $isFav ? 'las la-heart text-lg text-red-500' : 'lar la-heart text-lg text-gray-400' ?> hover:text-red-500 transition"></i>
+                            </button>
                             
-                            <div class="p-3">
-                                <?php if (!empty($product['vendor_name'])): ?>
-                                    <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                                        <?= htmlspecialchars($product['vendor_name']) ?>
-                                    </p>
-                                <?php endif; ?>
-                                <h2 class="font-medium text-gray-900 group-hover:text-gray-600 transition-colors line-clamp-2 text-sm">
-                                    <?= htmlspecialchars($product['name']) ?>
-                                </h2>
-                                <?php if (!empty($product['is_sale'])): ?>
-                                    <div class="mt-2 flex items-center gap-2">
-                                        <span class="text-gray-400 line-through text-xs">
+                            <a href="/webshop/termek/<?= $product['product_id'] ?>" class="block">
+                                <div class="aspect-[3/4] bg-gray-100 overflow-hidden relative">
+                                    <?php if (!empty($product['is_sale'])): ?>
+                                        <span class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded z-10">
+                                            -20%
+                                        </span>
+                                    <?php endif; ?>
+                                    <?php if (!empty($product['image'])): ?>
+                                        <img src="/webshop/<?= htmlspecialchars($product['image']) ?>" 
+                                             alt="<?= htmlspecialchars($product['name']) ?>"
+                                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                             loading="lazy">
+                                    <?php else: ?>
+                                        <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                            <i class="las la-image text-4xl"></i>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            
+                                <div class="p-3">
+                                    <?php if (!empty($product['vendor_name'])): ?>
+                                        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                                            <?= htmlspecialchars($product['vendor_name']) ?>
+                                        </p>
+                                    <?php endif; ?>
+                                    <h2 class="font-medium text-gray-900 group-hover:text-gray-600 transition-colors line-clamp-2 text-sm">
+                                        <?= htmlspecialchars($product['name']) ?>
+                                    </h2>
+                                    <?php if (!empty($product['is_sale'])): ?>
+                                        <div class="mt-2 flex items-center gap-2">
+                                            <span class="text-gray-400 line-through text-xs">
+                                                <?= number_format($product['price'], 0, ',', ' ') ?> Ft
+                                            </span>
+                                            <span class="text-red-600 font-bold text-sm">
+                                                <?= number_format($product['sale_price'], 0, ',', ' ') ?> Ft
+                                            </span>
+                                        </div>
+                                    <?php else: ?>
+                                        <p class="text-gray-900 font-bold mt-2 text-sm">
                                             <?= number_format($product['price'], 0, ',', ' ') ?> Ft
-                                        </span>
-                                        <span class="text-red-600 font-bold text-sm">
-                                            <?= number_format($product['sale_price'], 0, ',', ' ') ?> Ft
-                                        </span>
-                                    </div>
-                                <?php else: ?>
-                                    <p class="text-gray-900 font-bold mt-2 text-sm">
-                                        <?= number_format($product['price'], 0, ',', ' ') ?> Ft
-                                    </p>
-                                <?php endif; ?>
-                            </div>
-                        </a>
+                                        </p>
+                                    <?php endif; ?>
+                                </div>
+                            </a>
+                        </div>
                     <?php endforeach; ?>
                 </div>
             <?php else: ?>
@@ -456,3 +466,47 @@ $colorCodes = [
         </div>
     </div>
 </div>
+
+<script>
+function toggleFavorite(productId, btn, event) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const isLoggedIn = <?= isset($_SESSION['user_id']) ? 'true' : 'false' ?>;
+    
+    if (!isLoggedIn) {
+        showLoginModal();
+        return;
+    }
+    
+    fetch('/webshop/favorite-toggle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'product_id=' + productId
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const icon = btn.querySelector('i');
+            const isFavorite = icon.classList.contains('lar');
+            
+            if (isFavorite) {
+                // Hozzáadva
+                icon.classList.remove('lar', 'text-gray-400');
+                icon.classList.add('las', 'text-red-500');
+                btn.classList.add('bg-red-50');
+            } else {
+                // Eltávolítva
+                icon.classList.remove('las', 'text-red-500');
+                icon.classList.add('lar', 'text-gray-400');
+                btn.classList.remove('bg-red-50');
+            }
+            
+            // Kis animáció
+            btn.style.transform = 'scale(1.2)';
+            setTimeout(() => btn.style.transform = 'scale(1)', 150);
+        }
+    })
+    .catch(err => console.error('Hiba:', err));
+}
+</script>

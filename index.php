@@ -170,6 +170,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $page = $_GET['page'] ?? 'home';
     $viewPath = __DIR__ . '/app/views/pages/' . $page . '.php';
     
+    // Kedvencek betöltése (bejelentkezett felhasználónak)
+    $userFavoriteIds = [];
+    if (!empty($_SESSION['user_id'])) {
+        $favModel = new FavouriteModel($pdo);
+        $userFavs = $favModel->getUserFavorites($_SESSION['user_id']);
+        $userFavoriteIds = array_column($userFavs, 'product_id');
+    }
+    
     // Főoldal esetén termékek betöltése
     if ($page === 'home') {
         $productModel = new ProductModel($pdo);

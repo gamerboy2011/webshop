@@ -40,6 +40,13 @@ if (!empty($parts[0])) {
     switch ($parts[0]) {
 
         /* ============================
+           ADMIN PANEL (rejtett)
+        ============================ */
+        case 'yw-admin':
+            require __DIR__ . '/admin.php';
+            exit;
+
+        /* ============================
            AUTH
         ============================ */
         case 'login':
