@@ -6,7 +6,7 @@
     <title>Admin - Yoursy Wear</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://maxst.icons8.com/vue-static/landings/line-awesome/line-awesome/1.3.0/css/line-awesome.min.css">
-    <link rel="icon" href="/webshop/favicon.svg">
+    <link rel="icon" type="image/svg+xml" href="/webshop/favicon.svg">
 </head>
 <body class="bg-gray-100">
     <div class="flex min-h-screen">
