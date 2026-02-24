@@ -93,6 +93,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: /webshop/yw-admin/users');
             exit;
 
+        case 'delete_user':
+            $admin->requireAdmin();
+            $admin->deleteUser((int)$_POST['user_id']);
+            header('Location: /webshop/yw-admin/users?deleted=1');
+            exit;
+
+        case 'activate_user':
+            $admin->requireAdmin();
+            $admin->activateUser((int)$_POST['user_id']);
+            header('Location: /webshop/yw-admin/users?activated=1');
+            exit;
+
         case 'update_stock':
             $admin->requireAdmin();
             if (!empty($_POST['stock'])) {

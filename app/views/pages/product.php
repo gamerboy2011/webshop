@@ -383,4 +383,14 @@ document.querySelector('.favorite-btn')?.addEventListener('click', function() {
     const productId = this.dataset.product;
     toggleWishlist(parseInt(productId));
 });
+
+/* ===== MAGYAR VALIDÁCIÓS ÜZENET ===== */
+document.querySelectorAll('input[name="size_id"]').forEach(input => {
+    input.addEventListener('invalid', function() {
+        this.setCustomValidity('Kérlek válassz méretet!');
+    });
+    input.addEventListener('change', function() {
+        this.setCustomValidity('');
+    });
+});
 </script>

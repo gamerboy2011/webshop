@@ -144,8 +144,8 @@ $colorCodes = [
         <?php if ($activeFilters['min_price'] || $activeFilters['max_price']): ?>
             <a href="<?= buildFilterUrl($baseUrl, $activeFilters, 'price') ?>" 
                class="inline-flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-200 transition">
-                <?= number_format($activeFilters['min_price'] ?? $filterOptions['price_min'], 0, ',', ' ') ?> - 
-                <?= number_format($activeFilters['max_price'] ?? $filterOptions['price_max'], 0, ',', ' ') ?> Ft
+            <?= number_format((float)($activeFilters['min_price'] ?: $filterOptions['price_min']), 0, ',', ' ') ?> - 
+                <?= number_format((float)($activeFilters['max_price'] ?: $filterOptions['price_max']), 0, ',', ' ') ?> Ft
                 <i class="las la-times"></i>
             </a>
         <?php endif; ?>

@@ -1,248 +1,437 @@
 <?php
-// ====== BELÉPÉS ELLENŐRZÉS ======
-if (!isset($_SESSION['user_id'])) {
-    header("Location: index.php?page=login");
+// Bejelentkezés ellenőrzése
+if (empty($_SESSION['user_id'])) {
+    header('Location: /webshop/login?redirect=checkout');
     exit;
 }
 
-require_once __DIR__ . "/../../config/database.php";
-
-// Ezeket a controller adja
-// $items  → kosár tételek
-// $total  → végösszeg
-
-$userId = $_SESSION['user_id'];
-$error = "";
-$success = "";
-
-// ====== REGEXEK ======
-$regexCountry  = "/^[A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű ]{2,50}$/u";
-$regexCity     = "/^[A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű \\-]{2,50}$/u";
-$regexPostcode = "/^[0-9]{4,6}$/";
-$regexStreet   = "/^[A-Za-zÁÉÍÓÖŐÚÜŰáéíóöőúüű0-9 .\\-\\/]{3,100}$/u";
-$regexPhone    = "/^\\+[0-9]{9,15}$/";
-
-// ====== PROFIL ADATOK ELŐTÖLTÉS ======
-$stmt = $pdo->prepare("
-    SELECT
-        billing_country,
-        billing_city,
-        billing_postcode,
-        billing_street,
-        shipping_country,
-        shipping_city,
-        shipping_postcode,
-        shipping_street,
-        phone
-    FROM users
-    WHERE user_id = ?
-");
-$stmt->execute([$userId]);
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-// alapértékek
-$billingCountry  = $user['billing_country']  ?? '';
-$billingCity     = $user['billing_city']     ?? '';
-$billingPostcode = $user['billing_postcode'] ?? '';
-$billingStreet   = $user['billing_street']   ?? '';
-
-$shippingCountry  = $user['shipping_country']  ?? '';
-$shippingCity     = $user['shipping_city']     ?? '';
-$shippingPostcode = $user['shipping_postcode'] ?? '';
-$shippingStreet   = $user['shipping_street']   ?? '';
-
-$phone = $user['phone'] ?? '';
-
-// ====== POST KEZELÉS ======
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-    $deliveryMethod = $_POST['delivery_method_id'] ?? '1';
-
-    // számlázási cím
-    $billingCountry  = trim($_POST['billing_country'] ?? '');
-    $billingCity     = trim($_POST['billing_city'] ?? '');
-    $billingPostcode = trim($_POST['billing_postcode'] ?? '');
-    $billingStreet   = trim($_POST['billing_street'] ?? '');
-
-    // cím egyezés
-    $sameAddress = isset($_POST['same_address']);
-
-    if ($sameAddress) {
-        $shippingCountry  = $billingCountry;
-        $shippingCity     = $billingCity;
-        $shippingPostcode = $billingPostcode;
-        $shippingStreet   = $billingStreet;
-    } else {
-        $shippingCountry  = trim($_POST['shipping_country'] ?? '');
-        $shippingCity     = trim($_POST['shipping_city'] ?? '');
-        $shippingPostcode = trim($_POST['shipping_postcode'] ?? '');
-        $shippingStreet   = trim($_POST['shipping_street'] ?? '');
-    }
-
-    $phone = trim($_POST['phone'] ?? '');
-
-    // ====== VALIDÁCIÓ ======
-    if (
-        !preg_match($regexCountry, $billingCountry) ||
-        !preg_match($regexCity, $billingCity) ||
-        !preg_match($regexPostcode, $billingPostcode) ||
-        !preg_match($regexStreet, $billingStreet) ||
-        !preg_match($regexPhone, $phone)
-    ) {
-        $error = "Hibás számlázási cím vagy telefonszám.";
-    }
-
-    if ($deliveryMethod === '1' && !$error) {
-        if (
-            !preg_match($regexCountry, $shippingCountry) ||
-            !preg_match($regexCity, $shippingCity) ||
-            !preg_match($regexPostcode, $shippingPostcode) ||
-            !preg_match($regexStreet, $shippingStreet)
-        ) {
-            $error = "Hibás szállítási cím.";
-        }
-    }
-
-    if (!$error) {
-        $success = "Adatok ellenőrizve, megrendelés feldolgozásra kész.";
-    }
+// Kosár ellenőrzése
+$cart = $_SESSION['cart'] ?? [];
+if (empty($cart)) {
+    header('Location: /webshop/kosar');
+    exit;
 }
+
+// Felhasználó adatai
+$stmt = $pdo->prepare("SELECT * FROM users WHERE user_id = ?");
+$stmt->execute([$_SESSION['user_id']]);
+$user = $stmt->fetch();
+
+// Kosár elemek betöltése
+$items = [];
+$subtotal = 0;
+
+foreach ($cart as $cartItem) {
+    $stmt = $pdo->prepare("
+        SELECT p.product_id, p.name, p.price,
+               (SELECT src FROM product_img WHERE product_id = p.product_id ORDER BY position LIMIT 1) AS image
+        FROM product p WHERE p.product_id = ?
+    ");
+    $stmt->execute([$cartItem['product_id']]);
+    $product = $stmt->fetch();
+    
+    if (!$product) continue;
+    
+    $stmt = $pdo->prepare("SELECT size_value FROM size WHERE size_id = ?");
+    $stmt->execute([$cartItem['size_id']]);
+    $sizeValue = $stmt->fetchColumn() ?: '-';
+    
+    $itemTotal = $product['price'] * $cartItem['quantity'];
+    $subtotal += $itemTotal;
+    
+    $items[] = [
+        'product_id' => $cartItem['product_id'],
+        'size_id' => $cartItem['size_id'],
+        'name' => $product['name'],
+        'price' => $product['price'],
+        'image' => $product['image'],
+        'size' => $sizeValue,
+        'quantity' => $cartItem['quantity'],
+        'total' => $itemTotal
+    ];
+}
+
+$shippingCost = $subtotal >= 15000 ? 0 : 1490;
+$total = $subtotal + $shippingCost;
 ?>
 
-<form method="post" action="index.php?page=checkout">
-
-<main class="max-w-7xl mx-auto px-4 lg:px-8 py-8">
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-<section class="lg:col-span-2 space-y-10">
-
-<?php if ($error): ?>
-<div class="bg-red-100 text-red-700 p-4 rounded-xl">
-<?= htmlspecialchars($error) ?>
+<div class="max-w-6xl mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-8">
+        <i class="las la-credit-card mr-2"></i>Pénztár
+    </h1>
+    
+    <form method="post" action="/webshop/index.php" id="checkoutForm">
+        <?= csrf_field() ?>
+        <input type="hidden" name="action" value="place_order">
+        
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- BAL OLDAL - ŰRLAP -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- SZÁLLÍTÁSI MÓD -->
+                <div class="bg-white border rounded-xl p-6">
+                    <h2 class="text-lg font-semibold mb-4">
+                        <i class="las la-truck mr-2 text-gray-500"></i>Szállítási mód
+                    </h2>
+                    
+                    <div class="space-y-3">
+                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-black transition delivery-option" data-type="delivery">
+                            <input type="radio" name="delivery_method_id" value="2" class="w-5 h-5 text-black" required>
+                            <div class="ml-4 flex-1">
+                                <span class="font-medium">Házhoz szállítás</span>
+                                <p class="text-sm text-gray-500">GLS futárszolgálat, 1-3 munkanap</p>
+                            </div>
+                            <span class="font-medium"><?= $subtotal >= 15000 ? 'Ingyenes' : '1 490 Ft' ?></span>
+                        </label>
+                        
+                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-black transition delivery-option" data-type="foxpost">
+                            <input type="radio" name="delivery_method_id" value="3" class="w-5 h-5 text-black">
+                            <div class="ml-4 flex-1">
+                                <span class="font-medium">FoxPost csomagautomata</span>
+                                <p class="text-sm text-gray-500">Válassz az 1400+ automata közül</p>
+                            </div>
+                            <span class="font-medium"><?= $subtotal >= 15000 ? 'Ingyenes' : '990 Ft' ?></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- HÁZHOZ SZÁLLÍTÁS ADATOK -->
+                <div id="deliveryFields" class="bg-white border rounded-xl p-6 hidden">
+                    <h2 class="text-lg font-semibold mb-4">
+                        <i class="las la-map-marker mr-2 text-gray-500"></i>Szállítási cím
+                    </h2>
+                    
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Név *</label>
+                            <input type="text" name="shipping_name" 
+                                   value="<?= htmlspecialchars($user['username'] ?? '') ?>"
+                                   class="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Telefonszám *</label>
+                            <input type="tel" name="shipping_phone" 
+                                   value="<?= htmlspecialchars($user['phone'] ?? '') ?>"
+                                   placeholder="+36 30 123 4567"
+                                   class="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Irányítószám *</label>
+                            <input type="text" name="shipping_postcode" 
+                                   value="<?= htmlspecialchars($user['shipping_postcode'] ?? '') ?>"
+                                   maxlength="4"
+                                   class="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Város *</label>
+                            <input type="text" name="shipping_city" 
+                                   value="<?= htmlspecialchars($user['shipping_city'] ?? '') ?>"
+                                   class="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Utca, házszám *</label>
+                            <input type="text" name="shipping_address" 
+                                   value="<?= htmlspecialchars(trim(($user['shipping_street_name'] ?? '') . ' ' . ($user['shipping_street_type'] ?? '') . ' ' . ($user['shipping_house_number'] ?? ''))) ?>"
+                                   placeholder="Példa utca 12. 3. em. 4. ajtó"
+                                   class="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- FOXPOST CSOMAGPONT VÁLASZTÓ -->
+                <div id="foxpostFields" class="bg-white border rounded-xl p-6 hidden">
+                    <h2 class="text-lg font-semibold mb-4">
+                        <i class="las la-box mr-2 text-gray-500"></i>FoxPost csomagautomata
+                    </h2>
+                    
+                    <!-- Kiválasztott pont megjelenítése -->
+                    <div id="selectedFoxpost" class="hidden mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <div class="flex items-start gap-3">
+                            <i class="las la-check-circle text-2xl text-green-500 mt-1"></i>
+                            <div>
+                                <p class="font-medium text-green-800" id="foxpostName"></p>
+                                <p class="text-sm text-green-600" id="foxpostAddress"></p>
+                            </div>
+                            <button type="button" onclick="changeFoxpost()" class="ml-auto text-sm text-green-700 hover:underline">Módosítás</button>
+                        </div>
+                    </div>
+                    
+                    <!-- FoxPost iframe -->
+                    <div id="foxpostIframe" class="rounded-lg overflow-hidden border">
+                        <iframe frameborder="0" loading="lazy" 
+                                src="https://cdn.foxpost.hu/apt-finder/v1/app/?desktop_height=450&tablet_width=600&tablet_height=350&mobile_width=400&mobile_height=350" 
+                                width="100%" height="450"></iframe>
+                    </div>
+                    
+                    <!-- Hidden mezők a FoxPost adatoknak -->
+                    <input type="hidden" name="foxpost_point_id" id="foxpost_point_id">
+                    <input type="hidden" name="foxpost_point_name" id="foxpost_point_name">
+                    <input type="hidden" name="foxpost_point_address" id="foxpost_point_address">
+                </div>
+                
+                <!-- FIZETÉSI MÓD -->
+                <div class="bg-white border rounded-xl p-6">
+                    <h2 class="text-lg font-semibold mb-4">
+                        <i class="las la-wallet mr-2 text-gray-500"></i>Fizetési mód
+                    </h2>
+                    
+                    <div class="space-y-3">
+                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-black transition">
+                            <input type="radio" name="payment_method_id" value="1" class="w-5 h-5 text-black" required>
+                            <div class="ml-4 flex-1">
+                                <span class="font-medium">Bankkártyás fizetés</span>
+                                <p class="text-sm text-gray-500">Visa, Mastercard, American Express</p>
+                            </div>
+                            <i class="lab la-cc-visa text-2xl text-gray-400 mr-2"></i>
+                            <i class="lab la-cc-mastercard text-2xl text-gray-400"></i>
+                        </label>
+                        
+                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-black transition">
+                            <input type="radio" name="payment_method_id" value="2" class="w-5 h-5 text-black">
+                            <div class="ml-4 flex-1">
+                                <span class="font-medium">Utánvét</span>
+                                <p class="text-sm text-gray-500">Fizetés a csomag átvételekor</p>
+                            </div>
+                            <span class="text-sm text-gray-500">+390 Ft</span>
+                        </label>
+                        
+                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-black transition">
+                            <input type="radio" name="payment_method_id" value="3" class="w-5 h-5 text-black">
+                            <div class="ml-4 flex-1">
+                                <span class="font-medium">Banki átutalás</span>
+                                <p class="text-sm text-gray-500">Előre utalás, gyorsabb feldolgozás</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- MEGJEGYZÉS -->
+                <div class="bg-white border rounded-xl p-6">
+                    <h2 class="text-lg font-semibold mb-4">
+                        <i class="las la-comment mr-2 text-gray-500"></i>Megjegyzés (opcionális)
+                    </h2>
+                    <textarea name="note" rows="3" 
+                              placeholder="Pl.: Kapucsengő kód, kézbesítési instrukciók..."
+                              class="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black resize-none"></textarea>
+                </div>
+            </div>
+            
+            <!-- JOBB OLDAL - ÖSSZESÍTŐ -->
+            <div class="lg:col-span-1">
+                <div class="bg-gray-50 rounded-xl p-6 sticky top-4">
+                    <h2 class="text-lg font-semibold mb-4">Rendelés összesítő</h2>
+                    
+                    <!-- TERMÉKEK -->
+                    <div class="space-y-3 mb-4 max-h-64 overflow-y-auto">
+                        <?php foreach ($items as $item): ?>
+                            <div class="flex gap-3">
+                                <?php if (!empty($item['image'])): ?>
+                                    <img src="/webshop/<?= htmlspecialchars($item['image']) ?>" 
+                                         alt="<?= htmlspecialchars($item['name']) ?>"
+                                         class="w-16 h-16 object-cover rounded-lg flex-shrink-0">
+                                <?php else: ?>
+                                    <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <i class="las la-image text-gray-400"></i>
+                                    </div>
+                                <?php endif; ?>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-medium text-sm truncate"><?= htmlspecialchars($item['name']) ?></p>
+                                    <p class="text-xs text-gray-500">Méret: <?= htmlspecialchars($item['size']) ?> × <?= $item['quantity'] ?></p>
+                                    <p class="text-sm font-medium"><?= number_format($item['total'], 0, ',', ' ') ?> Ft</p>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    
+                    <div class="border-t pt-4 space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Részösszeg:</span>
+                            <span><?= number_format($subtotal, 0, ',', ' ') ?> Ft</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Szállítás:</span>
+                            <span id="shippingCostDisplay"><?= $shippingCost === 0 ? 'Ingyenes' : number_format($shippingCost, 0, ',', ' ') . ' Ft' ?></span>
+                        </div>
+                        <div class="flex justify-between text-sm" id="codFeeRow" style="display: none;">
+                            <span class="text-gray-600">Utánvét kezelési díj:</span>
+                            <span>390 Ft</span>
+                        </div>
+                    </div>
+                    
+                    <div class="border-t mt-4 pt-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-bold">Összesen:</span>
+                            <span class="text-2xl font-bold" id="totalDisplay"><?= number_format($total, 0, ',', ' ') ?> Ft</span>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" name="subtotal" value="<?= $subtotal ?>">
+                    
+                    <button type="submit" id="submitBtn"
+                            class="w-full mt-6 bg-black text-white py-4 rounded-lg font-medium text-lg hover:bg-gray-800 transition flex items-center justify-center gap-2">
+                        <i class="las la-lock"></i>
+                        Megrendelés elküldése
+                    </button>
+                    
+                    <p class="text-xs text-gray-500 text-center mt-4">
+                        A "Megrendelés elküldése" gombra kattintva elfogadod az 
+                        <a href="/webshop/aszf" class="underline">ÁSZF</a>-et és az 
+                        <a href="/webshop/adatvedelem" class="underline">Adatvédelmi tájékoztatót</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </form>
 </div>
-<?php endif; ?>
 
-<?php if ($success): ?>
-<div class="bg-green-100 text-green-700 p-4 rounded-xl">
-<?= htmlspecialchars($success) ?>
-</div>
-<?php endif; ?>
+<script>
+// Árak
+const subtotal = <?= $subtotal ?>;
+const freeShippingThreshold = 15000;
+const deliveryCost = subtotal >= freeShippingThreshold ? 0 : 1490;
+const foxpostCost = subtotal >= freeShippingThreshold ? 0 : 990;
+const codFee = 390;
 
-<!-- SZÁLLÍTÁSI MÓD -->
-<div class="border rounded-xl p-6 space-y-4">
-<h2 class="text-lg font-semibold">Szállítási mód</h2>
+let currentShippingCost = 0;
+let currentCodFee = 0;
 
-<label class="flex items-center gap-3">
-<input type="radio" name="delivery_method_id" value="1" checked>
-<span>Házhozszállítás</span>
-</label>
+// Szállítási mód váltás
+document.querySelectorAll('input[name="delivery_method_id"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const type = this.closest('.delivery-option').dataset.type;
+        
+        document.getElementById('deliveryFields').classList.toggle('hidden', type !== 'delivery');
+        document.getElementById('foxpostFields').classList.toggle('hidden', type !== 'foxpost');
+        
+        // Szállítási költség frissítése
+        if (type === 'delivery') {
+            currentShippingCost = deliveryCost;
+        } else if (type === 'foxpost') {
+            currentShippingCost = foxpostCost;
+        }
+        
+        updateTotal();
+        updateRequiredFields(type);
+    });
+});
 
-<label class="flex items-center gap-3">
-<input type="radio" name="delivery_method_id" value="2">
-<span>Csomagautomata</span>
-</label>
-</div>
+// Fizetési mód váltás (utánvét díj)
+document.querySelectorAll('input[name="payment_method_id"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        currentCodFee = this.value === '2' ? codFee : 0;
+        document.getElementById('codFeeRow').style.display = currentCodFee > 0 ? 'flex' : 'none';
+        updateTotal();
+    });
+});
 
-<!-- SZÁMLÁZÁSI CÍM -->
-<div class="border rounded-xl p-6 space-y-4">
-<h2 class="text-lg font-semibold">Számlázási cím</h2>
+function updateTotal() {
+    const total = subtotal + currentShippingCost + currentCodFee;
+    document.getElementById('totalDisplay').textContent = new Intl.NumberFormat('hu-HU').format(total) + ' Ft';
+    document.getElementById('shippingCostDisplay').textContent = currentShippingCost === 0 ? 'Ingyenes' : new Intl.NumberFormat('hu-HU').format(currentShippingCost) + ' Ft';
+}
 
-<input name="billing_country" class="w-full border rounded p-3"
-placeholder="Ország" required value="<?= htmlspecialchars($billingCountry) ?>">
+function updateRequiredFields(type) {
+    // Házhoz szállítás mezők required kezelése
+    const deliveryInputs = document.querySelectorAll('#deliveryFields input');
+    deliveryInputs.forEach(input => {
+        input.required = (type === 'delivery');
+    });
+}
 
-<input name="billing_city" class="w-full border rounded p-3"
-placeholder="Város" required value="<?= htmlspecialchars($billingCity) ?>">
+// FoxPost pont választás
+window.addEventListener('message', function(event) {
+    // FoxPost iframe üzenet
+    if (event.data && typeof event.data === 'string') {
+        try {
+            const apt = JSON.parse(event.data);
+            if (apt.operator_id && apt.name) {
+                document.getElementById('foxpost_point_id').value = apt.operator_id;
+                document.getElementById('foxpost_point_name').value = apt.name;
+                document.getElementById('foxpost_point_address').value = apt.address;
+                
+                document.getElementById('foxpostName').textContent = apt.name;
+                document.getElementById('foxpostAddress').textContent = apt.address;
+                
+                document.getElementById('selectedFoxpost').classList.remove('hidden');
+                document.getElementById('foxpostIframe').classList.add('hidden');
+            }
+        } catch (e) {
+            // Nem JSON üzenet, ignoráljuk
+        }
+    }
+}, false);
 
-<input name="billing_postcode" class="w-full border rounded p-3"
-placeholder="Irányítószám" pattern="[0-9]{4,6}" required
-value="<?= htmlspecialchars($billingPostcode) ?>">
+function changeFoxpost() {
+    document.getElementById('selectedFoxpost').classList.add('hidden');
+    document.getElementById('foxpostIframe').classList.remove('hidden');
+    document.getElementById('foxpost_point_id').value = '';
+    document.getElementById('foxpost_point_name').value = '';
+    document.getElementById('foxpost_point_address').value = '';
+}
 
-<input name="billing_street" class="w-full border rounded p-3"
-placeholder="Utca, házszám" required value="<?= htmlspecialchars($billingStreet) ?>">
-</div>
+// Irányítószám - város automatikus kitöltés
+const postcodeInput = document.querySelector('input[name="shipping_postcode"]');
+const cityInput = document.querySelector('input[name="shipping_city"]');
 
-<!-- SZÁLLÍTÁSI CÍM -->
-<div class="border rounded-xl p-6 space-y-4">
-<h2 class="text-lg font-semibold">Szállítási cím</h2>
+if (postcodeInput) {
+    postcodeInput.addEventListener('input', async function() {
+        const zip = this.value.replace(/\D/g, '');
+        if (zip.length === 4) {
+            try {
+                const res = await fetch('/webshop/api/postal.php?zip=' + zip);
+                const data = await res.json();
+                if (data.city && cityInput) {
+                    cityInput.value = data.city;
+                }
+            } catch (e) {}
+        }
+    });
+}
 
-<label class="flex items-center gap-2 text-sm">
-<input type="checkbox" name="same_address" checked>
-Megegyezik a számlázási címmel
-</label>
+if (cityInput) {
+    let cityTimeout;
+    cityInput.addEventListener('input', function() {
+        clearTimeout(cityTimeout);
+        const city = this.value.trim();
+        if (city.length >= 3) {
+            cityTimeout = setTimeout(async () => {
+                try {
+                    const res = await fetch('/webshop/api/postal.php?city=' + encodeURIComponent(city));
+                    const data = await res.json();
+                    if (data.zip && postcodeInput && !postcodeInput.value) {
+                        postcodeInput.value = data.zip;
+                    }
+                } catch (e) {}
+            }, 500);
+        }
+    });
+}
 
-<div class="space-y-3">
-<input name="shipping_country" class="w-full border rounded p-3"
-placeholder="Ország" value="<?= htmlspecialchars($shippingCountry) ?>">
-
-<input name="shipping_city" class="w-full border rounded p-3"
-placeholder="Város" value="<?= htmlspecialchars($shippingCity) ?>">
-
-<input name="shipping_postcode" class="w-full border rounded p-3"
-placeholder="Irányítószám" pattern="[0-9]{4,6}"
-value="<?= htmlspecialchars($shippingPostcode) ?>">
-
-<input name="shipping_street" class="w-full border rounded p-3"
-placeholder="Utca, házszám" value="<?= htmlspecialchars($shippingStreet) ?>">
-</div>
-</div>
-
-<!-- KAPCSOLAT -->
-<div class="border rounded-xl p-6 space-y-4">
-<h2 class="text-lg font-semibold">Kapcsolat</h2>
-
-<input name="phone" class="w-full border rounded p-3"
-placeholder="+36301234567" required value="<?= htmlspecialchars($phone) ?>">
-</div>
-
-<label class="flex gap-2 text-sm">
-<input type="checkbox" required>
-Elfogadom az ÁSZF-et és az adatkezelési tájékoztatót
-</label>
-
-</section>
-
-<aside class="border rounded-xl p-6 space-y-6 sticky top-24">
-<h3 class="text-lg font-semibold">Rendelési összegzés</h3>
-
-<?php foreach ($items as $item): ?>
-<div class="flex gap-4">
-<img src="/uploads/<?= htmlspecialchars($item['image']) ?>"
-class="w-20 h-24 object-cover rounded" alt="">
-<div class="text-sm flex-1">
-<div class="font-medium"><?= htmlspecialchars($item['name']) ?></div>
-<div class="text-gray-500">
-Méret: <?= htmlspecialchars($item['size']) ?> ·
-Mennyiség: <?= (int)$item['quantity'] ?>
-</div>
-<div class="font-semibold mt-1">
-<?= number_format($item['line_total'], 0, ',', ' ') ?> Ft
-</div>
-</div>
-</div>
-<?php endforeach; ?>
-
-<div class="border-t pt-4 space-y-2 text-sm">
-<div class="flex justify-between">
-<span>Rendelési érték</span>
-<span><?= number_format($total, 0, ',', ' ') ?> Ft</span>
-</div>
-<div class="flex justify-between">
-<span>Szállítás</span>
-<span>Ingyenes</span>
-</div>
-</div>
-
-<div class="flex justify-between font-bold text-lg pt-4 border-t">
-<span>Fizetendő</span>
-<span><?= number_format($total, 0, ',', ' ') ?> Ft</span>
-</div>
-
-<button class="w-full bg-black text-white py-4 rounded-xl font-semibold">
-Megrendelés leadása
-</button>
-
-</aside>
-
-</div>
-</main>
-</form>
+// Form validáció
+document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+    const deliveryMethod = document.querySelector('input[name="delivery_method_id"]:checked');
+    
+    if (!deliveryMethod) {
+        e.preventDefault();
+        alert('Kérlek válassz szállítási módot!');
+        return;
+    }
+    
+    // FoxPost ellenőrzés
+    if (deliveryMethod.value === '3') {
+        const foxpostId = document.getElementById('foxpost_point_id').value;
+        if (!foxpostId) {
+            e.preventDefault();
+            alert('Kérlek válassz FoxPost csomagautomatát!');
+            return;
+        }
+    }
+    
+    const paymentMethod = document.querySelector('input[name="payment_method_id"]:checked');
+    if (!paymentMethod) {
+        e.preventDefault();
+        alert('Kérlek válassz fizetési módot!');
+        return;
+    }
+});
+</script>

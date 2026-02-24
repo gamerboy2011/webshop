@@ -74,10 +74,10 @@ function closeLoginModal() {
             <div>
                 <h4 class="text-white font-medium mb-4">Shop</h4>
                 <ul class="space-y-2 text-sm">
-                    <li><a href="?gender=female" class="hover:text-white">Női</a></li>
-                    <li><a href="?gender=male" class="hover:text-white">Férfi</a></li>
-                    <li><a href="?page=sale" class="hover:text-white">Akciók</a></li>
-                    <li><a href="?page=new" class="hover:text-white">Újdonságok</a></li>
+                    <li><a href="/webshop/noi" class="hover:text-white">Női</a></li>
+                    <li><a href="/webshop/ferfi" class="hover:text-white">Férfi</a></li>
+                    <li><a href="/webshop/akcio" class="hover:text-white">Akciók</a></li>
+                    <li><a href="/webshop/ujdonsagok" class="hover:text-white">Újdonságok</a></li>
                 </ul>
             </div>
 
@@ -85,10 +85,10 @@ function closeLoginModal() {
             <div>
                 <h4 class="text-white font-medium mb-4">Információ</h4>
                 <ul class="space-y-2 text-sm">
-                    <li><a href="index.php?page=contact">Kapcsolat</a></li>
-                    <li><a href="index.php?page=shipping">Szállítás/Visszaküldés</a></li>
-                    <li><a href="index.php?page=aszf">ÁSZF</a></li>
-                   <li><a href="index.php?page=privacy">Adatvédelem</a></li>
+                    <li><a href="/webshop/kapcsolat" class="hover:text-white">Kapcsolat</a></li>
+                    <li><a href="/webshop/szallitas" class="hover:text-white">Szállítás/Visszaküldés</a></li>
+                    <li><a href="/webshop/aszf" class="hover:text-white">ÁSZF</a></li>
+                    <li><a href="/webshop/adatvedelem" class="hover:text-white">Adatvédelem</a></li>
                 </ul>
             </div>
 

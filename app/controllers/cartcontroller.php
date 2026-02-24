@@ -135,4 +135,11 @@ class CartController
         header('Location: /webshop/kosar');
         exit;
     }
+
+    public function clear(): void
+    {
+        $_SESSION['cart'] = [];
+        header('Location: /webshop/kosar');
+        exit;
+    }
 }

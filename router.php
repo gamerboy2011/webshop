@@ -57,6 +57,10 @@ if (!empty($parts[0])) {
             $page = 'register';
             break;
 
+        case 'email-elkuldve':
+            $page = 'email-sent';
+            break;
+
         case 'logout':
             $page = 'logout';
             break;
@@ -70,6 +74,10 @@ if (!empty($parts[0])) {
 
         case 'checkout':
             $page = 'checkout';
+            break;
+
+        case 'rendeles-sikeres':
+            $page = 'order-success';
             break;
 
         /* ============================
@@ -88,6 +96,22 @@ if (!empty($parts[0])) {
 
         case 'ujdonsagok':
             $page = 'new';
+            break;
+
+        case 'kapcsolat':
+            $page = 'contact';
+            break;
+
+        case 'szallitas':
+            $page = 'shipping';
+            break;
+
+        case 'aszf':
+            $page = 'aszf';
+            break;
+
+        case 'adatvedelem':
+            $page = 'privacy';
             break;
 
         /* ============================

@@ -75,8 +75,12 @@ class AdminController
         $stmt = $this->pdo->prepare("
             SELECT o.*, u.username, u.email,
                    o.created_at AS order_date,
+                   o.shipping_name, o.shipping_phone, o.shipping_postcode, 
+                   o.shipping_city, o.shipping_address,
+                   o.foxpost_point_id, o.foxpost_point_name, o.foxpost_point_address,
+                   o.status,
                    (
-                       SELECT SUM(p.price * oi.quantity) 
+                       SELECT COALESCE(SUM(p.price * oi.quantity), 0)
                        FROM order_item oi 
                        JOIN stock s ON oi.stock_id = s.stock_id
                        JOIN product p ON s.product_id = p.product_id
@@ -235,6 +239,34 @@ class AdminController
     {
         $stmt = $this->pdo->prepare("UPDATE users SET role_id = ? WHERE user_id = ?");
         return $stmt->execute([$roleId, $userId]);
+    }
+
+    /**
+     * Felhasználó törlése
+     */
+    public function deleteUser(int $userId): bool
+    {
+        // Ne törölhesse önmagát
+        if ($userId == $_SESSION['user_id']) {
+            return false;
+        }
+        
+        // Kedvencek törlése
+        $stmt = $this->pdo->prepare("DELETE FROM favorites WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        
+        // Felhasználó törlése
+        $stmt = $this->pdo->prepare("DELETE FROM users WHERE user_id = ?");
+        return $stmt->execute([$userId]);
+    }
+    
+    /**
+     * Felhasználó aktiválása
+     */
+    public function activateUser(int $userId): bool
+    {
+        $stmt = $this->pdo->prepare("UPDATE users SET is_active = 1, activation_token = NULL WHERE user_id = ?");
+        return $stmt->execute([$userId]);
     }
 
     /**

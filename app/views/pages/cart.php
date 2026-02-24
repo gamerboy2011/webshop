@@ -133,8 +133,17 @@ foreach ($cart as $cartItem) {
             <?php endforeach; ?>
         </div>
 
+        <!-- KOSÁR KIÜRÍTÉSE GOMB -->
+        <div class="mt-6 flex justify-end">
+            <button type="button" onclick="showClearCartModal()"
+                    class="text-red-500 hover:text-red-700 text-sm font-medium transition flex items-center gap-2">
+                <i class="las la-trash-alt"></i>
+                Kosár kiürítése
+            </button>
+        </div>
+
         <!-- ÖSSZEGZÉS -->
-        <div class="mt-8 bg-gray-50 rounded-lg p-6">
+        <div class="mt-4 bg-gray-50 rounded-lg p-6">
             <div class="flex justify-between items-center mb-4">
                 <span class="text-gray-600">Részösszeg:</span>
                 <span class="font-medium"><?= number_format($total, 0, ',', ' ') ?> Ft</span>
@@ -165,3 +174,60 @@ foreach ($cart as $cartItem) {
         </div>
     <?php endif; ?>
 </div>
+
+<!-- KOSÁR KIÜRÍTÉSE MODAL -->
+<div id="clearCartModal" class="fixed inset-0 z-[200] hidden">
+    <div class="absolute inset-0 bg-black/50" onclick="closeClearCartModal()"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center transform scale-95 opacity-0 transition-all duration-300" id="clearCartModalContent">
+            <!-- Figyelmeztető ikon -->
+            <div class="w-20 h-20 mx-auto mb-6 bg-red-100 rounded-full flex items-center justify-center">
+                <i class="las la-exclamation-triangle text-5xl text-red-500"></i>
+            </div>
+            
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Kosár kiürítése</h3>
+            <p class="text-gray-500 mb-6">
+                Biztosan ki szeretnéd üríteni a kosarad? Ez a művelet nem vonható vissza.
+            </p>
+            
+            <div class="flex gap-3">
+                <button onclick="closeClearCartModal()" 
+                        class="flex-1 border border-gray-300 py-3 px-6 rounded-lg font-medium text-gray-600 hover:bg-gray-50 transition">
+                    Mégsem
+                </button>
+                <form method="post" action="/webshop/index.php" class="flex-1">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="action" value="cart_clear">
+                    <button type="submit" 
+                            class="w-full bg-red-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-red-600 transition">
+                        Kiürítés
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showClearCartModal() {
+    const modal = document.getElementById('clearCartModal');
+    const content = document.getElementById('clearCartModalContent');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => {
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+    }, 10);
+}
+
+function closeClearCartModal() {
+    const modal = document.getElementById('clearCartModal');
+    const content = document.getElementById('clearCartModalContent');
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }, 300);
+}
+</script>

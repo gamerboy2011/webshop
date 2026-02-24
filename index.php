@@ -97,7 +97,7 @@ $hideHero = false;
 
 // Ha bejelentkezési vagy regisztrációs oldalon vagyunk, elrejtjük
 $currentPage = $_GET['page'] ?? 'home';
-if (in_array($currentPage, ['login', 'register', 'cart', 'checkout', 'profile', 'logout'])) {
+if (in_array($currentPage, ['login', 'register', 'cart', 'checkout', 'profile', 'logout', 'order-success', 'email-sent'])) {
     $hideHero = true;
 }
 
@@ -126,6 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         case 'cart_add':
         case 'cart_update':
         case 'cart_remove':
+        case 'cart_clear':
             if (class_exists('CartController')) {
                 $controller = new CartController();
                 if ($action === 'cart_add' && method_exists($controller, 'add')) {
@@ -134,6 +135,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $controller->update();
                 } elseif ($action === 'cart_remove' && method_exists($controller, 'remove')) {
                     $controller->remove();
+                } elseif ($action === 'cart_clear' && method_exists($controller, 'clear')) {
+                    $controller->clear();
                 }
             }
             exit;
@@ -143,6 +146,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 (new OrderController())->checkout();
             }
             exit;
+            
+        case 'place_order':
+            if (class_exists('OrderController')) {
+                (new OrderController())->placeOrder();
+            }
+            exit;
+            
+        case 'profile_save':
+            // Profile mentés - továbbengedjük, a profile.php kezeli
+            break;
             
         case 'logout':
             // Kijelentkezés POST kérésként

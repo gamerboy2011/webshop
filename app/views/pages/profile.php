@@ -241,7 +241,9 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
                 </div>
             <?php endif; ?>
 
-            <form method="post" class="space-y-10">
+            <form method="post" action="/webshop/profil?section=security" class="space-y-10">
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="profile_save">
 
                 <!-- SZÁLLÍTÁSI CÍM -->
                 <div>

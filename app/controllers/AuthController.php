@@ -116,47 +116,72 @@ class AuthController
         ]);
 
         if ($success) {
-
-            // 🔵 FEJLESZTŐI MÓD – Tailwind-es aktivációs oldal
             $activationLink = "http://{$_SERVER['HTTP_HOST']}/webshop/activate?token=$token";
-
-            echo "
-<!DOCTYPE html>
-<html lang='hu'>
-<head>
-    <meta charset='UTF-8'>
-    <title>Fejlesztői aktiváció</title>
-    <script src='https://cdn.tailwindcss.com'></script>
-</head>
-
-<body class='bg-gray-100 flex items-center justify-center min-h-screen'>
-
-    <div class='bg-white shadow-lg rounded-xl p-10 text-center max-w-lg mx-auto'>
-        
-        <h2 class='text-2xl font-semibold text-gray-900 mb-4'>
-            Fejlesztői aktivációs link
-        </h2>
-
-        <p class='text-gray-600 mb-6'>
-            E-mail szerver hiányában itt tudod aktiválni a fiókot:
-        </p>
-
-        <a href='$activationLink'
-           class='inline-block bg-black text-white px-6 py-3 rounded-lg text-lg font-medium hover:bg-gray-800 transition'>
-            Aktiválás megnyitása
-        </a>
-
-        <p class='text-sm text-gray-400 mt-6'>
-            <b>Megjegyzés:</b> éles szerveren ez a rész automatikusan el lesz távolítva.
-        </p>
-    </div>
-
-</body>
-</html>
-";
-            exit;
+            
+            // Email küldése
+            $emailSent = $this->sendActivationEmail($email, $fullName, $activationLink);
+            
+            // Session-be mentjük az adatokat az email-sent oldalhoz
+            $_SESSION['registration_email'] = $email;
+            $_SESSION['registration_name'] = $fullName;
+            
+            // Fejlesztői mód: ha nincs email szerver, mentjük az aktivációs linket is
+            if (!$emailSent) {
+                $_SESSION['dev_activation_link'] = $activationLink;
+            }
+            
+            redirect('/email-elkuldve');
         } else {
             redirect('/register?error=database');
         }
+    }
+    
+    private function sendActivationEmail(string $email, string $name, string $activationLink): bool
+    {
+        $subject = "YoursyWear - Fiók aktiválás";
+        
+        $htmlBody = "
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset='UTF-8'></head>
+        <body style='font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px;'>
+            <div style='max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden;'>
+                <div style='background: #000; color: white; padding: 30px; text-align: center;'>
+                    <h1 style='margin: 0;'>YoursyWear</h1>
+                </div>
+                
+                <div style='padding: 30px;'>
+                    <h2 style='color: #333;'>Üdvözöljük, {$name}!</h2>
+                    <p style='color: #666;'>Köszönjük, hogy regisztráltál a YoursyWear webshopban!</p>
+                    <p style='color: #666;'>A fiókod aktiválásához kattints az alábbi gombra:</p>
+                    
+                    <div style='text-align: center; margin: 30px 0;'>
+                        <a href='{$activationLink}' 
+                           style='display: inline-block; background: #000; color: white; padding: 15px 30px; 
+                                  text-decoration: none; border-radius: 8px; font-weight: bold;'>
+                            Fiók aktiválása
+                        </a>
+                    </div>
+                    
+                    <p style='color: #999; font-size: 14px;'>
+                        Ha nem te regisztráltál, hagyd figyelmen kívül ezt az emailt.
+                    </p>
+                    
+                    <p style='color: #999; font-size: 12px; margin-top: 20px;'>
+                        Ha a gomb nem működik, másold be ezt a linket a böngésződbe:<br>
+                        <a href='{$activationLink}' style='color: #666;'>{$activationLink}</a>
+                    </p>
+                </div>
+                
+                <div style='background: #f5f5f5; padding: 20px; text-align: center; font-size: 12px; color: #999;'>
+                    © " . date('Y') . " YoursyWear. Minden jog fenntartva.
+                </div>
+            </div>
+        </body>
+        </html>";
+        
+        require_once __DIR__ . '/../helpers/Mail.php';
+        $result = Mail::send($email, $subject, $htmlBody, $name);
+        return $result['success'];
     }
 }
