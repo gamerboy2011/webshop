@@ -182,75 +182,149 @@ class OrderController
     ): bool {
         $subject = "YoursyWear - Rendelés visszaigazolás #$orderId";
         
-        // Szállítási mód szöveg
-        $deliveryText = $deliveryMethodId == 3 ? 'FoxPost csomagautomata' : 'Házhoz szállítás';
+        // Szállítási mód és költség
+        $deliveryText = $deliveryMethodId == 3 ? 'FoxPost csomagautomata' : 'Házhoz szállítás (GLS)';
+        $shippingCost = $total >= 15000 ? 0 : ($deliveryMethodId == 3 ? 890 : 1490);
+        $grandTotal = $total + $shippingCost;
+        
+        // Számla szám generálás
+        $invoiceNumber = 'YW-' . date('Y') . '-' . str_pad($orderId, 6, '0', STR_PAD_LEFT);
+        $invoiceDate = date('Y. m. d.');
         
         // Termékek HTML
         $itemsHtml = '';
         foreach ($items as $item) {
+            $unitPrice = number_format($item['price'], 0, ',', ' ');
+            $lineTotal = number_format($item['total'], 0, ',', ' ');
             $itemsHtml .= "
                 <tr>
-                    <td style='padding: 10px; border-bottom: 1px solid #eee;'>{$item['name']}</td>
-                    <td style='padding: 10px; border-bottom: 1px solid #eee; text-align: center;'>{$item['size']}</td>
-                    <td style='padding: 10px; border-bottom: 1px solid #eee; text-align: center;'>{$item['quantity']} db</td>
-                    <td style='padding: 10px; border-bottom: 1px solid #eee; text-align: right;'>" . number_format($item['total'], 0, ',', ' ') . " Ft</td>
+                    <td style='padding: 12px 8px; border-bottom: 1px solid #e5e5e5;'>
+                        <strong>{$item['name']}</strong><br>
+                        <span style='color: #666; font-size: 12px;'>Méret: {$item['size']}</span>
+                    </td>
+                    <td style='padding: 12px 8px; border-bottom: 1px solid #e5e5e5; text-align: center;'>{$item['quantity']}</td>
+                    <td style='padding: 12px 8px; border-bottom: 1px solid #e5e5e5; text-align: right;'>{$unitPrice} Ft</td>
+                    <td style='padding: 12px 8px; border-bottom: 1px solid #e5e5e5; text-align: right;'>{$lineTotal} Ft</td>
                 </tr>";
         }
         
-        $totalFormatted = number_format($total, 0, ',', ' ');
+        $subtotalFormatted = number_format($total, 0, ',', ' ');
+        $shippingFormatted = $shippingCost == 0 ? 'INGYENES' : number_format($shippingCost, 0, ',', ' ') . ' Ft';
+        $grandTotalFormatted = number_format($grandTotal, 0, ',', ' ');
+        $nettoTotal = number_format(round($grandTotal / 1.27), 0, ',', ' ');
+        $vatAmount = number_format(round($grandTotal - ($grandTotal / 1.27)), 0, ',', ' ');
         
         $htmlBody = "
         <!DOCTYPE html>
         <html>
         <head><meta charset='UTF-8'></head>
-        <body style='font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px;'>
-            <div style='max-width: 600px; margin: 0 auto; background: white; border-radius: 10px; overflow: hidden;'>
-                <div style='background: #000; color: white; padding: 30px; text-align: center;'>
-                    <h1 style='margin: 0;'>YoursyWear</h1>
+        <body style='font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; margin: 0;'>
+            <div style='max-width: 650px; margin: 0 auto; background: white; border: 1px solid #ddd;'>
+                
+                <!-- FEJLÉC -->
+                <div style='background: #000; color: white; padding: 25px 30px;'>
+                    <table style='width: 100%;'>
+                        <tr>
+                            <td>
+                                <h1 style='margin: 0; font-size: 28px;'>YoursyWear</h1>
+                                <p style='margin: 5px 0 0 0; font-size: 12px; color: #ccc;'>www.yoursywear.hu</p>
+                            </td>
+                            <td style='text-align: right;'>
+                                <p style='margin: 0; font-size: 20px; font-weight: bold;'>SZÁMLA</p>
+                                <p style='margin: 5px 0 0 0; font-size: 14px; color: #ccc;'>{$invoiceNumber}</p>
+                            </td>
+                        </tr>
+                    </table>
                 </div>
                 
-                <div style='padding: 30px;'>
-                    <h2 style='color: #333;'>Kedves {$name}!</h2>
-                    <p style='color: #666;'>Köszönjük a rendelésed! Az alábbi rendelést rögzítettük:</p>
-                    
-                    <div style='background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;'>
-                        <p style='margin: 0; font-weight: bold;'>Rendelésszám: #{$orderId}</p>
-                    </div>
-                    
-                    <table style='width: 100%; border-collapse: collapse; margin: 20px 0;'>
+                <!-- ELŐFIZMETREŐ ÉS VEVŐ -->
+                <div style='padding: 25px 30px; border-bottom: 2px solid #eee;'>
+                    <table style='width: 100%;'>
+                        <tr>
+                            <td style='width: 50%; vertical-align: top;'>
+                                <p style='margin: 0 0 5px 0; font-size: 11px; color: #999; text-transform: uppercase;'>Eladó</p>
+                                <p style='margin: 0; font-weight: bold;'>YoursyWear Kft.</p>
+                                <p style='margin: 3px 0; color: #666; font-size: 13px;'>1234 Budapest, Példa utca 123.</p>
+                                <p style='margin: 3px 0; color: #666; font-size: 13px;'>Adószám: 12345678-2-42</p>
+                            </td>
+                            <td style='width: 50%; vertical-align: top; text-align: right;'>
+                                <p style='margin: 0 0 5px 0; font-size: 11px; color: #999; text-transform: uppercase;'>Vevő</p>
+                                <p style='margin: 0; font-weight: bold;'>{$name}</p>
+                                <p style='margin: 3px 0; color: #666; font-size: 13px;'>{$email}</p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <!-- DÁTUMOK -->
+                <div style='padding: 15px 30px; background: #fafafa; border-bottom: 1px solid #eee;'>
+                    <table style='width: 100%; font-size: 13px;'>
+                        <tr>
+                            <td><strong>Számla kelte:</strong> {$invoiceDate}</td>
+                            <td style='text-align: center;'><strong>Fizetési mód:</strong> Online</td>
+                            <td style='text-align: right;'><strong>Rendelésszám:</strong> #{$orderId}</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <!-- TÉTELEK -->
+                <div style='padding: 20px 30px;'>
+                    <table style='width: 100%; border-collapse: collapse;'>
                         <thead>
                             <tr style='background: #f5f5f5;'>
-                                <th style='padding: 10px; text-align: left;'>Termék</th>
-                                <th style='padding: 10px; text-align: center;'>Méret</th>
-                                <th style='padding: 10px; text-align: center;'>Mennyiség</th>
-                                <th style='padding: 10px; text-align: right;'>Ár</th>
+                                <th style='padding: 12px 8px; text-align: left; font-size: 12px; color: #666; text-transform: uppercase;'>Termék</th>
+                                <th style='padding: 12px 8px; text-align: center; font-size: 12px; color: #666; text-transform: uppercase;'>Menny.</th>
+                                <th style='padding: 12px 8px; text-align: right; font-size: 12px; color: #666; text-transform: uppercase;'>Egységár</th>
+                                <th style='padding: 12px 8px; text-align: right; font-size: 12px; color: #666; text-transform: uppercase;'>Összeg</th>
                             </tr>
                         </thead>
                         <tbody>
                             {$itemsHtml}
                         </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colspan='3' style='padding: 15px; font-weight: bold; text-align: right;'>Összesen:</td>
-                                <td style='padding: 15px; font-weight: bold; text-align: right; font-size: 18px;'>{$totalFormatted} Ft</td>
-                            </tr>
-                        </tfoot>
                     </table>
-                    
-                    <div style='background: #f0f7ff; padding: 15px; border-radius: 8px; margin: 20px 0;'>
-                        <p style='margin: 0 0 5px 0; font-weight: bold;'>Szállítási mód:</p>
-                        <p style='margin: 0; color: #666;'>{$deliveryText}</p>
-                        <p style='margin: 5px 0 0 0; color: #666;'>{$deliveryAddress}</p>
-                    </div>
-                    
-                    <p style='color: #666; font-size: 14px;'>
-                        Ha kérdésed van, írj nekünk: <a href='mailto:info@yoursywear.hu'>info@yoursywear.hu</a>
-                    </p>
                 </div>
                 
-                <div style='background: #f5f5f5; padding: 20px; text-align: center; font-size: 12px; color: #999;'>
-                    © " . date('Y') . " YoursyWear. Minden jog fenntartva.
+                <!-- ÖSSZEGZÉS -->
+                <div style='padding: 20px 30px; background: #fafafa;'>
+                    <table style='width: 100%; font-size: 14px;'>
+                        <tr>
+                            <td style='padding: 5px 0;'>Részösszeg:</td>
+                            <td style='padding: 5px 0; text-align: right;'>{$subtotalFormatted} Ft</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 5px 0;'>Szállítási költség ({$deliveryText}):</td>
+                            <td style='padding: 5px 0; text-align: right;'>{$shippingFormatted}</td>
+                        </tr>
+                        <tr style='border-top: 2px solid #ddd;'>
+                            <td style='padding: 10px 0; font-size: 11px; color: #666;'>Nettó összeg:</td>
+                            <td style='padding: 10px 0; text-align: right; font-size: 11px; color: #666;'>{$nettoTotal} Ft</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 5px 0; font-size: 11px; color: #666;'>ÁFA (27%):</td>
+                            <td style='padding: 5px 0; text-align: right; font-size: 11px; color: #666;'>{$vatAmount} Ft</td>
+                        </tr>
+                        <tr style='border-top: 2px solid #000;'>
+                            <td style='padding: 15px 0; font-size: 18px; font-weight: bold;'>Fizetendő összeg:</td>
+                            <td style='padding: 15px 0; text-align: right; font-size: 22px; font-weight: bold;'>{$grandTotalFormatted} Ft</td>
+                        </tr>
+                    </table>
                 </div>
+                
+                <!-- SZÁLLÍTÁS -->
+                <div style='padding: 20px 30px; border-top: 1px solid #eee;'>
+                    <p style='margin: 0 0 10px 0; font-weight: bold; color: #333;'>
+                        <span style='color: #666;'>✉</span> Szállítási cím:
+                    </p>
+                    <p style='margin: 0; color: #666;'>{$deliveryAddress}</p>
+                </div>
+                
+                <!-- LÁBLÉC -->
+                <div style='padding: 20px 30px; background: #f5f5f5; text-align: center; font-size: 12px; color: #999;'>
+                    <p style='margin: 0 0 10px 0;'>Köszönjük a vásárlást!</p>
+                    <p style='margin: 0;'>Kérdés esetén: <a href='mailto:info@yoursywear.hu' style='color: #666;'>info@yoursywear.hu</a></p>
+                    <p style='margin: 10px 0 0 0; font-size: 10px;'>© " . date('Y') . " YoursyWear. Minden jog fenntartva.</p>
+                </div>
+                
             </div>
         </body>
         </html>";

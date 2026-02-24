@@ -16,6 +16,65 @@ if ($section === 'favorites') {
     $favorites = $favModel->getUserFavorites($userId);
 }
 
+/* ===== RENDELÉSEK BETÖLTÉSE ===== */
+$orders = [];
+if ($section === 'orders') {
+    $stmt = $pdo->prepare("
+        SELECT o.*, 
+               dm.name as delivery_method_name,
+               pm.name as payment_method_name
+        FROM orders o
+        LEFT JOIN delivery_method dm ON o.delivery_method_id = dm.delivery_method_id
+        LEFT JOIN payment_method pm ON o.payment_method_id = pm.payment_method_id
+        WHERE o.user_id = ?
+        ORDER BY o.created_at DESC
+    ");
+    $stmt->execute([$userId]);
+    $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Rendelés tételek betöltése
+    foreach ($orders as &$order) {
+        $stmt = $pdo->prepare("
+            SELECT oi.*, s.product_id, p.name as product_name, p.price, p.is_sale,
+                   sz.size_value,
+                   (SELECT pi.src FROM product_img pi WHERE pi.product_id = p.product_id ORDER BY pi.position LIMIT 1) as image
+            FROM order_item oi
+            JOIN stock s ON oi.stock_id = s.stock_id
+            JOIN product p ON s.product_id = p.product_id
+            LEFT JOIN size sz ON s.size_id = sz.size_id
+            WHERE oi.order_id = ?
+        ");
+        $stmt->execute([$order['order_id']]);
+        $order['items'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Összeg számítása
+        $order['total'] = 0;
+        foreach ($order['items'] as $item) {
+            $price = $item['is_sale'] ? ($item['price'] * 0.8) : $item['price']; // 20% kedvezmény
+            $order['total'] += $price * $item['quantity'];
+        }
+        
+        // Van-e már visszaküldés ehhez?
+        $stmt = $pdo->prepare("SELECT * FROM returns WHERE order_id = ? AND user_id = ?");
+        $stmt->execute([$order['order_id'], $userId]);
+        $order['return'] = $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+}
+
+/* ===== VISSZAKÜLDÉSEK BETÖLTÉSE ===== */
+$returns = [];
+if ($section === 'returns') {
+    $stmt = $pdo->prepare("
+        SELECT r.*, o.created_at as order_date
+        FROM returns r
+        JOIN orders o ON r.order_id = o.order_id
+        WHERE r.user_id = ?
+        ORDER BY r.created_at DESC
+    ");
+    $stmt->execute([$userId]);
+    $returns = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 $success = "";
 $error   = "";
 
@@ -212,7 +271,7 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
                                                 <?= number_format($product['price'], 0, ',', ' ') ?> Ft
                                             </span>
                                             <span class="text-red-600 font-bold text-sm">
-                                                <?= number_format($product['sale_price'], 0, ',', ' ') ?> Ft
+                                                <?= number_format($product['price'] * 0.8, 0, ',', ' ') ?> Ft
                                             </span>
                                         </div>
                                     <?php else: ?>
@@ -229,6 +288,175 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
                 <p class="text-center text-gray-400 text-sm mt-6">
                     <?= count($favorites) ?> termék a kedvenceid között
                 </p>
+            <?php endif; ?>
+
+        <?php elseif ($section === 'orders'): ?>
+
+            <h2 class="text-2xl font-semibold mb-6">
+                <i class="las la-shopping-bag mr-2"></i>
+                Rendeléseim
+            </h2>
+
+            <?php if (empty($orders)): ?>
+                <div class="text-center py-12">
+                    <i class="las la-shopping-bag text-gray-300 text-6xl mb-4"></i>
+                    <p class="text-gray-500 text-lg mb-2">Még nincs rendelésed</p>
+                    <a href="/webshop/" class="inline-block bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition">
+                        Vásárlás
+                    </a>
+                </div>
+            <?php else: ?>
+                <div class="space-y-6">
+                    <?php foreach ($orders as $order): ?>
+                        <div class="border rounded-lg overflow-hidden">
+                            <!-- Rendelés fejléc -->
+                            <div class="bg-gray-50 p-4 flex flex-wrap justify-between items-center gap-4">
+                                <div>
+                                    <span class="font-semibold">Rendelés #<?= $order['order_id'] ?></span>
+                                    <span class="text-gray-500 text-sm ml-2">
+                                        <?= date('Y.m.d H:i', strtotime($order['created_at'])) ?>
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <?php
+                                    $statusColors = [
+                                        'pending' => 'bg-yellow-100 text-yellow-800',
+                                        'confirmed' => 'bg-blue-100 text-blue-800',
+                                        'shipped' => 'bg-purple-100 text-purple-800',
+                                        'delivered' => 'bg-green-100 text-green-800'
+                                    ];
+                                    $statusTexts = [
+                                        'pending' => 'Feldolgozás alatt',
+                                        'confirmed' => 'Visszaigazolva',
+                                        'shipped' => 'Kiszállítás alatt',
+                                        'delivered' => 'Kézbesítve'
+                                    ];
+                                    $status = $order['status'] ?? 'pending';
+                                    ?>
+                                    <span class="px-3 py-1 rounded-full text-xs font-medium <?= $statusColors[$status] ?>">
+                                        <?= $statusTexts[$status] ?>
+                                    </span>
+                                    <span class="font-bold">
+                                        <?= number_format($order['total'], 0, ',', ' ') ?> Ft
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Termékek -->
+                            <div class="p-4">
+                                <div class="space-y-3">
+                                    <?php foreach ($order['items'] as $item): ?>
+                                        <div class="flex items-center gap-4">
+                                            <div class="w-16 h-16 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                                                <?php if ($item['image']): ?>
+                                                    <img src="/webshop/<?= htmlspecialchars($item['image']) ?>" 
+                                                         class="w-full h-full object-cover">
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="flex-1">
+                                                <p class="font-medium"><?= htmlspecialchars($item['product_name']) ?></p>
+                                                <p class="text-sm text-gray-500">
+                                                    Méret: <?= htmlspecialchars($item['size_value'] ?? '-') ?> | 
+                                                    <?= $item['quantity'] ?> db
+                                                </p>
+                                            </div>
+                                            <div class="text-right">
+                                                <?php $price = $item['is_sale'] ? ($item['price'] * 0.8) : $item['price']; ?>
+                                                <p class="font-medium"><?= number_format($price * $item['quantity'], 0, ',', ' ') ?> Ft</p>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                                
+                                <!-- Szállítási adatok -->
+                                <div class="mt-4 pt-4 border-t text-sm text-gray-600">
+                                    <p><strong>Szállítás:</strong> <?= htmlspecialchars($order['delivery_method_name'] ?? '-') ?></p>
+                                    <?php if ($order['foxpost_point_name']): ?>
+                                        <p><?= htmlspecialchars($order['foxpost_point_name']) ?></p>
+                                    <?php elseif ($order['shipping_address']): ?>
+                                        <p><?= htmlspecialchars($order['shipping_postcode'] . ' ' . $order['shipping_city'] . ', ' . $order['shipping_address']) ?></p>
+                                    <?php endif; ?>
+                                </div>
+                                
+                                <!-- Visszaküldés gomb -->
+                                <div class="mt-4 pt-4 border-t">
+                                    <?php if ($order['return']): ?>
+                                        <?php
+                                        $returnStatusColors = [
+                                            'pending' => 'bg-yellow-100 text-yellow-800',
+                                            'approved' => 'bg-green-100 text-green-800',
+                                            'rejected' => 'bg-red-100 text-red-800',
+                                            'completed' => 'bg-gray-100 text-gray-800'
+                                        ];
+                                        $returnStatusTexts = [
+                                            'pending' => 'Visszaküldés elbírálás alatt',
+                                            'approved' => 'Visszaküldés jóváhagyva',
+                                            'rejected' => 'Visszaküldés elutasítva',
+                                            'completed' => 'Visszaküldés lezárva'
+                                        ];
+                                        ?>
+                                        <span class="px-3 py-1 rounded-full text-xs font-medium <?= $returnStatusColors[$order['return']['status']] ?>">
+                                            <?= $returnStatusTexts[$order['return']['status']] ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <button onclick="openReturnModal(<?= $order['order_id'] ?>)" 
+                                                class="text-sm text-red-600 hover:text-red-800 font-medium">
+                                            <i class="las la-undo-alt mr-1"></i> Visszaküldés kérése
+                                        </button>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+
+        <?php elseif ($section === 'returns'): ?>
+
+            <h2 class="text-2xl font-semibold mb-6">
+                <i class="las la-undo-alt mr-2"></i>
+                Visszaküldött termékek
+            </h2>
+
+            <?php if (empty($returns)): ?>
+                <div class="text-center py-12">
+                    <i class="las la-undo-alt text-gray-300 text-6xl mb-4"></i>
+                    <p class="text-gray-500 text-lg">Nincs visszaküldési kérelmed</p>
+                </div>
+            <?php else: ?>
+                <div class="space-y-4">
+                    <?php foreach ($returns as $return): ?>
+                        <?php
+                        $returnStatusColors = [
+                            'pending' => 'bg-yellow-100 text-yellow-800',
+                            'approved' => 'bg-green-100 text-green-800',
+                            'rejected' => 'bg-red-100 text-red-800',
+                            'completed' => 'bg-gray-100 text-gray-800'
+                        ];
+                        $returnStatusTexts = [
+                            'pending' => 'Elbírálás alatt',
+                            'approved' => 'Jóváhagyva',
+                            'rejected' => 'Elutasítva',
+                            'completed' => 'Lezárva'
+                        ];
+                        ?>
+                        <div class="border rounded-lg p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-semibold">Rendelés #<?= $return['order_id'] ?></p>
+                                    <p class="text-sm text-gray-500">Kérelem: <?= date('Y.m.d H:i', strtotime($return['created_at'])) ?></p>
+                                    <p class="text-sm mt-2"><strong>Indoklás:</strong> <?= htmlspecialchars($return['reason']) ?></p>
+                                    <?php if ($return['admin_note']): ?>
+                                        <p class="text-sm mt-2 text-blue-600"><strong>Admin válasz:</strong> <?= htmlspecialchars($return['admin_note']) ?></p>
+                                    <?php endif; ?>
+                                </div>
+                                <span class="px-3 py-1 rounded-full text-xs font-medium <?= $returnStatusColors[$return['status']] ?>">
+                                    <?= $returnStatusTexts[$return['status']] ?>
+                                </span>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
             <?php endif; ?>
 
         <?php elseif ($section === 'security'): ?>
@@ -348,6 +576,50 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
     </main>
 </div>
 
+<!-- VISSZAKÜLDÉS MODAL -->
+<div id="returnModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 max-w-lg w-full mx-4">
+        <h3 class="text-xl font-semibold mb-4">
+            <i class="las la-undo-alt mr-2"></i>Visszaküldés kérése
+        </h3>
+        <form id="returnForm" method="POST" action="/webshop/api/return-request.php">
+            <input type="hidden" name="order_id" id="returnOrderId">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Mi a probléma a termékkel?</label>
+                <select name="problem_type" required class="w-full border rounded-lg p-3 text-sm mb-3">
+                    <option value="">Válassz...</option>
+                    <option value="damaged">Sérült termék</option>
+                    <option value="wrong_size">Nem megfelelő méret</option>
+                    <option value="wrong_product">Nem ezt a terméket rendeltem</option>
+                    <option value="quality">Minőségi probléma</option>
+                    <option value="not_as_described">Nem felel meg a leírásnak</option>
+                    <option value="changed_mind">Meggondoltam magam</option>
+                    <option value="other">Egyéb</option>
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Részletes leírás</label>
+                <textarea name="reason" rows="4" required
+                          class="w-full border rounded-lg p-3 text-sm"
+                          placeholder="Kérlek írd le részletesen a problémát..."></textarea>
+            </div>
+            
+            <div class="flex gap-3">
+                <button type="button" onclick="closeReturnModal()" 
+                        class="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50">
+                    Mégse
+                </button>
+                <button type="submit" 
+                        class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                    <i class="las la-paper-plane mr-1"></i> Kérelem beküldése
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- ===== JAVÍTOTT, VÉGLEGES SCRIPT BLOKK ===== -->
 <script>
 
@@ -460,14 +732,12 @@ function removeFavorite(productId, btn) {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            // Eltávolítjuk a kártyát animációval
             const card = btn.closest('.group');
             card.style.transition = 'opacity 0.3s, transform 0.3s';
             card.style.opacity = '0';
             card.style.transform = 'scale(0.9)';
             setTimeout(() => {
                 card.remove();
-                // Ha nincs több kedvenc, frissítsük az oldalt
                 const remaining = document.querySelectorAll('.group.relative');
                 if (remaining.length === 0) {
                     location.reload();
@@ -477,6 +747,41 @@ function removeFavorite(productId, btn) {
     })
     .catch(err => console.error('Hiba:', err));
 }
+
+/* ===== VISSZAKÜLDÉS MODAL ===== */
+function openReturnModal(orderId) {
+    document.getElementById('returnOrderId').value = orderId;
+    document.getElementById('returnModal').classList.remove('hidden');
+    document.getElementById('returnModal').classList.add('flex');
+}
+
+function closeReturnModal() {
+    document.getElementById('returnModal').classList.add('hidden');
+    document.getElementById('returnModal').classList.remove('flex');
+}
+
+document.getElementById('returnForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    
+    fetch('/webshop/api/return-request.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('Visszaküldési kérelem sikeresen beküldve!');
+            location.reload();
+        } else {
+            alert('Hiba: ' + data.error);
+        }
+    })
+    .catch(err => {
+        console.error('Hiba:', err);
+        alert('Hiba történt a kérelem beküldésekor.');
+    });
+});
 
 </script>
 

@@ -97,7 +97,7 @@ $hideHero = false;
 
 // Ha bejelentkezési vagy regisztrációs oldalon vagyunk, elrejtjük
 $currentPage = $_GET['page'] ?? 'home';
-if (in_array($currentPage, ['login', 'register', 'cart', 'checkout', 'profile', 'logout', 'order-success', 'email-sent'])) {
+if (in_array($currentPage, ['login', 'register', 'cart', 'checkout', 'profile', 'logout', 'order-success', 'email-sent', 'ertekeles'])) {
     $hideHero = true;
 }
 

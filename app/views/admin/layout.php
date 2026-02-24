@@ -44,7 +44,19 @@
                     Rendelések
                 </a>
                 
-                <a href="/webshop/yw-admin/users" 
+                <a href="/webshop/yw-admin/returns"
+                   class="flex items-center px-6 py-3 <?= $page === 'returns' ? 'bg-gray-800 border-l-4 border-white' : 'hover:bg-gray-800' ?>">
+                    <i class="las la-undo-alt text-xl mr-3"></i>
+                    Visszaküldések
+                </a>
+                
+                <a href="/webshop/yw-admin/ratings"
+                   class="flex items-center px-6 py-3 <?= $page === 'ratings' ? 'bg-gray-800 border-l-4 border-white' : 'hover:bg-gray-800' ?>">
+                    <i class="las la-star text-xl mr-3"></i>
+                    Értékelések
+                </a>
+                
+                <a href="/webshop/yw-admin/users"
                    class="flex items-center px-6 py-3 <?= $page === 'users' ? 'bg-gray-800 border-l-4 border-white' : 'hover:bg-gray-800' ?>">
                     <i class="las la-users text-xl mr-3"></i>
                     Felhasználók
@@ -83,6 +95,8 @@
                             'product-edit' => isset($product) ? 'Termék szerkesztése' : 'Új termék',
                             'stock' => 'Készletkezelés',
                             'orders' => 'Rendelések',
+                            'returns' => 'Visszaküldések',
+                            'ratings' => 'Értékelések',
                             'users' => 'Felhasználók'
                         ];
                         echo $titles[$page] ?? 'Admin';

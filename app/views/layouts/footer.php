@@ -96,13 +96,13 @@ function closeLoginModal() {
             <div>
                 <h4 class="text-white font-medium mb-4">Kövess minket</h4>
                 <div class="flex gap-4 text-xl">
-                    <a href="#" class="hover:text-white">
+                    <a href="https://www.instagram.com/yoursywear/" target="_blank" class="hover:text-white">
                         <i class="lab la-instagram"></i>
                     </a>
-                    <a href="https://www.facebook.com/profile.php?id=61587284315953" class="hover:text-white">
+                    <a href="https://www.facebook.com/profile.php?id=61587284315953" target="_blank" class="hover:text-white">
                         <i class="lab la-facebook"></i>
                     </a>
-                    <a href="#" class="hover:text-white">
+                    <a href="https://www.tiktok.com/@yoursywear" target="_blank" class="hover:text-white">
                         <i class="lab la-tiktok"></i>
                     </a>
                 </div>

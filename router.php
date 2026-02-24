@@ -114,6 +114,11 @@ if (!empty($parts[0])) {
             $page = 'privacy';
             break;
 
+        case 'ertekeles':
+            require_once __DIR__ . '/app/config/database.php';
+            require __DIR__ . '/app/views/pages/ertekeles.php';
+            exit;
+
         /* ============================
            TERMÉK OLDAL
            /termek/123

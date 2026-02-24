@@ -205,7 +205,9 @@ if (isset($_SESSION['user_id'])) {
                                                     type="radio"
                                                     name="size_id"
                                                     value="<?= $size['size_id'] ?>"
-                                                    class="peer sr-only"
+                                                    data-stock="<?= $size['quantity'] ?>"
+                                                    class="peer sr-only size-radio"
+                                                    onchange="updateMaxQty(<?= $size['quantity'] ?>)"
                                                     required>
                                                 <div class="border-2 border-gray-200 rounded-md py-3 text-center text-sm font-medium 
                                                             peer-checked:border-black peer-checked:bg-black peer-checked:text-white
@@ -222,11 +224,31 @@ if (isset($_SESSION['user_id'])) {
                                     </div>
                                 <?php endif; ?>
 
+                            <!-- Mennyiség -->
+                            <div class="mt-6">
+                                <p class="font-medium mb-3">Mennyiség <span id="stockInfo" class="text-sm text-gray-500 font-normal"></span></p>
+                                <div class="flex items-center gap-3">
+                                    <button type="button" onclick="decreaseQty()" 
+                                            class="w-10 h-10 border-2 border-gray-200 rounded-lg text-xl font-bold hover:border-gray-400 transition">
+                                        -
+                                    </button>
+                                    <input type="number" name="quantity" id="qtyInput" value="1" min="1" max="10"
+                                           class="w-16 h-10 border-2 border-gray-200 rounded-lg text-center font-medium focus:border-black focus:outline-none">
+                                    <button type="button" onclick="increaseQty()" 
+                                            class="w-10 h-10 border-2 border-gray-200 rounded-lg text-xl font-bold hover:border-gray-400 transition">
+                                        +
+                                    </button>
+                                </div>
+                                <p id="lowStockWarning" class="hidden text-sm text-orange-600 mt-2">
+                                    <i class="las la-exclamation-triangle"></i> <span></span>
+                                </p>
+                            </div>
+
                             <!-- Kosárba gomb -->
                             <button
                                 type="submit"
                                 <?= empty($sizes) ? 'disabled' : '' ?>
-                                class="mt-6 w-full bg-black text-white py-4 px-6 rounded-lg font-medium text-lg
+                                class="mt-4 w-full bg-black text-white py-4 px-6 rounded-lg font-medium text-lg
                                        hover:bg-gray-800 transition-colors
                                        disabled:bg-gray-300 disabled:cursor-not-allowed
                                        flex items-center justify-center gap-2">
@@ -382,6 +404,54 @@ function toggleWishlist(productId) {
 document.querySelector('.favorite-btn')?.addEventListener('click', function() {
     const productId = this.dataset.product;
     toggleWishlist(parseInt(productId));
+});
+
+/* ===== MENNYISÉG KEZELÉS ===== */
+let currentMaxQty = 10; // Alapértelmezett max
+
+function updateMaxQty(stock) {
+    const input = document.getElementById('qtyInput');
+    const stockInfo = document.getElementById('stockInfo');
+    const warning = document.getElementById('lowStockWarning');
+    
+    currentMaxQty = Math.min(stock, 10); // Max 10 vagy a készlet
+    input.max = currentMaxQty;
+    
+    // Ha a jelenlegi érték nagyobb mint az új max, csökkentjük
+    if (parseInt(input.value) > currentMaxQty) {
+        input.value = currentMaxQty;
+    }
+    
+    // Készlet info megjelenítése
+    if (stock <= 5) {
+        stockInfo.textContent = `(${stock} db elérhető)`;
+        warning.classList.remove('hidden');
+        warning.querySelector('span').textContent = `Csak ${stock} db maradt raktáron!`;
+    } else {
+        stockInfo.textContent = '';
+        warning.classList.add('hidden');
+    }
+}
+
+function decreaseQty() {
+    const input = document.getElementById('qtyInput');
+    let val = parseInt(input.value) || 1;
+    if (val > 1) input.value = val - 1;
+}
+
+function increaseQty() {
+    const input = document.getElementById('qtyInput');
+    let val = parseInt(input.value) || 1;
+    if (val < currentMaxQty) {
+        input.value = val + 1;
+    }
+}
+
+// Manuális beírás korlátozása
+document.getElementById('qtyInput')?.addEventListener('change', function() {
+    let val = parseInt(this.value) || 1;
+    if (val < 1) this.value = 1;
+    if (val > currentMaxQty) this.value = currentMaxQty;
 });
 
 /* ===== MAGYAR VALIDÁCIÓS ÜZENET ===== */

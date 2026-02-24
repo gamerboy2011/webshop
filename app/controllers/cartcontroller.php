@@ -4,32 +4,61 @@ class CartController
 {
     public function add(): void
     {
+        global $pdo;
+        
         if (!isset($_SESSION['cart'])) {
             $_SESSION['cart'] = [];
         }
 
         $productId    = (int)($_POST['product_id'] ?? 0);
         $sizeValueId  = (int)($_POST['size_id'] ?? 0);
+        $quantity     = max(1, min(10, (int)($_POST['quantity'] ?? 1))); // 1-10 között
 
         if ($productId <= 0 || $sizeValueId <= 0) {
             die('Hibás kosáradat');
         }
 
+        // Készlet ellenőrzés
+        $stmt = $pdo->prepare("SELECT quantity FROM stock WHERE product_id = ? AND size_id = ?");
+        $stmt->execute([$productId, $sizeValueId]);
+        $stockQty = (int)$stmt->fetchColumn();
+        
+        // Mennyi van már a kosárban ebből?
+        $inCartQty = 0;
+        foreach ($_SESSION['cart'] as $item) {
+            if ($item['product_id'] === $productId && $item['size_id'] === $sizeValueId) {
+                $inCartQty = $item['quantity'];
+                break;
+            }
+        }
+        
+        // Maximum rendelheto mennyiség
+        $maxCanAdd = $stockQty - $inCartQty;
+        if ($maxCanAdd <= 0) {
+            header('Location: /webshop/kosar?error=out_of_stock');
+            exit;
+        }
+        
+        // Korlátozzák a kért mennyiséget a készlet alapján
+        $quantity = min($quantity, $maxCanAdd);
+
+        // Ha már van ilyen termék+méret a kosárban, növeljük a mennyiséget
         foreach ($_SESSION['cart'] as &$item) {
             if (
                 $item['product_id'] === $productId &&
                 $item['size_id'] === $sizeValueId
             ) {
-                $item['quantity']++;
+                $item['quantity'] += $quantity;
                 header('Location: /webshop/kosar');
                 exit;
             }
         }
 
+        // Új tétel hozzáadása
         $_SESSION['cart'][] = [
             'product_id'    => $productId,
             'size_id' => $sizeValueId,
-            'quantity'      => 1
+            'quantity'      => $quantity
         ];
 
         header('Location: /webshop/kosar');

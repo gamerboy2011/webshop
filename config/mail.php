@@ -9,8 +9,8 @@
 return [
     'smtp_host' => 'sandbox.smtp.mailtrap.io',
     'smtp_port' => 2525,
-    'smtp_username' => 'YOUR_MAILTRAP_USERNAME', // cseréld ki!
-    'smtp_password' => 'YOUR_MAILTRAP_PASSWORD', // cseréld ki!
+    'smtp_username' => '5c76de670068fb',
+    'smtp_password' => '2956238198912f',
     'from_email' => 'noreply@yoursywear.hu',
     'from_name' => 'YoursyWear',
 ];
