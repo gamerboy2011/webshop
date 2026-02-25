@@ -53,6 +53,13 @@ foreach ($cart as $cartItem) {
 
 $shippingCost = $subtotal >= 15000 ? 0 : 1490;
 $total = $subtotal + $shippingCost;
+
+// Közterület típusok betöltése
+$streetTypes = [];
+try {
+    $stmt = $pdo->query("SELECT * FROM street_type ORDER BY CASE WHEN name = 'utca' THEN 0 WHEN name = 'út' THEN 1 ELSE 2 END, name");
+    $streetTypes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {}
 ?>
 
 <div class="max-w-6xl mx-auto px-4 py-8">
@@ -117,25 +124,56 @@ $total = $subtotal + $shippingCost;
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Irányítószám *</label>
-                            <input type="text" name="shipping_postcode" 
+                            <input type="text" name="shipping_postcode" id="shipping_postcode"
                                    value="<?= htmlspecialchars($user['shipping_postcode'] ?? '') ?>"
-                                   maxlength="4"
+                                   maxlength="4" pattern="[0-9]{4}"
                                    class="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Város *</label>
-                            <input type="text" name="shipping_city" 
+                            <input type="text" name="shipping_city" id="shipping_city"
                                    value="<?= htmlspecialchars($user['shipping_city'] ?? '') ?>"
+                                   readonly
+                                   class="w-full border rounded-lg px-4 py-3 bg-gray-50 focus:outline-none">
+                            <p class="text-xs text-gray-500 mt-1">Automatikusan kitöltődik az irányítószám alapján</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Közterület neve *</label>
+                            <input type="text" name="shipping_street_name" id="shipping_street_name"
+                                   value="<?= htmlspecialchars($user['shipping_street_name'] ?? '') ?>"
+                                   placeholder="Példa"
                                    class="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black">
                         </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Utca, házszám *</label>
-                            <input type="text" name="shipping_address" 
-                                   value="<?= htmlspecialchars(trim(($user['shipping_street_name'] ?? '') . ' ' . ($user['shipping_street_type'] ?? '') . ' ' . ($user['shipping_house_number'] ?? ''))) ?>"
-                                   placeholder="Példa utca 12. 3. em. 4. ajtó"
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Közterület típusa *</label>
+                            <select name="shipping_street_type" id="shipping_street_type"
+                                    class="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black bg-white">
+                                <option value="">Válassz...</option>
+                                <?php foreach ($streetTypes as $type): ?>
+                                    <option value="<?= htmlspecialchars($type['name']) ?>"
+                                        <?= ($user['shipping_street_type'] ?? '') === $type['name'] ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($type['name']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Házszám *</label>
+                            <input type="text" name="shipping_house_number" id="shipping_house_number"
+                                   value="<?= htmlspecialchars($user['shipping_house_number'] ?? '') ?>"
+                                   placeholder="12/A"
+                                   class="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Emelet, ajtó (opcionális)</label>
+                            <input type="text" name="shipping_floor_door" id="shipping_floor_door"
+                                   value="<?= htmlspecialchars($user['shipping_floor_door'] ?? '') ?>"
+                                   placeholder="3. em. 4."
                                    class="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black">
                         </div>
                     </div>
+                    <!-- Teljes cím hidden mező a rendszer számára -->
+                    <input type="hidden" name="shipping_address" id="shipping_address_combined">
                 </div>
                 
                 <!-- FOXPOST CSOMAGPONT VÁLASZTÓ -->
@@ -370,42 +408,65 @@ function changeFoxpost() {
 }
 
 // Irányítószám - város automatikus kitöltés
-const postcodeInput = document.querySelector('input[name="shipping_postcode"]');
-const cityInput = document.querySelector('input[name="shipping_city"]');
+const postcodeInput = document.getElementById('shipping_postcode');
+const cityInput = document.getElementById('shipping_city');
 
 if (postcodeInput) {
     postcodeInput.addEventListener('input', async function() {
         const zip = this.value.replace(/\D/g, '');
+        this.value = zip; // Csak számok
+        
         if (zip.length === 4) {
             try {
                 const res = await fetch('/webshop/api/postal.php?zip=' + zip);
                 const data = await res.json();
                 if (data.city && cityInput) {
                     cityInput.value = data.city;
+                    cityInput.classList.remove('bg-gray-50');
+                    cityInput.classList.add('bg-green-50');
+                } else {
+                    cityInput.value = '';
+                    cityInput.classList.remove('bg-green-50');
+                    cityInput.classList.add('bg-gray-50');
                 }
             } catch (e) {}
+        } else {
+            cityInput.value = '';
+            cityInput.classList.remove('bg-green-50');
+            cityInput.classList.add('bg-gray-50');
         }
     });
+    
+    // Ha már van irányítószám, töltsük be a várost
+    if (postcodeInput.value.length === 4 && !cityInput.value) {
+        postcodeInput.dispatchEvent(new Event('input'));
+    }
 }
 
-if (cityInput) {
-    let cityTimeout;
-    cityInput.addEventListener('input', function() {
-        clearTimeout(cityTimeout);
-        const city = this.value.trim();
-        if (city.length >= 3) {
-            cityTimeout = setTimeout(async () => {
-                try {
-                    const res = await fetch('/webshop/api/postal.php?city=' + encodeURIComponent(city));
-                    const data = await res.json();
-                    if (data.zip && postcodeInput && !postcodeInput.value) {
-                        postcodeInput.value = data.zip;
-                    }
-                } catch (e) {}
-            }, 500);
-        }
-    });
+// Cím összeállítása a hidden mezőbe
+function buildFullAddress() {
+    const streetName = document.getElementById('shipping_street_name')?.value || '';
+    const streetType = document.getElementById('shipping_street_type')?.value || '';
+    const houseNumber = document.getElementById('shipping_house_number')?.value || '';
+    const floorDoor = document.getElementById('shipping_floor_door')?.value || '';
+    
+    let address = streetName;
+    if (streetType) address += ' ' + streetType;
+    if (houseNumber) address += ' ' + houseNumber;
+    if (floorDoor) address += ' ' + floorDoor;
+    
+    const combinedField = document.getElementById('shipping_address_combined');
+    if (combinedField) {
+        combinedField.value = address.trim();
+    }
 }
+
+// Cím mezők változásakor frissítsük a hidden mezőt
+['shipping_street_name', 'shipping_street_type', 'shipping_house_number', 'shipping_floor_door'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', buildFullAddress);
+    if (el) el.addEventListener('change', buildFullAddress);
+});
 
 // Form validáció
 document.getElementById('checkoutForm').addEventListener('submit', function(e) {
@@ -415,6 +476,44 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         e.preventDefault();
         alert('Kérlek válassz szállítási módot!');
         return;
+    }
+    
+    // Házhoz szállítás ellenőrzés
+    if (deliveryMethod.value === '2') {
+        const postcode = document.getElementById('shipping_postcode')?.value;
+        const city = document.getElementById('shipping_city')?.value;
+        const streetName = document.getElementById('shipping_street_name')?.value;
+        const streetType = document.getElementById('shipping_street_type')?.value;
+        const houseNumber = document.getElementById('shipping_house_number')?.value;
+        
+        if (!postcode || postcode.length !== 4) {
+            e.preventDefault();
+            alert('Kérlek adj meg érvényes irányítószámot!');
+            return;
+        }
+        if (!city) {
+            e.preventDefault();
+            alert('Érvénytelen irányítószám - város nem található!');
+            return;
+        }
+        if (!streetName) {
+            e.preventDefault();
+            alert('Kérlek add meg a közterület nevét!');
+            return;
+        }
+        if (!streetType) {
+            e.preventDefault();
+            alert('Kérlek válaszd ki a közterület típusát!');
+            return;
+        }
+        if (!houseNumber) {
+            e.preventDefault();
+            alert('Kérlek add meg a házszámot!');
+            return;
+        }
+        
+        // Teljes cím összerakása
+        buildFullAddress();
     }
     
     // FoxPost ellenőrzés
