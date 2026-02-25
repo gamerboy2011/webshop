@@ -1,4 +1,4 @@
-f<?php
+<?php
 // Bejelentkezés ellenőrzése
 if (empty($_SESSION['user_id'])) {
     header('Location: /webshop/login?redirect=checkout');
