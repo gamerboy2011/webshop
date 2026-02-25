@@ -43,6 +43,46 @@ class OrderController
             exit;
         }
         
+        // Bankkártyás fizetés esetén először fizetési oldalra irányítás
+        if ($paymentMethodId == 1) {
+            // Rendelési adatok mentése session-be
+            $_SESSION['pending_order'] = [
+                'user_id' => $userId,
+                'payment_method_id' => $paymentMethodId,
+                'delivery_method_id' => $deliveryMethodId,
+                'shipping_name' => $shippingName,
+                'shipping_phone' => $shippingPhone,
+                'shipping_postcode' => $shippingPostcode,
+                'shipping_city' => $shippingCity,
+                'shipping_address' => $shippingAddress,
+                'foxpost_point_id' => $foxpostPointId,
+                'foxpost_point_name' => $foxpostPointName,
+                'foxpost_point_address' => $foxpostPointAddress,
+                'cart' => $_SESSION['cart']
+            ];
+            
+            // Összeg számítása
+            $orderTotal = 0;
+            foreach ($_SESSION['cart'] as $item) {
+                $stmt = $this->pdo->prepare("SELECT price FROM product WHERE product_id = ?");
+                $stmt->execute([$item['product_id']]);
+                $price = (float)$stmt->fetchColumn();
+                $orderTotal += $price * $item['quantity'];
+            }
+            
+            // Szállítási költség
+            $shippingCost = $orderTotal >= 15000 ? 0 : ($deliveryMethodId == 3 ? 890 : 1490);
+            $grandTotal = $orderTotal + $shippingCost;
+            
+            $_SESSION['pending_payment'] = [
+                'total' => $grandTotal,
+                'order_id' => 'TEMP-' . time()
+            ];
+            
+            header('Location: /webshop/fizetes');
+            exit;
+        }
+        
         $this->pdo->beginTransaction();
         
         try {
@@ -139,10 +179,33 @@ class OrderController
             
             $this->pdo->commit();
             
-            // Felhasználó email címe
-            $stmt = $this->pdo->prepare("SELECT email, username FROM users WHERE user_id = ?");
+            // Felhasználó adatok (email és számlázási cím)
+            $stmt = $this->pdo->prepare("
+                SELECT email, username,
+                       billing_postcode, billing_city, billing_street_name, 
+                       billing_street_type, billing_house_number, billing_floor_door
+                FROM users WHERE user_id = ?
+            ");
             $stmt->execute([$userId]);
             $user = $stmt->fetch();
+            
+            // Számlázási cím összeállítása
+            $billingAddress = '';
+            if ($user['billing_postcode'] && $user['billing_city']) {
+                $billingAddress = $user['billing_postcode'] . ' ' . $user['billing_city'];
+                if ($user['billing_street_name']) {
+                    $billingAddress .= ', ' . $user['billing_street_name'];
+                    if ($user['billing_street_type']) {
+                        $billingAddress .= ' ' . $user['billing_street_type'];
+                    }
+                    if ($user['billing_house_number']) {
+                        $billingAddress .= ' ' . $user['billing_house_number'];
+                    }
+                    if ($user['billing_floor_door']) {
+                        $billingAddress .= ', ' . $user['billing_floor_door'];
+                    }
+                }
+            }
             
             // Email küldése
             $this->sendOrderConfirmationEmail(
@@ -152,7 +215,8 @@ class OrderController
                 $orderItems,
                 $orderTotal,
                 $deliveryMethodId,
-                $foxpostPointName ?: ($shippingCity . ', ' . $shippingAddress)
+                $foxpostPointName ?: ($shippingCity . ', ' . $shippingAddress),
+                $billingAddress
             );
             
             // Kosár ürítése
@@ -178,7 +242,8 @@ class OrderController
         array $items,
         float $total,
         int $deliveryMethodId,
-        string $deliveryAddress
+        string $deliveryAddress,
+        string $billingAddress = ''
     ): bool {
         $subject = "YoursyWear - Rendelés visszaigazolás #$orderId";
         
@@ -250,6 +315,7 @@ class OrderController
                             <td style='width: 50%; vertical-align: top; text-align: right;'>
                                 <p style='margin: 0 0 5px 0; font-size: 11px; color: #999; text-transform: uppercase;'>Vevő</p>
                                 <p style='margin: 0; font-weight: bold;'>{$name}</p>
+                                " . ($billingAddress ? "<p style='margin: 3px 0; color: #666; font-size: 13px;'>{$billingAddress}</p>" : "") . "
                                 <p style='margin: 3px 0; color: #666; font-size: 13px;'>{$email}</p>
                             </td>
                         </tr>

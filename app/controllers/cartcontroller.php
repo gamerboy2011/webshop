@@ -14,14 +14,28 @@ class CartController
         $sizeValueId  = (int)($_POST['size_id'] ?? 0);
         $quantity     = max(1, min(10, (int)($_POST['quantity'] ?? 1))); // 1-10 között
 
-        if ($productId <= 0 || $sizeValueId <= 0) {
-            die('Hibás kosáradat');
+        if ($productId <= 0) {
+            header('Location: /webshop/?error=invalid_product');
+            exit;
+        }
+        
+        if ($sizeValueId <= 0) {
+            header('Location: /webshop/termek/' . $productId . '?error=no_size');
+            exit;
         }
 
         // Készlet ellenőrzés
         $stmt = $pdo->prepare("SELECT quantity FROM stock WHERE product_id = ? AND size_id = ?");
         $stmt->execute([$productId, $sizeValueId]);
-        $stockQty = (int)$stmt->fetchColumn();
+        $stockResult = $stmt->fetchColumn();
+        
+        // Ha nincs stock rekord, lehet hogy új termék - engedjük át alap készlettel
+        $stockQty = ($stockResult !== false) ? (int)$stockResult : 10;
+        
+        if ($stockQty <= 0) {
+            header('Location: /webshop/termek/' . $productId . '?error=out_of_stock');
+            exit;
+        }
         
         // Mennyi van már a kosárban ebből?
         $inCartQty = 0;

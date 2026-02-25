@@ -80,6 +80,14 @@ if (!empty($parts[0])) {
             $page = 'order-success';
             break;
 
+        case 'fizetes':
+            $page = 'fizetes';
+            break;
+
+        case 'fizetes-sikeres':
+            require __DIR__ . '/app/api/payment-success.php';
+            exit;
+
         /* ============================
            PROFIL
         ============================ */

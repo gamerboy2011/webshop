@@ -36,37 +36,6 @@ $mainImage = $images[0]['src'] ?? null;
    ========================= */
 $sizes = $model->getSizes($productId);
 
-// Cipők esetén dinamikus méretek gender alapján
-$isShoe = in_array(strtolower($product['type']), ['shoe', 'cipők', 'cipő', 'shoes']);
-if ($isShoe) {
-    // Méret tartományok gender alapján
-    if ($product['gender'] === 'f') {
-        // Női: 35-42
-        $minSize = 35;
-        $maxSize = 42;
-    } elseif ($product['gender'] === 'm') {
-        // Férfi: 39-47
-        $minSize = 39;
-        $maxSize = 47;
-    } else {
-        // Uniszex: teljes tartomány 35-47
-        $minSize = 35;
-        $maxSize = 47;
-    }
-    
-    // Dinamikus méretek generálása félméretekkel
-    $dynamicSizes = [];
-    for ($s = $minSize; $s <= $maxSize; $s += 0.5) {
-        $sizeValue = ($s == floor($s)) ? (string)(int)$s : number_format($s, 1, '.', '');
-        $dynamicSizes[] = [
-            'size_id' => $s * 10, // Virtuális ID
-            'size_value' => $sizeValue,
-            'quantity' => 5 // Alapértelmezett készlet
-        ];
-    }
-    $sizes = $dynamicSizes;
-}
-
 /* =========================
    AJÁNLOTT TERMÉKEK
    ========================= */
@@ -83,6 +52,20 @@ if (isset($_SESSION['user_id'])) {
 
 <div class="bg-gray-50 min-h-screen">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <?php if (isset($_GET['error'])): ?>
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+                <i class="las la-exclamation-circle mr-2"></i>
+                <?php
+                $errorMessages = [
+                    'no_size' => 'Kérlek válassz méretet a kosárba rakás előtt!',
+                    'out_of_stock' => 'Sajnáljuk, ez a méret elfogyott.',
+                    'invalid_product' => 'Hibás termék.',
+                ];
+                echo htmlspecialchars($errorMessages[$_GET['error']] ?? 'Ismeretlen hiba történt.');
+                ?>
+            </div>
+        <?php endif; ?>
 
         <!-- BREADCRUMB -->
         <nav class="flex items-center gap-2 text-sm mb-6">
@@ -463,4 +446,29 @@ document.querySelectorAll('input[name="size_id"]').forEach(input => {
         this.setCustomValidity('');
     });
 });
+
+/* ===== FORM SUBMIT VALIDÁCIÓ ===== */
+const cartForm = document.querySelector('form[action="/webshop/index.php"]');
+if (cartForm) {
+    cartForm.addEventListener('submit', function(e) {
+        const selectedSize = document.querySelector('input[name="size_id"]:checked');
+        if (!selectedSize) {
+            e.preventDefault();
+            alert('Kérlek válassz méretet!');
+            // Scroll to size section
+            document.querySelector('p.font-medium')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return false;
+        }
+        
+        const quantity = parseInt(document.getElementById('qtyInput')?.value) || 1;
+        if (quantity < 1) {
+            e.preventDefault();
+            alert('Érvénytelen mennyiség!');
+            return false;
+        }
+        
+        // Minden rendben, engedjük a submitot
+        return true;
+    });
+}
 </script>

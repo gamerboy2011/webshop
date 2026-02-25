@@ -7,6 +7,13 @@ if (!isset($_SESSION['user_id'])) {
 require_once __DIR__ . "/../../library/config.php";
 
 $userId  = $_SESSION['user_id'];
+
+// Közterület típusok betöltése
+$streetTypes = [];
+try {
+    $stmt = $pdo->query("SELECT * FROM street_type ORDER BY CASE WHEN name = 'utca' THEN 0 WHEN name = 'út' THEN 1 ELSE 2 END, name");
+    $streetTypes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {}
 $section = $_GET['section'] ?? 'favorites';
 
 /* ===== KEDVENCEK BETÖLTÉSE ===== */
@@ -78,31 +85,6 @@ if ($section === 'returns') {
 $success = "";
 $error   = "";
 
-/* ===== FELHASZNÁLÓ ADATOK ===== */
-$stmt = $pdo->prepare("
-    SELECT
-        username,
-        email,
-
-        shipping_postcode,
-        shipping_city,
-        shipping_street_name,
-        shipping_street_type,
-        shipping_house_number,
-
-        billing_postcode,
-        billing_city,
-        billing_street_name,
-        billing_street_type,
-        billing_house_number,
-
-        phone
-    FROM users
-    WHERE user_id = ?
-");
-$stmt->execute([$userId]);
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
-
 /* ===== MENTÉS ===== */
 if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
 
@@ -112,6 +94,7 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
     $shipping_street_name   = trim($_POST['shipping_street_name'] ?? '');
     $shipping_street_type   = trim($_POST['shipping_street_type'] ?? '');
     $shipping_house_number  = trim($_POST['shipping_house_number'] ?? '');
+    $shipping_floor_door    = trim($_POST['shipping_floor_door'] ?? '');
 
     // Számlázási cím (pipálható)
     $sameBilling = isset($_POST['sameBilling']);
@@ -122,12 +105,14 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
         $billing_street_name   = $shipping_street_name;
         $billing_street_type   = $shipping_street_type;
         $billing_house_number  = $shipping_house_number;
+        $billing_floor_door    = $shipping_floor_door;
     } else {
         $billing_postcode      = trim($_POST['billing_postcode'] ?? '');
         $billing_city          = trim($_POST['billing_city'] ?? '');
         $billing_street_name   = trim($_POST['billing_street_name'] ?? '');
         $billing_street_type   = trim($_POST['billing_street_type'] ?? '');
         $billing_house_number  = trim($_POST['billing_house_number'] ?? '');
+        $billing_floor_door    = trim($_POST['billing_floor_door'] ?? '');
     }
 
     $phone = trim($_POST['phone'] ?? '');
@@ -139,12 +124,14 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
             shipping_street_name = ?,
             shipping_street_type = ?,
             shipping_house_number = ?,
+            shipping_floor_door = ?,
 
             billing_postcode = ?,
             billing_city = ?,
             billing_street_name = ?,
             billing_street_type = ?,
             billing_house_number = ?,
+            billing_floor_door = ?,
 
             phone = ?
         WHERE user_id = ?
@@ -156,12 +143,14 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
         $shipping_street_name,
         $shipping_street_type,
         $shipping_house_number,
+        $shipping_floor_door,
 
         $billing_postcode,
         $billing_city,
         $billing_street_name,
         $billing_street_type,
         $billing_house_number,
+        $billing_floor_door,
 
         $phone,
         $userId
@@ -169,6 +158,33 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
 
     $success = "Profil adatok sikeresen mentve.";
 }
+
+/* ===== FELHASZNÁLÓ ADATOK ===== */
+$stmt = $pdo->prepare("
+    SELECT
+        username,
+        email,
+
+        shipping_postcode,
+        shipping_city,
+        shipping_street_name,
+        shipping_street_type,
+        shipping_house_number,
+        shipping_floor_door,
+
+        billing_postcode,
+        billing_city,
+        billing_street_name,
+        billing_street_type,
+        billing_house_number,
+        billing_floor_door,
+
+        phone
+    FROM users
+    WHERE user_id = ?
+");
+$stmt->execute([$userId]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>
 
 <div class="max-w-6xl mx-auto mt-12 grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -485,10 +501,11 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
                             placeholder="Irányítószám"
                             value="<?= htmlspecialchars($user['shipping_postcode'] ?? '') ?>">
 
-                        <input class="border p-2 rounded"
+                        <input class="border p-2 rounded bg-gray-50"
                             name="shipping_city"
                             id="shipping_city"
                             placeholder="Város"
+                            readonly
                             value="<?= htmlspecialchars($user['shipping_city'] ?? '') ?>">
 
                         <!-- 2. sor -->
@@ -497,10 +514,17 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
                             placeholder="Utca neve"
                             value="<?= htmlspecialchars($user['shipping_street_name'] ?? '') ?>">
 
-                        <input class="border p-2 rounded"
+                        <select class="border p-2 rounded bg-white"
                             name="shipping_street_type"
-                            placeholder="Utca típusa (utca, út, tér...)"
-                            value="<?= htmlspecialchars($user['shipping_street_type'] ?? '') ?>">
+                            id="shipping_street_type">
+                            <option value="">Közterület típusa...</option>
+                            <?php foreach ($streetTypes as $type): ?>
+                                <option value="<?= htmlspecialchars($type['name']) ?>"
+                                    <?= ($user['shipping_street_type'] ?? '') === $type['name'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($type['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
 
                         <!-- 3. sor -->
                         <input class="border p-2 rounded"
@@ -508,7 +532,10 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
                             placeholder="Házszám"
                             value="<?= htmlspecialchars($user['shipping_house_number'] ?? '') ?>">
 
-                        <div></div>
+                        <input class="border p-2 rounded"
+                            name="shipping_floor_door"
+                            placeholder="Emelet, ajtó (opcionális)"
+                            value="<?= htmlspecialchars($user['shipping_floor_door'] ?? '') ?>">
                     </div>
                 </div>
 
@@ -529,10 +556,11 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
                             placeholder="Irányítószám"
                             value="<?= htmlspecialchars($user['billing_postcode'] ?? '') ?>">
 
-                        <input class="border p-2 rounded"
+                        <input class="border p-2 rounded bg-gray-50"
                             name="billing_city"
                             id="billing_city"
                             placeholder="Város"
+                            readonly
                             value="<?= htmlspecialchars($user['billing_city'] ?? '') ?>">
 
                         <!-- 2. sor -->
@@ -541,10 +569,17 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
                             placeholder="Utca neve"
                             value="<?= htmlspecialchars($user['billing_street_name'] ?? '') ?>">
 
-                        <input class="border p-2 rounded"
+                        <select class="border p-2 rounded bg-white"
                             name="billing_street_type"
-                            placeholder="Utca típusa (utca, út, tér...)"
-                            value="<?= htmlspecialchars($user['billing_street_type'] ?? '') ?>">
+                            id="billing_street_type">
+                            <option value="">Közterület típusa...</option>
+                            <?php foreach ($streetTypes as $type): ?>
+                                <option value="<?= htmlspecialchars($type['name']) ?>"
+                                    <?= ($user['billing_street_type'] ?? '') === $type['name'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($type['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
 
                         <!-- 3. sor -->
                         <input class="border p-2 rounded"
@@ -552,7 +587,10 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
                             placeholder="Házszám"
                             value="<?= htmlspecialchars($user['billing_house_number'] ?? '') ?>">
 
-                        <div></div>
+                        <input class="border p-2 rounded"
+                            name="billing_floor_door"
+                            placeholder="Emelet, ajtó (opcionális)"
+                            value="<?= htmlspecialchars($user['billing_floor_door'] ?? '') ?>">
                     </div>
                 </div>
 
@@ -704,7 +742,7 @@ document.querySelectorAll("input").forEach(input => {
 const sameBillingCheckbox = document.getElementById('sameBilling');
 if (sameBillingCheckbox) {
     sameBillingCheckbox.addEventListener('change', function() {
-        const fields = ['postcode', 'city', 'street_name', 'street_type', 'house_number'];
+        const fields = ['postcode', 'city', 'street_name', 'street_type', 'house_number', 'floor_door'];
 
         fields.forEach(f => {
             const ship = document.querySelector(`[name='shipping_${f}']`);
@@ -713,9 +751,18 @@ if (sameBillingCheckbox) {
             if (ship && bill) {
                 if (this.checked) {
                     bill.value = ship.value;
-                    bill.readOnly = true;
+                    // Select elem esetén disabled, input esetén readOnly
+                    if (bill.tagName === 'SELECT') {
+                        bill.disabled = true;
+                    } else if (f !== 'city') { // A város mező mindig readonly marad
+                        bill.readOnly = true;
+                    }
                 } else {
-                    bill.readOnly = false;
+                    if (bill.tagName === 'SELECT') {
+                        bill.disabled = false;
+                    } else if (f !== 'city') {
+                        bill.readOnly = false;
+                    }
                 }
             }
         });
