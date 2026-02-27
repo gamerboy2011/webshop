@@ -24,7 +24,7 @@ $searchQuery = $searchQuery ?? '';
                 <a href="/webshop/termek/<?= $product['product_id'] ?>" 
                    class="group bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow overflow-hidden block">
                     
-                    <div class="aspect-square bg-gray-100 overflow-hidden relative">
+                    <div class="aspect-square bg-white overflow-hidden relative flex items-center justify-center border-b">
                         <?php if (!empty($product['is_sale'])): ?>
                             <span class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded z-10">
                                 -20%
@@ -33,7 +33,7 @@ $searchQuery = $searchQuery ?? '';
                         <?php if (!empty($product['image'])): ?>
                             <img src="/webshop/<?= htmlspecialchars($product['image']) ?>" 
                                  alt="<?= htmlspecialchars($product['name']) ?>"
-                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                 class="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300">
                         <?php else: ?>
                             <div class="w-full h-full flex items-center justify-center text-gray-400">
                                 <i class="las la-image text-4xl"></i>

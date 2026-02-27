@@ -128,6 +128,16 @@ if (!empty($parts[0])) {
             exit;
 
         /* ============================
+           KUPONOK
+        ============================ */
+        case 'kuponok':
+            if (!empty($parts[1])) {
+                $_GET['code'] = $parts[1];
+            }
+            $page = 'kuponok';
+            break;
+
+        /* ============================
            TERMÉK OLDAL
            /termek/123
         ============================ */

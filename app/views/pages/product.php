@@ -84,12 +84,12 @@ if (isset($_SESSION['user_id'])) {
                 <!-- KÉPGALÉRIA -->
                 <div class="p-6 lg:p-8">
                     <!-- Fő kép -->
-                    <div class="aspect-[3/4] bg-gray-100 rounded-lg overflow-hidden mb-4">
+                    <div class="aspect-[3/4] bg-white rounded-lg overflow-hidden mb-4 flex items-center justify-center border">
                         <?php if ($mainImage): ?>
                             <img id="mainImage"
                                  src="/webshop/<?= htmlspecialchars($mainImage) ?>"
                                  alt="<?= htmlspecialchars($product['name']) ?>"
-                                 class="w-full h-full object-cover">
+                                 class="max-w-full max-h-full object-contain">
                         <?php else: ?>
                             <div class="w-full h-full flex items-center justify-center text-gray-400">
                                 <i class="las la-image text-6xl"></i>
@@ -104,10 +104,10 @@ if (isset($_SESSION['user_id'])) {
                                 <button
                                     type="button"
                                     onclick="changeImage('/webshop/<?= htmlspecialchars($img['src']) ?>', this)"
-                                    class="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden border-2 transition-all thumbnail <?= $index === 0 ? 'border-black' : 'border-transparent hover:border-gray-300' ?>">
+                                    class="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden border-2 transition-all thumbnail bg-white flex items-center justify-center <?= $index === 0 ? 'border-black' : 'border-transparent hover:border-gray-300' ?>">
                                     <img src="/webshop/<?= htmlspecialchars($img['src']) ?>"
                                          alt=""
-                                         class="w-full h-full object-cover">
+                                         class="max-w-full max-h-full object-contain">
                                 </button>
                             <?php endforeach; ?>
                         </div>
@@ -304,12 +304,25 @@ if (isset($_SESSION['user_id'])) {
             <div class="mt-12">
                 <h2 class="text-xl font-bold text-gray-900 mb-6">Hasonló termékek</h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <?php foreach ($related as $r): ?>
-                    <a href="/webshop/termek/<?= $r['product_id'] ?>">
-                        <img src="<?= htmlspecialchars($r['image']) ?>" class="mb-3">
-                        <p class="font-medium"><?= htmlspecialchars($r['name']) ?></p>
-                        <p class="text-sm"><?= number_format($r['price'], 0, ',', ' ') ?> Ft</p>
+                    <a href="/webshop/termek/<?= $r['product_id'] ?>" class="group bg-white rounded-lg shadow-sm hover:shadow-lg transition-shadow overflow-hidden block">
+                        <div class="aspect-[3/4] bg-white overflow-hidden flex items-center justify-center border-b">
+                            <?php if (!empty($r['image'])): ?>
+                                <img src="/webshop/<?= htmlspecialchars($r['image']) ?>" 
+                                     alt="<?= htmlspecialchars($r['name']) ?>"
+                                     class="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                                     loading="lazy">
+                            <?php else: ?>
+                                <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                    <i class="las la-image text-4xl"></i>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="p-3">
+                            <p class="font-medium text-sm line-clamp-2 group-hover:text-gray-600 transition-colors"><?= htmlspecialchars($r['name']) ?></p>
+                            <p class="text-sm font-bold mt-1"><?= number_format($r['price'], 0, ',', ' ') ?> Ft</p>
+                        </div>
                     </a>
                 <?php endforeach; ?>
             </div>

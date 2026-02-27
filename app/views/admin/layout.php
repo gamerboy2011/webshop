@@ -62,6 +62,12 @@
                     Felhasználók
                 </a>
                 
+                <a href="/webshop/yw-admin/coupons"
+                   class="flex items-center px-6 py-3 <?= $page === 'coupons' || $page === 'coupon-edit' ? 'bg-gray-800 border-l-4 border-white' : 'hover:bg-gray-800' ?>">
+                    <i class="las la-ticket-alt text-xl mr-3"></i>
+                    Kuponok
+                </a>
+                
                 <div class="border-t border-gray-700 mt-6 pt-6">
                     <a href="/webshop/" target="_blank" 
                        class="flex items-center px-6 py-3 hover:bg-gray-800 text-gray-400">
@@ -97,7 +103,9 @@
                             'orders' => 'Rendelések',
                             'returns' => 'Visszaküldések',
                             'ratings' => 'Értékelések',
-                            'users' => 'Felhasználók'
+                            'users' => 'Felhasználók',
+                            'coupons' => 'Kuponok',
+                            'coupon-edit' => isset($coupon) ? 'Kupon szerkesztése' : 'Új kupon'
                         ];
                         echo $titles[$page] ?? 'Admin';
                         ?>

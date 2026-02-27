@@ -328,6 +328,161 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             session_destroy();
             header('Location: /webshop/yw-admin/login');
             exit;
+            
+        case 'save_coupon':
+            $admin->requireAdmin();
+            
+            $couponId = (int)($_POST['coupon_id'] ?? 0);
+            $name = trim($_POST['name'] ?? '');
+            $description = trim($_POST['description'] ?? '');
+            $couponPass = strtoupper(trim($_POST['coupon_pass'] ?? ''));
+            $amount = (int)($_POST['amount'] ?? 0);
+            $categoryType = $_POST['category_type'] ?? 'all';
+            $productTypeId = null;
+            $productSubtypeId = null;
+            
+            // Kategória típus alapján állítjuk be
+            if ($categoryType === 'type' && !empty($_POST['product_type_id'])) {
+                $productTypeId = (int)$_POST['product_type_id'];
+            } elseif ($categoryType === 'subtype' && !empty($_POST['product_subtype_id'])) {
+                $productSubtypeId = (int)$_POST['product_subtype_id'];
+            }
+            
+            $startDate = $_POST['start_date'] ?? date('Y-m-d');
+            $endDate = $_POST['end_date'] ?? date('Y-m-d', strtotime('+30 days'));
+            $isActive = isset($_POST['is_active']) ? 1 : 0;
+            
+            // QR kód generálás
+            $qrCodePath = null;
+            if ($couponPass) {
+                $qrUrl = "https://" . ($_SERVER['HTTP_HOST'] ?? 'localhost') . "/webshop/kuponok/$couponPass";
+                
+                // goqr.me API használata cURL-lel
+                $qrApiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($qrUrl);
+                
+                $qrDir = __DIR__ . '/uploads/qrcodes';
+                if (!is_dir($qrDir)) {
+                    mkdir($qrDir, 0755, true);
+                }
+                
+                $qrFileName = 'qr_' . $couponPass . '_' . time() . '.png';
+                $qrFilePath = $qrDir . '/' . $qrFileName;
+                
+                // QR kép letöltése cURL-lel
+                $ch = curl_init($qrApiUrl);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                $qrImage = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+                
+                if ($qrImage !== false && $httpCode === 200 && strlen($qrImage) > 100) {
+                    file_put_contents($qrFilePath, $qrImage);
+                    $qrCodePath = 'uploads/qrcodes/' . $qrFileName;
+                }
+            }
+            
+            if ($couponId > 0) {
+                // Update
+                $sql = "UPDATE coupons SET name = ?, description = ?, coupon_pass = ?, amount = ?, 
+                        product_type_id = ?, product_subtype_id = ?, start_date = ?, end_date = ?, is_active = ?";
+                $params = [$name, $description, $couponPass, $amount, $productTypeId, $productSubtypeId, $startDate, $endDate, $isActive];
+                
+                if ($qrCodePath) {
+                    $sql .= ", qr_code_path = ?";
+                    $params[] = $qrCodePath;
+                }
+                $sql .= " WHERE id = ?";
+                $params[] = $couponId;
+                
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($params);
+            } else {
+                // Insert
+                $stmt = $pdo->prepare("
+                    INSERT INTO coupons (name, description, coupon_pass, amount, product_type_id, product_subtype_id, start_date, end_date, is_active, qr_code_path)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ");
+                $stmt->execute([$name, $description, $couponPass, $amount, $productTypeId, $productSubtypeId, $startDate, $endDate, $isActive, $qrCodePath]);
+            }
+            
+            header('Location: /webshop/yw-admin/coupons?saved=1');
+            exit;
+            
+        case 'delete_coupon':
+            $admin->requireAdmin();
+            $couponId = (int)$_POST['coupon_id'];
+            if ($couponId > 0) {
+                // QR kép törlése
+                $stmt = $pdo->prepare("SELECT qr_code_path FROM coupons WHERE id = ?");
+                $stmt->execute([$couponId]);
+                $qrPath = $stmt->fetchColumn();
+                if ($qrPath && file_exists(__DIR__ . '/' . $qrPath)) {
+                    unlink(__DIR__ . '/' . $qrPath);
+                }
+                
+                // Kupon törlése
+                $stmt = $pdo->prepare("DELETE FROM user_coupons WHERE coupon_id = ?");
+                $stmt->execute([$couponId]);
+                $stmt = $pdo->prepare("DELETE FROM coupons WHERE id = ?");
+                $stmt->execute([$couponId]);
+            }
+            header('Location: /webshop/yw-admin/coupons?deleted=1');
+            exit;
+            
+        case 'toggle_coupon':
+            $admin->requireAdmin();
+            $couponId = (int)$_POST['coupon_id'];
+            if ($couponId > 0) {
+                $stmt = $pdo->prepare("UPDATE coupons SET is_active = NOT is_active WHERE id = ?");
+                $stmt->execute([$couponId]);
+            }
+            header('Location: /webshop/yw-admin/coupons');
+            exit;
+            
+        case 'upload_product_image':
+            $admin->requireAdmin();
+            header('Content-Type: application/json');
+            
+            $productId = (int)($_POST['product_id'] ?? 0);
+            if ($productId <= 0 || empty($_FILES['image'])) {
+                echo json_encode(['success' => false, 'error' => 'Hiányzó adatok']);
+                exit;
+            }
+            
+            $result = $admin->uploadProductImage($productId, $_FILES['image']);
+            echo json_encode($result);
+            exit;
+            
+        case 'delete_product_image':
+            $admin->requireAdmin();
+            header('Content-Type: application/json');
+            
+            $imageId = (int)($_POST['image_id'] ?? 0);
+            if ($imageId <= 0) {
+                echo json_encode(['success' => false, 'error' => 'Hiányzó kép ID']);
+                exit;
+            }
+            
+            $result = $admin->deleteProductImage($imageId);
+            echo json_encode(['success' => $result]);
+            exit;
+            
+        case 'reorder_product_images':
+            $admin->requireAdmin();
+            header('Content-Type: application/json');
+            
+            $imageIds = $_POST['image_ids'] ?? [];
+            if (empty($imageIds)) {
+                echo json_encode(['success' => false, 'error' => 'Hiányzó kép lista']);
+                exit;
+            }
+            
+            $result = $admin->reorderProductImages($imageIds);
+            echo json_encode(['success' => $result]);
+            exit;
     }
 }
 
@@ -355,6 +510,7 @@ switch ($page) {
     case 'product-edit':
         $productId = (int)($parts[1] ?? 0);
         $product = $productId ? $admin->getProduct($productId) : null;
+        $productImages = $productId ? $admin->getProductImages($productId) : [];
         $vendors = $admin->getVendors();
         $colors = $admin->getColors();
         $genders = $admin->getGenders();
@@ -384,6 +540,19 @@ switch ($page) {
         
     case 'ratings':
         // A ratings.php maga betölti az adatokat
+        break;
+        
+    case 'coupons':
+        // A coupons.php maga betölti az adatokat
+        break;
+        
+    case 'coupon-edit':
+        $couponId = (int)($parts[1] ?? 0);
+        if ($couponId > 0) {
+            $stmt = $pdo->prepare("SELECT * FROM coupons WHERE id = ?");
+            $stmt->execute([$couponId]);
+            $coupon = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
         break;
 }
 

@@ -20,17 +20,30 @@ $user = $stmt->fetch();
 // Kosár elemek betöltése
 $items = [];
 $subtotal = 0;
+$cartProductTypeIds = []; // Kosárban lévő terméktípusok ID-i
+$cartProductSubtypeIds = []; // Kosárban lévő alkategóriák ID-i
 
 foreach ($cart as $cartItem) {
     $stmt = $pdo->prepare("
-        SELECT p.product_id, p.name, p.price,
+        SELECT p.product_id, p.name, p.price, p.subtype_id as product_subtype_id,
+               ps.product_type_id,
                (SELECT src FROM product_img WHERE product_id = p.product_id ORDER BY position LIMIT 1) AS image
-        FROM product p WHERE p.product_id = ?
+        FROM product p
+        LEFT JOIN product_subtype ps ON p.subtype_id = ps.product_subtype_id
+        WHERE p.product_id = ?
     ");
     $stmt->execute([$cartItem['product_id']]);
     $product = $stmt->fetch();
     
     if (!$product) continue;
+    
+    // Termék típus és alkategória ID gyűjtése
+    if (!empty($product['product_type_id'])) {
+        $cartProductTypeIds[$product['product_type_id']] = true;
+    }
+    if (!empty($product['product_subtype_id'])) {
+        $cartProductSubtypeIds[$product['product_subtype_id']] = true;
+    }
     
     $stmt = $pdo->prepare("SELECT size_value FROM size WHERE size_id = ?");
     $stmt->execute([$cartItem['size_id']]);
@@ -47,9 +60,76 @@ foreach ($cart as $cartItem) {
         'image' => $product['image'],
         'size' => $sizeValue,
         'quantity' => $cartItem['quantity'],
-        'total' => $itemTotal
+        'total' => $itemTotal,
+        'product_type_id' => $product['product_type_id'],
+        'product_subtype_id' => $product['product_subtype_id']
     ];
 }
+
+$cartProductTypeIds = array_keys($cartProductTypeIds);
+$cartProductSubtypeIds = array_keys($cartProductSubtypeIds);
+
+// Felhasználó elérhető kuponjai (aktivált, nem használt, érvényes)
+// Szűrés: általános VAGY megfelelő főkategória VAGY megfelelő alkategória
+$userCoupons = [];
+$stmt = $pdo->prepare("
+    SELECT c.*, pt.name as product_type_name, ps.name as product_subtype_name
+    FROM user_coupons uc
+    JOIN coupons c ON uc.coupon_id = c.id
+    LEFT JOIN product_type pt ON c.product_type_id = pt.product_type_id
+    LEFT JOIN product_subtype ps ON c.product_subtype_id = ps.product_subtype_id
+    WHERE uc.user_id = ?
+      AND uc.used_at IS NULL
+      AND c.is_active = 1
+      AND CURDATE() BETWEEN c.start_date AND c.end_date
+    ORDER BY c.amount DESC
+");
+$stmt->execute([$_SESSION['user_id']]);
+$allCoupons = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Szűrjük a kuponokat a kosár tartalma alapján
+foreach ($allCoupons as $coupon) {
+    // Általános kupon (nincs kategória megkötés)
+    if (empty($coupon['product_type_id']) && empty($coupon['product_subtype_id'])) {
+        $userCoupons[] = $coupon;
+        continue;
+    }
+    // Alkategória kupon
+    if (!empty($coupon['product_subtype_id'])) {
+        if (in_array($coupon['product_subtype_id'], $cartProductSubtypeIds)) {
+            $userCoupons[] = $coupon;
+        }
+        continue;
+    }
+    // Főkategória kupon
+    if (!empty($coupon['product_type_id'])) {
+        if (in_array($coupon['product_type_id'], $cartProductTypeIds)) {
+            $userCoupons[] = $coupon;
+        }
+    }
+}
+
+// Típus nevek magyarul
+$typeNames = [
+    'Accessory' => 'Kiegészítők',
+    'Clothe' => 'Ruházat',
+    'Shoe' => 'Cipők'
+];
+
+$subtypeNames = [
+    'bag' => 'Táska',
+    'cap' => 'Sapka',
+    'hat' => 'Kalap',
+    'hoodie' => 'Kapucnis pulcsi',
+    'jacket' => 'Dzseki',
+    'jeans' => 'Farmer',
+    'leggings' => 'Leggings',
+    'sweater' => 'Pulóver',
+    't-shirt' => 'Póló',
+    'winter coat' => 'Télikabát',
+    'sandals' => 'Szandál',
+    'shoes' => 'Cipő'
+];
 
 $shippingCost = $subtotal >= 15000 ? 0 : 1490;
 $total = $subtotal + $shippingCost;
@@ -243,6 +323,78 @@ try {
                     </div>
                 </div>
                 
+                <!-- KUPONKÓD -->
+                <div class="bg-white border rounded-xl p-6">
+                    <h2 class="text-lg font-semibold mb-4">
+                        <i class="las la-ticket-alt mr-2 text-gray-500"></i>Kuponkód
+                    </h2>
+                    
+                    <?php if (!empty($userCoupons)): ?>
+                        <!-- Aktivált kuponok választó -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Aktivált kuponjaim</label>
+                            <div class="space-y-2 max-h-48 overflow-y-auto pr-2" id="couponList">
+                                <?php foreach ($userCoupons as $uc): ?>
+                                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:border-purple-300 transition coupon-option"
+                                           data-coupon-id="<?= $uc['id'] ?>"
+                                           data-coupon-amount="<?= (int)$uc['amount'] ?>"
+                                           data-coupon-type="<?= $uc['product_type_id'] ?? 'all' ?>"
+                                           data-coupon-subtype="<?= $uc['product_subtype_id'] ?? 'all' ?>">
+                                        <input type="checkbox" name="selected_coupons[]" value="<?= $uc['id'] ?>" 
+                                               class="w-5 h-5 text-purple-600 rounded coupon-checkbox">
+                                        <div class="ml-3 flex-1">
+                                            <span class="font-medium text-sm">
+                                                <?= htmlspecialchars($uc['name'] ?: $uc['description']) ?>
+                                            </span>
+                                            <p class="text-xs text-gray-500">
+                                                <?php
+                                                if (!empty($uc['product_subtype_name'])) {
+                                                    echo $subtypeNames[$uc['product_subtype_name']] ?? ucfirst($uc['product_subtype_name']);
+                                                } elseif (!empty($uc['product_type_name'])) {
+                                                    echo $typeNames[$uc['product_type_name']] ?? $uc['product_type_name'];
+                                                } else {
+                                                    echo 'Minden termékre';
+                                                }
+                                                ?>
+                                            </p>
+                                        </div>
+                                        <span class="px-2 py-1 bg-purple-100 text-purple-700 text-sm font-bold rounded">
+                                            -<?= (int)$uc['amount'] ?>%
+                                        </span>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t pt-4">
+                            <p class="text-sm text-gray-500 mb-2">Vagy adj meg egy új kuponkódot:</p>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <!-- Szabad szöveges kuponkód mező -->
+                    <div class="flex gap-2">
+                        <input type="text" name="manual_coupon_code" id="manualCouponCode"
+                               placeholder="Kuponkód beírása..."
+                               class="flex-1 border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <button type="button" id="checkCouponBtn"
+                                class="px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                            <i class="las la-check"></i>
+                        </button>
+                    </div>
+                    <div id="couponMessage" class="mt-2 text-sm hidden"></div>
+                    
+                    <!-- Alkalmazott kedvezmény -->
+                    <div id="appliedDiscount" class="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg hidden">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="font-medium text-green-800">Kupon alkalmazva!</p>
+                                <p class="text-sm text-green-600" id="discountInfo"></p>
+                            </div>
+                            <span class="text-lg font-bold text-green-700" id="discountAmount"></span>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- MEGJEGYZÉS -->
                 <div class="bg-white border rounded-xl p-6">
                     <h2 class="text-lg font-semibold mb-4">
@@ -284,7 +436,11 @@ try {
                     <div class="border-t pt-4 space-y-2">
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Részösszeg:</span>
-                            <span><?= number_format($subtotal, 0, ',', ' ') ?> Ft</span>
+                            <span id="subtotalDisplay"><?= number_format($subtotal, 0, ',', ' ') ?> Ft</span>
+                        </div>
+                        <div class="flex justify-between text-sm text-green-600" id="couponDiscountRow" style="display: none;">
+                            <span>Kupon kedvezmény:</span>
+                            <span id="couponDiscountDisplay">-0 Ft</span>
                         </div>
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Szállítás:</span>
@@ -304,6 +460,8 @@ try {
                     </div>
                     
                     <input type="hidden" name="subtotal" value="<?= $subtotal ?>">
+                    <input type="hidden" name="discount_amount" id="discountAmountHidden" value="0">
+                    <input type="hidden" name="applied_coupon_ids" id="appliedCouponIds" value="">
                     
                     <button type="submit" id="submitBtn"
                             class="w-full mt-6 bg-black text-white py-4 rounded-lg font-medium text-lg hover:bg-gray-800 transition flex items-center justify-center gap-2">
@@ -332,6 +490,18 @@ const codFee = 390;
 
 let currentShippingCost = 0;
 let currentCodFee = 0;
+let currentDiscount = 0;
+let appliedCouponIds = [];
+let manualCouponData = null;
+
+// Kosár termék típusok, alkategóriák és árak
+const cartItems = <?= json_encode(array_map(function($item) {
+    return [
+        'product_type_id' => $item['product_type_id'],
+        'product_subtype_id' => $item['product_subtype_id'],
+        'total' => $item['total']
+    ];
+}, $items)) ?>;
 
 // Szállítási mód váltás
 document.querySelectorAll('input[name="delivery_method_id"]').forEach(radio => {
@@ -363,16 +533,34 @@ document.querySelectorAll('input[name="payment_method_id"]').forEach(radio => {
 });
 
 function updateTotal() {
-    const total = subtotal + currentShippingCost + currentCodFee;
+    const total = subtotal - currentDiscount + currentShippingCost + currentCodFee;
     document.getElementById('totalDisplay').textContent = new Intl.NumberFormat('hu-HU').format(total) + ' Ft';
     document.getElementById('shippingCostDisplay').textContent = currentShippingCost === 0 ? 'Ingyenes' : new Intl.NumberFormat('hu-HU').format(currentShippingCost) + ' Ft';
+    
+    // Kedvezmény sor
+    const discountRow = document.getElementById('couponDiscountRow');
+    if (currentDiscount > 0) {
+        discountRow.style.display = 'flex';
+        document.getElementById('couponDiscountDisplay').textContent = '-' + new Intl.NumberFormat('hu-HU').format(currentDiscount) + ' Ft';
+    } else {
+        discountRow.style.display = 'none';
+    }
+    
+    // Hidden mezők frissítése
+    document.getElementById('discountAmountHidden').value = currentDiscount;
+    document.getElementById('appliedCouponIds').value = appliedCouponIds.join(',');
 }
 
 function updateRequiredFields(type) {
-    // Házhoz szállítás mezők required kezelése
+    // Házhoz szállítás mezők required kezelése (kivéve emelet/ajtó)
     const deliveryInputs = document.querySelectorAll('#deliveryFields input');
     deliveryInputs.forEach(input => {
-        input.required = (type === 'delivery');
+        // Az emelet/ajtó mező nem kötelező
+        if (input.name === 'shipping_floor_door') {
+            input.required = false;
+        } else {
+            input.required = (type === 'delivery');
+        }
     });
 }
 
@@ -467,6 +655,143 @@ function buildFullAddress() {
     if (el) el.addEventListener('input', buildFullAddress);
     if (el) el.addEventListener('change', buildFullAddress);
 });
+
+// ===============================
+// KUPON KEZELÉS
+// ===============================
+
+// Kupon kedvezmény számítása
+function calculateDiscount() {
+    currentDiscount = 0;
+    appliedCouponIds = [];
+    
+    // Aktivált kuponok feldolgozása (checkboxok)
+    document.querySelectorAll('.coupon-checkbox:checked').forEach(checkbox => {
+        const option = checkbox.closest('.coupon-option');
+        const couponId = parseInt(option.dataset.couponId);
+        const amount = parseInt(option.dataset.couponAmount);
+        const typeId = option.dataset.couponType;
+        const subtypeId = option.dataset.couponSubtype;
+        
+        appliedCouponIds.push(couponId);
+        
+        // Kedvezmény számítása a megfelelő terméktípusra/alkategóriára
+        cartItems.forEach(item => {
+            let matches = false;
+            // Általános kupon
+            if ((typeId === 'all' || typeId === '') && (subtypeId === 'all' || subtypeId === '')) {
+                matches = true;
+            }
+            // Alkategória kupon
+            else if (subtypeId && subtypeId !== 'all' && subtypeId !== '') {
+                matches = (subtypeId == item.product_subtype_id);
+            }
+            // Főkategória kupon
+            else if (typeId && typeId !== 'all' && typeId !== '') {
+                matches = (typeId == item.product_type_id);
+            }
+            
+            if (matches) {
+                currentDiscount += Math.round(item.total * (amount / 100));
+            }
+        });
+    });
+    
+    // Manuális kupon hozzáadása (ha van)
+    if (manualCouponData && !appliedCouponIds.includes(manualCouponData.id)) {
+        appliedCouponIds.push(manualCouponData.id);
+        cartItems.forEach(item => {
+            let matches = false;
+            // Általános kupon
+            if (!manualCouponData.product_type_id && !manualCouponData.product_subtype_id) {
+                matches = true;
+            }
+            // Alkategória kupon
+            else if (manualCouponData.product_subtype_id) {
+                matches = (manualCouponData.product_subtype_id == item.product_subtype_id);
+            }
+            // Főkategória kupon
+            else if (manualCouponData.product_type_id) {
+                matches = (manualCouponData.product_type_id == item.product_type_id);
+            }
+            
+            if (matches) {
+                currentDiscount += Math.round(item.total * (manualCouponData.amount / 100));
+            }
+        });
+    }
+    
+    updateTotal();
+    updateAppliedDiscountUI();
+}
+
+function updateAppliedDiscountUI() {
+    const appliedDiv = document.getElementById('appliedDiscount');
+    if (currentDiscount > 0) {
+        appliedDiv.classList.remove('hidden');
+        document.getElementById('discountInfo').textContent = appliedCouponIds.length + ' kupon alkalmazva';
+        document.getElementById('discountAmount').textContent = '-' + new Intl.NumberFormat('hu-HU').format(currentDiscount) + ' Ft';
+    } else {
+        appliedDiv.classList.add('hidden');
+    }
+}
+
+// Checkbox kuponok eseménykezelő
+document.querySelectorAll('.coupon-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', calculateDiscount);
+});
+
+// Manuális kuponkód ellenőrzés
+const checkCouponBtn = document.getElementById('checkCouponBtn');
+const couponMessage = document.getElementById('couponMessage');
+const manualCouponInput = document.getElementById('manualCouponCode');
+
+if (checkCouponBtn) {
+    checkCouponBtn.addEventListener('click', async function() {
+        const code = manualCouponInput.value.trim();
+        if (!code) {
+            showCouponMessage('Kérlek adj meg egy kuponkódot!', 'error');
+            return;
+        }
+        
+        checkCouponBtn.disabled = true;
+        checkCouponBtn.innerHTML = '<i class="las la-spinner la-spin"></i>';
+        
+        try {
+            const res = await fetch('/webshop/api/check-coupon.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    code: code, 
+                    cart_type_ids: cartItems.map(i => i.product_type_id),
+                    cart_subtype_ids: cartItems.map(i => i.product_subtype_id)
+                })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                manualCouponData = data.coupon;
+                showCouponMessage(data.message, 'success');
+                manualCouponInput.value = '';
+                manualCouponInput.disabled = true;
+                calculateDiscount();
+            } else {
+                showCouponMessage(data.message, 'error');
+            }
+        } catch (e) {
+            showCouponMessage('Hiba történt a kupon ellenőrzése közben.', 'error');
+        }
+        
+        checkCouponBtn.disabled = false;
+        checkCouponBtn.innerHTML = '<i class="las la-check"></i>';
+    });
+}
+
+function showCouponMessage(msg, type) {
+    couponMessage.classList.remove('hidden', 'text-green-600', 'text-red-600');
+    couponMessage.classList.add(type === 'success' ? 'text-green-600' : 'text-red-600');
+    couponMessage.innerHTML = '<i class="las ' + (type === 'success' ? 'la-check-circle' : 'la-times-circle') + ' mr-1"></i>' + msg;
+}
 
 // Form validáció
 document.getElementById('checkoutForm').addEventListener('submit', function(e) {

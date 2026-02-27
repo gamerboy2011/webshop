@@ -35,11 +35,11 @@ $products = $products ?? [];
                         <?php endif; ?>
                     </div>
                     
-                    <div class="aspect-square bg-gray-100 overflow-hidden">
+                    <div class="aspect-square bg-white overflow-hidden flex items-center justify-center border-b">
                         <?php if (!empty($product['image'])): ?>
                             <img src="/webshop/<?= htmlspecialchars($product['image']) ?>" 
                                  alt="<?= htmlspecialchars($product['name']) ?>"
-                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                 class="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300">
                         <?php else: ?>
                             <div class="w-full h-full flex items-center justify-center text-gray-400">
                                 <i class="las la-image text-4xl"></i>

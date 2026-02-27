@@ -26,6 +26,10 @@ class OrderController
         $paymentMethodId = (int)($_POST['payment_method_id'] ?? 0);
         $deliveryMethodId = (int)($_POST['delivery_method_id'] ?? 0);
         
+        // Kupon adatok
+        $discountAmount = (int)($_POST['discount_amount'] ?? 0);
+        $appliedCouponIds = array_filter(array_map('intval', explode(',', $_POST['applied_coupon_ids'] ?? '')));
+        
         // Szállítási adatok
         $shippingName = trim($_POST['shipping_name'] ?? '');
         $shippingPhone = trim($_POST['shipping_phone'] ?? '');
@@ -58,7 +62,9 @@ class OrderController
                 'foxpost_point_id' => $foxpostPointId,
                 'foxpost_point_name' => $foxpostPointName,
                 'foxpost_point_address' => $foxpostPointAddress,
-                'cart' => $_SESSION['cart']
+                'cart' => $_SESSION['cart'],
+                'discount_amount' => $discountAmount,
+                'applied_coupon_ids' => $appliedCouponIds
             ];
             
             // Összeg számítása
@@ -70,9 +76,9 @@ class OrderController
                 $orderTotal += $price * $item['quantity'];
             }
             
-            // Szállítási költség
+            // Szállítási költség és kedvezmény
             $shippingCost = $orderTotal >= 15000 ? 0 : ($deliveryMethodId == 3 ? 890 : 1490);
-            $grandTotal = $orderTotal + $shippingCost;
+            $grandTotal = $orderTotal - $discountAmount + $shippingCost;
             
             $_SESSION['pending_payment'] = [
                 'total' => $grandTotal,
@@ -177,6 +183,17 @@ class OrderController
                 ]);
             }
             
+            // Kuponok megjelölése felhasználtként
+            if (!empty($appliedCouponIds)) {
+                foreach ($appliedCouponIds as $couponId) {
+                    $stmt = $this->pdo->prepare("
+                        UPDATE user_coupons SET used_at = NOW(), order_id = ?
+                        WHERE user_id = ? AND coupon_id = ?
+                    ");
+                    $stmt->execute([$orderId, $userId, $couponId]);
+                }
+            }
+            
             $this->pdo->commit();
             
             // Felhasználó adatok (email és számlázási cím)
@@ -216,7 +233,8 @@ class OrderController
                 $orderTotal,
                 $deliveryMethodId,
                 $foxpostPointName ?: ($shippingCity . ', ' . $shippingAddress),
-                $billingAddress
+                $billingAddress,
+                $discountAmount
             );
             
             // Kosár ürítése
@@ -243,14 +261,15 @@ class OrderController
         float $total,
         int $deliveryMethodId,
         string $deliveryAddress,
-        string $billingAddress = ''
+        string $billingAddress = '',
+        int $discountAmount = 0
     ): bool {
         $subject = "YoursyWear - Rendelés visszaigazolás #$orderId";
         
         // Szállítási mód és költség
         $deliveryText = $deliveryMethodId == 3 ? 'FoxPost csomagautomata' : 'Házhoz szállítás (GLS)';
         $shippingCost = $total >= 15000 ? 0 : ($deliveryMethodId == 3 ? 890 : 1490);
-        $grandTotal = $total + $shippingCost;
+        $grandTotal = $total - $discountAmount + $shippingCost;
         
         // Számla szám generálás
         $invoiceNumber = 'YW-' . date('Y') . '-' . str_pad($orderId, 6, '0', STR_PAD_LEFT);
@@ -274,6 +293,7 @@ class OrderController
         }
         
         $subtotalFormatted = number_format($total, 0, ',', ' ');
+        $discountFormatted = $discountAmount > 0 ? '-' . number_format($discountAmount, 0, ',', ' ') . ' Ft' : '';
         $shippingFormatted = $shippingCost == 0 ? 'INGYENES' : number_format($shippingCost, 0, ',', ' ') . ' Ft';
         $grandTotalFormatted = number_format($grandTotal, 0, ',', ' ');
         $nettoTotal = number_format(round($grandTotal / 1.27), 0, ',', ' ');
@@ -361,6 +381,11 @@ class OrderController
                             <td style='padding: 5px 0;'>Szállítási költség ({$deliveryText}):</td>
                             <td style='padding: 5px 0; text-align: right;'>{$shippingFormatted}</td>
                         </tr>
+                        " . ($discountAmount > 0 ? "
+                        <tr>
+                            <td style='padding: 5px 0; color: #16a34a;'>Kupon kedvezmény:</td>
+                            <td style='padding: 5px 0; text-align: right; color: #16a34a;'>{$discountFormatted}</td>
+                        </tr>" : "") . "
                         <tr style='border-top: 2px solid #ddd;'>
                             <td style='padding: 10px 0; font-size: 11px; color: #666;'>Nettó összeg:</td>
                             <td style='padding: 10px 0; text-align: right; font-size: 11px; color: #666;'>{$nettoTotal} Ft</td>

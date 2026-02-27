@@ -392,4 +392,124 @@ class AdminController
         }
         return true;
     }
+
+    /**
+     * Termék képeinek lekérése
+     */
+    public function getProductImages(int $productId): array
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT * FROM product_img 
+            WHERE product_id = ? 
+            ORDER BY position ASC
+        ");
+        $stmt->execute([$productId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Kép feltöltése
+     */
+    public function uploadProductImage(int $productId, array $file): array
+    {
+        $uploadDir = __DIR__ . '/../../uploads/products/' . $productId;
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        // Validáció
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (!in_array($file['type'], $allowedTypes)) {
+            return ['success' => false, 'error' => 'Nem támogatott fájltípus'];
+        }
+
+        if ($file['size'] > 5 * 1024 * 1024) {
+            return ['success' => false, 'error' => 'Max 5MB méret engedélyezett'];
+        }
+
+        // Fájlnév generálás
+        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = uniqid('img_') . '.' . $ext;
+        $filepath = $uploadDir . '/' . $filename;
+        $relativePath = 'uploads/products/' . $productId . '/' . $filename;
+
+        if (!move_uploaded_file($file['tmp_name'], $filepath)) {
+            return ['success' => false, 'error' => 'Feltöltés sikertelen'];
+        }
+
+        // Következő pozíció meghatározása
+        $stmt = $this->pdo->prepare("SELECT COALESCE(MAX(position), 0) + 1 FROM product_img WHERE product_id = ?");
+        $stmt->execute([$productId]);
+        $position = $stmt->fetchColumn();
+
+        // Adatbázisba mentés
+        $stmt = $this->pdo->prepare("INSERT INTO product_img (product_id, src, position) VALUES (?, ?, ?)");
+        $stmt->execute([$productId, $relativePath, $position]);
+        $imageId = $this->pdo->lastInsertId();
+
+        return [
+            'success' => true,
+            'image' => [
+                'product_img_id' => $imageId,
+                'src' => $relativePath,
+                'position' => $position
+            ]
+        ];
+    }
+
+    /**
+     * Kép törlése
+     */
+    public function deleteProductImage(int $imageId): bool
+    {
+        // Kép adatai
+        $stmt = $this->pdo->prepare("SELECT * FROM product_img WHERE product_img_id = ?");
+        $stmt->execute([$imageId]);
+        $image = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$image) return false;
+
+        // Fájl törlése
+        $filepath = __DIR__ . '/../../' . $image['src'];
+        if (file_exists($filepath)) {
+            unlink($filepath);
+        }
+
+        // Adatbázisból törlés
+        $stmt = $this->pdo->prepare("DELETE FROM product_img WHERE product_img_id = ?");
+        $stmt->execute([$imageId]);
+
+        // Pozíciók újraszámozása
+        $stmt = $this->pdo->prepare("
+            SET @pos := 0;
+            UPDATE product_img SET position = (@pos := @pos + 1) 
+            WHERE product_id = ? ORDER BY position
+        ");
+        // MySQL nem támogatja így, szóval külön
+        $stmt = $this->pdo->prepare("
+            SELECT product_img_id FROM product_img 
+            WHERE product_id = ? ORDER BY position
+        ");
+        $stmt->execute([$image['product_id']]);
+        $images = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        $updateStmt = $this->pdo->prepare("UPDATE product_img SET position = ? WHERE product_img_id = ?");
+        foreach ($images as $pos => $imgId) {
+            $updateStmt->execute([$pos + 1, $imgId]);
+        }
+
+        return true;
+    }
+
+    /**
+     * Képek sorrendjének frissítése
+     */
+    public function reorderProductImages(array $imageIds): bool
+    {
+        $stmt = $this->pdo->prepare("UPDATE product_img SET position = ? WHERE product_img_id = ?");
+        foreach ($imageIds as $position => $imageId) {
+            $stmt->execute([$position + 1, (int)$imageId]);
+        }
+        return true;
+    }
 }

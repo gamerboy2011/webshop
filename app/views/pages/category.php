@@ -303,7 +303,7 @@ $colorCodes = [
                             </button>
                             
                             <a href="/webshop/termek/<?= $product['product_id'] ?>" class="block">
-                                <div class="aspect-[3/4] bg-gray-100 overflow-hidden relative">
+                                <div class="aspect-[3/4] bg-white overflow-hidden relative flex items-center justify-center border-b">
                                     <?php if (!empty($product['is_sale'])): ?>
                                         <span class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded z-10">
                                             -20%
@@ -312,7 +312,7 @@ $colorCodes = [
                                     <?php if (!empty($product['image'])): ?>
                                         <img src="/webshop/<?= htmlspecialchars($product['image']) ?>" 
                                              alt="<?= htmlspecialchars($product['name']) ?>"
-                                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                             class="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
                                              loading="lazy">
                                     <?php else: ?>
                                         <div class="w-full h-full flex items-center justify-center text-gray-400">
