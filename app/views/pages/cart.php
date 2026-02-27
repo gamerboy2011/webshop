@@ -57,77 +57,97 @@ foreach ($cart as $cartItem) {
     <?php else: ?>
         <div class="space-y-4">
             <?php foreach ($items as $item): ?>
-                <div class="bg-white border rounded-lg p-4 flex gap-4 items-center">
-                    <!-- KÉP -->
-                    <a href="/webshop/termek/<?= $item['product_id'] ?>" class="flex-shrink-0">
-                        <?php if (!empty($item['image'])): ?>
-                            <img src="/webshop/<?= htmlspecialchars($item['image']) ?>"
-                                 alt="<?= htmlspecialchars($item['name']) ?>"
-                                 class="w-24 h-24 object-cover rounded-lg">
-                        <?php else: ?>
-                            <div class="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center">
-                                <i class="las la-image text-gray-400"></i>
-                            </div>
-                        <?php endif; ?>
-                    </a>
-
-                    <!-- INFO -->
-                    <div class="flex-1 min-w-0">
-                        <a href="/webshop/termek/<?= $item['product_id'] ?>" class="font-semibold text-gray-900 hover:text-gray-600">
-                            <?= htmlspecialchars($item['name']) ?>
+                <div class="bg-white border rounded-lg p-4">
+                    <!-- MOBIL: Stack layout -->
+                    <div class="flex gap-4">
+                        <!-- KÉP -->
+                        <a href="/webshop/termek/<?= $item['product_id'] ?>" class="flex-shrink-0">
+                            <?php if (!empty($item['image'])): ?>
+                                <img src="/webshop/<?= htmlspecialchars($item['image']) ?>"
+                                     alt="<?= htmlspecialchars($item['name']) ?>"
+                                     class="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg">
+                            <?php else: ?>
+                                <div class="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-lg flex items-center justify-center">
+                                    <i class="las la-image text-gray-400"></i>
+                                </div>
+                            <?php endif; ?>
                         </a>
-                        <p class="text-sm text-gray-500 mt-1">
-                            Méret: <span class="font-medium"><?= htmlspecialchars($item['size']) ?></span>
-                        </p>
-                        <p class="font-medium mt-1">
-                            <?= number_format($item['price'], 0, ',', ' ') ?> Ft
-                        </p>
-                    </div>
 
-                    <!-- MENNYISÉG -->
-                    <div class="flex items-center gap-2">
-                        <form method="post" action="/webshop/index.php" class="inline">
-                            <?= csrf_field() ?>
-                            <input type="hidden" name="action" value="cart_update">
-                            <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
-                            <input type="hidden" name="size_id" value="<?= $item['size_id'] ?>">
-                            <input type="hidden" name="quantity" value="<?= max(1, $item['quantity'] - 1) ?>">
-                            <button type="submit" class="w-8 h-8 border rounded-lg hover:bg-gray-100 transition"
-                                    <?= $item['quantity'] <= 1 ? 'disabled' : '' ?>>
-                                <i class="las la-minus text-xs"></i>
-                            </button>
-                        </form>
+                        <!-- INFO -->
+                        <div class="flex-1 min-w-0">
+                            <a href="/webshop/termek/<?= $item['product_id'] ?>" class="font-semibold text-gray-900 hover:text-gray-600 text-sm sm:text-base line-clamp-2">
+                                <?= htmlspecialchars($item['name']) ?>
+                            </a>
+                            <p class="text-xs sm:text-sm text-gray-500 mt-1">
+                                Méret: <span class="font-medium"><?= htmlspecialchars($item['size']) ?></span>
+                            </p>
+                            <p class="font-medium mt-1 text-sm sm:text-base">
+                                <?= number_format($item['price'], 0, ',', ' ') ?> Ft
+                            </p>
+                            
+                            <!-- MOBIL: Törlés gomb -->
+                            <form method="post" action="/webshop/index.php" class="mt-2 sm:hidden">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="action" value="cart_remove">
+                                <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
+                                <input type="hidden" name="size_id" value="<?= $item['size_id'] ?>">
+                                <button type="submit" class="text-red-500 text-xs hover:text-red-700 transition">
+                                    <i class="las la-trash-alt mr-1"></i>Törlés
+                                </button>
+                            </form>
+                        </div>
                         
-                        <span class="w-10 text-center font-medium"><?= $item['quantity'] ?></span>
-                        
-                        <form method="post" action="/webshop/index.php" class="inline">
-                            <?= csrf_field() ?>
-                            <input type="hidden" name="action" value="cart_update">
-                            <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
-                            <input type="hidden" name="size_id" value="<?= $item['size_id'] ?>">
-                            <input type="hidden" name="quantity" value="<?= $item['quantity'] + 1 ?>">
-                            <button type="submit" class="w-8 h-8 border rounded-lg hover:bg-gray-100 transition">
-                                <i class="las la-plus text-xs"></i>
-                            </button>
-                        </form>
+                        <!-- DESKTOP: Részösszeg és törlés -->
+                        <div class="hidden sm:block text-right">
+                            <p class="font-bold text-lg">
+                                <?= number_format($item['subtotal'], 0, ',', ' ') ?> Ft
+                            </p>
+                            <form method="post" action="/webshop/index.php" class="mt-2">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="action" value="cart_remove">
+                                <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
+                                <input type="hidden" name="size_id" value="<?= $item['size_id'] ?>">
+                                <button type="submit" class="text-red-500 text-sm hover:text-red-700 transition">
+                                    <i class="las la-trash-alt mr-1"></i>Törlés
+                                </button>
+                            </form>
+                        </div>
                     </div>
-
-                    <!-- RÉSZÖSSZEG -->
-                    <div class="text-right w-28">
-                        <p class="font-bold text-lg">
+                    
+                    <!-- MENNYISÉG és MOBIL ár -->
+                    <div class="flex items-center justify-between mt-3 pt-3 border-t sm:border-0 sm:pt-0 sm:mt-0 sm:justify-end">
+                        <!-- Mennyiség -->
+                        <div class="flex items-center gap-2">
+                            <form method="post" action="/webshop/index.php" class="inline">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="action" value="cart_update">
+                                <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
+                                <input type="hidden" name="size_id" value="<?= $item['size_id'] ?>">
+                                <input type="hidden" name="quantity" value="<?= max(1, $item['quantity'] - 1) ?>">
+                                <button type="submit" class="w-8 h-8 border rounded-lg hover:bg-gray-100 transition"
+                                        <?= $item['quantity'] <= 1 ? 'disabled' : '' ?>>
+                                    <i class="las la-minus text-xs"></i>
+                                </button>
+                            </form>
+                            
+                            <span class="w-8 text-center font-medium"><?= $item['quantity'] ?></span>
+                            
+                            <form method="post" action="/webshop/index.php" class="inline">
+                                <?= csrf_field() ?>
+                                <input type="hidden" name="action" value="cart_update">
+                                <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
+                                <input type="hidden" name="size_id" value="<?= $item['size_id'] ?>">
+                                <input type="hidden" name="quantity" value="<?= $item['quantity'] + 1 ?>">
+                                <button type="submit" class="w-8 h-8 border rounded-lg hover:bg-gray-100 transition">
+                                    <i class="las la-plus text-xs"></i>
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- MOBIL: Részösszeg -->
+                        <p class="font-bold sm:hidden">
                             <?= number_format($item['subtotal'], 0, ',', ' ') ?> Ft
                         </p>
-                        
-                        <!-- TÖRLÉS -->
-                        <form method="post" action="/webshop/index.php" class="mt-2">
-                            <?= csrf_field() ?>
-                            <input type="hidden" name="action" value="cart_remove">
-                            <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
-                            <input type="hidden" name="size_id" value="<?= $item['size_id'] ?>">
-                            <button type="submit" class="text-red-500 text-sm hover:text-red-700 transition">
-                                <i class="las la-trash-alt mr-1"></i>Törlés
-                            </button>
-                        </form>
                     </div>
                 </div>
             <?php endforeach; ?>

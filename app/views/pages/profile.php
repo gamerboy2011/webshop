@@ -187,45 +187,73 @@ $stmt->execute([$userId]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>
 
-<div class="max-w-6xl mx-auto mt-12 grid grid-cols-1 md:grid-cols-4 gap-8">
+<div class="max-w-6xl mx-auto mt-6 md:mt-12 px-4 md:px-0">
 
-    <aside class="bg-white p-6 rounded-xl shadow-md h-fit">
-        <nav class="space-y-3 text-sm">
-
+    <!-- MOBIL: Horizontális menü -->
+    <div class="md:hidden mb-4 -mx-4 px-4">
+        <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             <a href="profil?section=favorites"
-                class="block px-4 py-2 rounded-lg font-medium 
-               <?= $section === 'favorites' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
-                Kedvencek
+               class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
+                      <?= $section === 'favorites' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700' ?>">
+                <i class="lar la-heart mr-1"></i>Kedvencek
             </a>
-
             <a href="profil?section=orders"
-                class="block px-4 py-2 rounded-lg font-medium 
-               <?= $section === 'orders' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
-                Rendeléseid
+               class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
+                      <?= $section === 'orders' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700' ?>">
+                <i class="las la-shopping-bag mr-1"></i>Rendelések
             </a>
-
             <a href="profil?section=security"
-                class="block px-4 py-2 rounded-lg font-medium 
-               <?= $section === 'security' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
-                Profil &amp; Biztonság
+               class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
+                      <?= $section === 'security' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700' ?>">
+                <i class="las la-user-shield mr-1"></i>Profil
             </a>
-
             <a href="profil?section=settings"
-                class="block px-4 py-2 rounded-lg font-medium 
-               <?= $section === 'settings' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
-                Beállítások
+               class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
+                      <?= $section === 'settings' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700' ?>">
+                <i class="las la-cog mr-1"></i>Beállítások
             </a>
-
             <a href="profil?section=returns"
-                class="block px-4 py-2 rounded-lg font-medium 
-               <?= $section === 'returns' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
-                Visszaküldött termékek
+               class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
+                      <?= $section === 'returns' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700' ?>">
+                <i class="las la-undo-alt mr-1"></i>Visszaküldések
             </a>
+        </div>
+    </div>
 
-        </nav>
-    </aside>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
 
-    <main class="md:col-span-3 bg-white p-8 rounded-xl shadow-md">
+        <!-- DESKTOP: Sidebar -->
+        <aside class="hidden md:block bg-white p-6 rounded-xl shadow-md h-fit">
+            <nav class="space-y-3 text-sm">
+                <a href="profil?section=favorites"
+                    class="block px-4 py-2 rounded-lg font-medium 
+                   <?= $section === 'favorites' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
+                    Kedvencek
+                </a>
+                <a href="profil?section=orders"
+                    class="block px-4 py-2 rounded-lg font-medium 
+                   <?= $section === 'orders' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
+                    Rendeléseid
+                </a>
+                <a href="profil?section=security"
+                    class="block px-4 py-2 rounded-lg font-medium 
+                   <?= $section === 'security' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
+                    Profil &amp; Biztonság
+                </a>
+                <a href="profil?section=settings"
+                    class="block px-4 py-2 rounded-lg font-medium 
+                   <?= $section === 'settings' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
+                    Beállítások
+                </a>
+                <a href="profil?section=returns"
+                    class="block px-4 py-2 rounded-lg font-medium 
+                   <?= $section === 'returns' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
+                    Visszaküldött termékek
+                </a>
+            </nav>
+        </aside>
+
+        <main class="md:col-span-3 bg-white p-4 md:p-8 rounded-xl shadow-md">
 
         <?php if ($section === 'favorites'): ?>
 
@@ -611,7 +639,8 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         <?php endif; ?>
 
-    </main>
+        </main>
+    </div>
 </div>
 
 <!-- VISSZAKÜLDÉS MODAL -->
