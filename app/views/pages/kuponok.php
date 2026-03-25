@@ -1,6 +1,4 @@
 <?php
-require_once __DIR__ . '/../../library/config.php';
-
 // Kuponkód az URL-ből
 $couponCode = $_GET['code'] ?? $_GET['id'] ?? null;
 

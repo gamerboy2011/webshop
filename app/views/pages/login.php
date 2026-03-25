@@ -1,11 +1,9 @@
 <?php
 // Ha már be van jelentkezve, irányítsuk a főoldalra
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
-    header("Location: /");
+    header("Location: /webshop/");
     exit;
 }
-
-require_once __DIR__ . "/../../library/customfunctions.php";
 
 $error = $_GET['error'] ?? null;
 $success = $_GET['success'] ?? null;

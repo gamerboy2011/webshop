@@ -342,7 +342,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // goqr.me API használata cURL-lel
                 $qrApiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($qrUrl);
                 
-                $qrDir = __DIR__ . '/uploads/qrcodes';
+                $qrDir = __DIR__ . '/storage/uploads/qrcodes';
                 if (!is_dir($qrDir)) {
                     mkdir($qrDir, 0755, true);
                 }
@@ -362,7 +362,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 if ($qrImage !== false && $httpCode === 200 && strlen($qrImage) > 100) {
                     file_put_contents($qrFilePath, $qrImage);
-                    $qrCodePath = 'uploads/qrcodes/' . $qrFileName;
+                    $qrCodePath = 'storage/uploads/qrcodes/' . $qrFileName;
                 }
             }
             

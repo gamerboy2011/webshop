@@ -1,6 +1,5 @@
 <?php
-session_start();
-require_once __DIR__ . '/../library/config.php';
+require_once __DIR__ . '/../../app/bootstrap.php';
 
 // Ellenőrzés
 if (empty($_SESSION['pending_order']) || empty($_SESSION['pending_payment'])) {

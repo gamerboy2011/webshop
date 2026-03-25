@@ -15,41 +15,33 @@ switch ($method) {
     case 'GET':
         if ($resourceId) {
             // GET /api/v1/products/{id}
-            $product = $productModel->getProductById($resourceId);
+            $product = $productModel->getProductById((int)$resourceId);
             
             if (!$product) {
                 ApiResponse::notFound('A termék nem található');
             }
             
             // Képek és méretek hozzáadása
-            $images = $productModel->getProductImages($resourceId);
-            $sizes = $productModel->getProductSizes($resourceId);
-            
-            $product['images'] = $images;
-            $product['sizes'] = $sizes;
+            $product['images'] = $productModel->getImages((int)$resourceId);
+            $product['sizes'] = $productModel->getSizes((int)$resourceId);
+            $product['variants'] = $productModel->getColorVariants((int)$resourceId);
             
             ApiResponse::success($product);
         } else {
             // GET /api/v1/products
-            $filters = [
-                'category' => $queryParams['category'] ?? null,
-                'vendor' => $queryParams['vendor'] ?? null,
-                'min_price' => $queryParams['min_price'] ?? null,
-                'max_price' => $queryParams['max_price'] ?? null,
-                'search' => $queryParams['search'] ?? null,
-                'sort' => $queryParams['sort'] ?? 'newest',
-                'limit' => isset($queryParams['limit']) ? (int)$queryParams['limit'] : 20,
-                'offset' => isset($queryParams['offset']) ? (int)$queryParams['offset'] : 0
-            ];
+            $search = $queryParams['search'] ?? null;
             
-            $products = $productModel->getProducts($filters);
-            $total = $productModel->getProductsCount($filters);
+            if ($search) {
+                // Keresés
+                $products = $productModel->search($search);
+            } else {
+                // Összes termék
+                $products = $productModel->getAll();
+            }
             
             ApiResponse::success([
                 'products' => $products,
-                'total' => $total,
-                'limit' => $filters['limit'],
-                'offset' => $filters['offset']
+                'total' => count($products)
             ]);
         }
         break;

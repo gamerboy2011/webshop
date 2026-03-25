@@ -4,8 +4,6 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-require_once __DIR__ . "/../../library/config.php";
-
 $userId  = $_SESSION['user_id'];
 
 // Közterület típusok betöltése

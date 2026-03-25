@@ -29,9 +29,9 @@ function csrf_token(): string
 /**
  * CSRF token validálása
  */
-function verify_csrf_token(): bool
+function verify_csrf_token(?string $token = null): bool
 {
-    $token = $_POST['csrf_token'] ?? '';
+    $token = $token ?? $_POST['csrf_token'] ?? '';
     return !empty($token) && hash_equals($_SESSION['csrf_token'] ?? '', $token);
 }
 

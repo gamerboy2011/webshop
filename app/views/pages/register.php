@@ -5,8 +5,6 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     exit;
 }
 
-require_once __DIR__ . "/../../library/customfunctions.php";
-
 $error = $_GET['error'] ?? null;
 $oldInput = [
     'full_name' => $_POST['full_name'] ?? '',
