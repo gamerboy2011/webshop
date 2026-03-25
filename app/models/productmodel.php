@@ -389,6 +389,83 @@ class ProductModel
     }
 
     /**
+     * Színváltozatok lekérése (parent + siblings)
+     */
+    public function getColorVariants(int $productId): array
+    {
+        // Először lekérjük a termék parent_product_id-ját
+        $stmt = $this->pdo->prepare("
+            SELECT product_id, parent_product_id 
+            FROM product 
+            WHERE product_id = :id
+        ");
+        $stmt->execute(['id' => $productId]);
+        $current = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$current) return [];
+        
+        // Ha van parent, akkor a parent és az összes child
+        // Ha nincs parent, akkor megnézzük van-e child
+        $parentId = $current['parent_product_id'] ?: $current['product_id'];
+        
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                p.product_id,
+                p.name,
+                c.name AS color,
+                c.color_id,
+                (SELECT src FROM product_img WHERE product_id = p.product_id ORDER BY position LIMIT 1) AS image
+            FROM product p
+            JOIN color c ON p.color_id = c.color_id
+            WHERE p.is_active = 1
+              AND (p.product_id = :parent_id OR p.parent_product_id = :parent_id2)
+            ORDER BY p.product_id
+        ");
+        $stmt->execute(['parent_id' => $parentId, 'parent_id2' => $parentId]);
+        $variants = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Csak ha több mint 1 változat van
+        return count($variants) > 1 ? $variants : [];
+    }
+
+    /**
+     * Összes termék lekérése színváltozatokkal (főoldal)
+     * Csak a parent/első termékeket mutatjuk, de jelezzük a variánsok számát
+     */
+    public function getAllWithVariants(): array
+    {
+        $stmt = $this->pdo->query("
+            SELECT
+                p.product_id,
+                p.name,
+                p.price,
+                ROUND(p.price * 0.8) AS sale_price,
+                p.is_sale,
+                p.parent_product_id,
+                pi.src AS image,
+                c.name AS color,
+                c.color_id
+            FROM product p
+            LEFT JOIN product_img pi
+                ON p.product_id = pi.product_id
+                AND pi.position = 1
+            JOIN color c ON p.color_id = c.color_id
+            WHERE p.is_active = 1
+              AND p.parent_product_id IS NULL
+            ORDER BY p.product_id DESC
+            LIMIT 12
+        ");
+        $products = $stmt->fetchAll() ?: [];
+        
+        // Színváltozatok hozzáadása minden termékhez
+        foreach ($products as &$product) {
+            $product['variants'] = $this->getColorVariants($product['product_id']);
+        }
+        
+        return $products;
+    }
+
+    /**
      * Szűrő opciók lekérése (márkák, színek, méretek)
      */
     public function getFilterOptions(?string $gender = null, ?string $category = null): array

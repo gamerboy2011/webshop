@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500" viewBox="0 0 400 500">
+  <rect width="400" height="500" fill="#f3f4f6"/>
+  <g transform="translate(100, 150)">
+    <rect x="50" y="20" width="100" height="80" rx="8" fill="#d1d5db"/>
+    <circle cx="75" cy="45" r="12" fill="#9ca3af"/>
+    <path d="M50 80 L90 55 L120 75 L150 45 L150 100 L50 100 Z" fill="#9ca3af"/>
+  </g>
+  <text x="200" y="320" text-anchor="middle" fill="#6b7280" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="500">Kép nem elérhető</text>
+</svg>

@@ -37,6 +37,11 @@ $mainImage = $images[0]['src'] ?? null;
 $sizes = $model->getSizes($productId);
 
 /* =========================
+   SZÍNVÁLTOZATOK
+   ========================= */
+$colorVariants = $model->getColorVariants($productId);
+
+/* =========================
    AJÁNLOTT TERMÉKEK
    ========================= */
 $related = $model->getRelated($product['subtype_id'], $productId);
@@ -85,16 +90,11 @@ if (isset($_SESSION['user_id'])) {
                 <div class="p-6 lg:p-8">
                     <!-- Fő kép -->
                     <div class="aspect-[3/4] bg-white rounded-lg overflow-hidden mb-4 flex items-center justify-center border">
-                        <?php if ($mainImage): ?>
-                            <img id="mainImage"
-                                 src="/webshop/<?= htmlspecialchars($mainImage) ?>"
-                                 alt="<?= htmlspecialchars($product['name']) ?>"
-                                 class="max-w-full max-h-full object-contain">
-                        <?php else: ?>
-                            <div class="w-full h-full flex items-center justify-center text-gray-400">
-                                <i class="las la-image text-6xl"></i>
-                            </div>
-                        <?php endif; ?>
+                        <img id="mainImage"
+                             src="/webshop/<?= $mainImage ? htmlspecialchars($mainImage) : 'public/images/placeholder.svg' ?>"
+                             alt="<?= htmlspecialchars($product['name']) ?>"
+                             class="max-w-full max-h-full object-contain"
+                             onerror="this.onerror=null; this.src='/webshop/public/images/placeholder.svg';">
                     </div>
 
                     <!-- Thumbnail galéria -->
@@ -162,9 +162,33 @@ if (isset($_SESSION['user_id'])) {
                             <?php endif; ?>
                         </div>
 
-                        <!-- Szín -->
+                        <!-- Szín és színváltozatok -->
                         <div class="mb-6">
                             <p class="text-sm font-medium text-gray-700 mb-2">Szín: <span class="font-normal"><?= htmlspecialchars($product['color']) ?></span></p>
+                            
+                            <?php if (!empty($colorVariants)): ?>
+                                <?php
+                                $colorHex = [
+                                    'Black' => '#000000', 'White' => '#FFFFFF', 'Red' => '#EF4444',
+                                    'Blue' => '#3B82F6', 'Green' => '#22C55E', 'Brown' => '#92400E',
+                                    'Yellow' => '#EAB308', 'Orange' => '#F97316', 'Gray' => '#6B7280',
+                                    'Pink' => '#EC4899', 'Purple' => '#A855F7', 'Beige' => '#D4C4A8',
+                                    'Navy' => '#1E3A5F', 'Cream' => '#FFFDD0', 'Oatmeal' => '#C9B99A',
+                                    'Iron' => '#48494B', 'Olive' => '#808000', 'Teal' => '#14B8A6',
+                                    'Multicolor' => 'linear-gradient(135deg, #EF4444, #EAB308, #22C55E, #3B82F6, #A855F7)',
+                                ];
+                                ?>
+                                <div class="flex flex-wrap gap-2 mt-3">
+                                    <?php foreach ($colorVariants as $variant): ?>
+                                        <?php $bg = $colorHex[$variant['color']] ?? '#CCCCCC'; ?>
+                                        <a href="/webshop/termek/<?= $variant['product_id'] ?>" 
+                                           class="w-8 h-8 rounded-full border-2 transition-all
+                                                  <?= $variant['product_id'] == $productId ? 'border-black ring-2 ring-black ring-offset-2' : 'border-gray-300 hover:border-gray-500 hover:scale-110' ?>"
+                                           style="background: <?= $bg ?>;"
+                                           title="<?= htmlspecialchars($variant['color']) ?>"></a>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
                         </div>
 
             <!-- MÉRET + KOSÁR -->

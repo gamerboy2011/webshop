@@ -57,21 +57,46 @@ if ($showHero) {
                                     -20%
                                 </span>
                             <?php endif; ?>
-                            <?php if (!empty($product['image'])): ?>
-                                <img src="/webshop/<?= htmlspecialchars($product['image']) ?>" 
-                                     alt="<?= htmlspecialchars($product['name']) ?>"
-                                     class="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300">
-                            <?php else: ?>
-                                <div class="w-full h-full flex items-center justify-center text-gray-400">
-                                    <i class="las la-image text-4xl"></i>
-                                </div>
-                            <?php endif; ?>
+                            <img src="/webshop/<?= !empty($product['image']) ? htmlspecialchars($product['image']) : 'public/images/placeholder.svg' ?>" 
+                                 alt="<?= htmlspecialchars($product['name']) ?>"
+                                 class="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                                 onerror="this.onerror=null; this.src='/webshop/public/images/placeholder.svg';"
+                                 loading="lazy">
                         </div>
 
                         <div class="p-4">
-                            <h3 class="text-lg font-semibold text-gray-900 group-hover:text-gray-600 transition-colors">
+                            <h3 class="text-lg font-semibold text-gray-900 group-hover:text-gray-600 transition-colors line-clamp-2">
                                 <?= htmlspecialchars($product['name']) ?>
                             </h3>
+                            
+                            <!-- Színváltozatok -->
+                            <?php if (!empty($product['variants'])): ?>
+                                <?php
+                                $colorHex = [
+                                    'Black' => '#000000', 'White' => '#FFFFFF', 'Red' => '#EF4444',
+                                    'Blue' => '#3B82F6', 'Green' => '#22C55E', 'Brown' => '#92400E',
+                                    'Yellow' => '#EAB308', 'Orange' => '#F97316', 'Gray' => '#6B7280',
+                                    'Pink' => '#EC4899', 'Purple' => '#A855F7', 'Beige' => '#D4C4A8',
+                                    'Navy' => '#1E3A5F', 'Cream' => '#FFFDD0', 'Oatmeal' => '#C9B99A',
+                                    'Iron' => '#48494B', 'Olive' => '#808000', 'Teal' => '#14B8A6',
+                                    'Multicolor' => 'linear-gradient(135deg, #EF4444, #EAB308, #22C55E, #3B82F6)',
+                                ];
+                                ?>
+                                <div class="flex items-center gap-1 mt-2">
+                                    <?php foreach (array_slice($product['variants'], 0, 5) as $variant): ?>
+                                        <?php $bg = $colorHex[$variant['color']] ?? '#CCCCCC'; ?>
+                                        <a href="/webshop/termek/<?= $variant['product_id'] ?>" 
+                                           onclick="event.stopPropagation();"
+                                           class="w-5 h-5 rounded-full border border-gray-300 hover:scale-110 transition-all"
+                                           style="background: <?= $bg ?>;"
+                                           title="<?= htmlspecialchars($variant['color']) ?>"></a>
+                                    <?php endforeach; ?>
+                                    <?php if (count($product['variants']) > 5): ?>
+                                        <span class="text-xs text-gray-500">+<?= count($product['variants']) - 5 ?></span>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
+                            
                             <?php if (!empty($product['is_sale'])): ?>
                                 <div class="mt-2">
                                     <span class="text-gray-400 line-through text-sm">

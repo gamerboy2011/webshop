@@ -690,7 +690,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 <!-- ===== JAVÍTOTT, VÉGLEGES SCRIPT BLOKK ===== -->
 <script>
 
-/* ===== AUTOMATIKUS VÁROSKITÖLTÉS (ZIP → CITY) ===== */
+/* ===== AUTOMATIKUS VÁROSKITÖLTÉS (ZIP → CITY) - RESTful API ===== */
 function autoFillCity(zipInputName, cityInputId) {
     const zipInput = document.querySelector(`input[name='${zipInputName}']`);
     const cityInput = document.getElementById(cityInputId);
@@ -700,19 +700,23 @@ function autoFillCity(zipInputName, cityInputId) {
         return;
     }
 
-    zipInput.addEventListener("keyup", function () {
+    zipInput.addEventListener("keyup", async function () {
         const zip = this.value.trim();
-        console.log("ZIP input:", zip);
 
         if (zip.length === 4) {
-            fetch("/webshop/app/api/getcity.php?zip=" + zip)
-                .then(res => res.json())
-                .then(data => {
-                    console.log("City API válasz:", data);
-                    cityInput.value = data.city || "";
+            try {
+                const response = await fetch("/webshop/api/v1/cities?postcode=" + zip);
+                const data = await response.json();
+                if (data.success && data.data?.city) {
+                    cityInput.value = data.data.city;
                     cityInput.readOnly = true;
-                })
-                .catch(err => console.error("AJAX hiba:", err));
+                } else {
+                    cityInput.value = "";
+                    cityInput.readOnly = false;
+                }
+            } catch (err) {
+                console.error("API hiba:", err);
+            }
         } else {
             cityInput.value = "";
             cityInput.readOnly = false;
@@ -798,16 +802,14 @@ if (sameBillingCheckbox) {
     });
 }
 
-/* ===== KEDVENC ELTÁVOLÍTÁSA ===== */
-function removeFavorite(productId, btn) {
-    fetch('/webshop/favorite-toggle', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'product_id=' + productId
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
+/* ===== KEDVENC ELTÁVOLÍTÁSA - RESTful API ===== */
+async function removeFavorite(productId, btn) {
+    try {
+        const response = await fetch('/webshop/api/v1/favorites/' + productId, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok || response.status === 204) {
             const card = btn.closest('.group');
             card.style.transition = 'opacity 0.3s, transform 0.3s';
             card.style.opacity = '0';
@@ -820,8 +822,9 @@ function removeFavorite(productId, btn) {
                 }
             }, 300);
         }
-    })
-    .catch(err => console.error('Hiba:', err));
+    } catch (err) {
+        console.error('Hiba:', err);
+    }
 }
 
 /* ===== VISSZAKÜLDÉS MODAL ===== */
@@ -836,27 +839,33 @@ function closeReturnModal() {
     document.getElementById('returnModal').classList.remove('flex');
 }
 
-document.getElementById('returnForm')?.addEventListener('submit', function(e) {
+document.getElementById('returnForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
     const formData = new FormData(this);
     
-    fetch('/webshop/api/return-request.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
+    try {
+        const response = await fetch('/webshop/api/v1/returns', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                order_id: formData.get('order_id'),
+                reason: formData.get('problem_type'),
+                description: formData.get('reason')
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
             alert('Visszaküldési kérelem sikeresen beküldve!');
             location.reload();
         } else {
-            alert('Hiba: ' + data.error);
+            alert('Hiba: ' + (data.message || 'Ismeretlen hiba'));
         }
-    })
-    .catch(err => {
+    } catch (err) {
         console.error('Hiba:', err);
         alert('Hiba történt a kérelem beküldésekor.');
-    });
+    }
 });
 
 </script>

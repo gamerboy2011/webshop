@@ -606,10 +606,10 @@ if (postcodeInput) {
         
         if (zip.length === 4) {
             try {
-                const res = await fetch('/webshop/api/postal.php?zip=' + zip);
+                const res = await fetch('/webshop/api/v1/cities?postcode=' + zip);
                 const data = await res.json();
-                if (data.city && cityInput) {
-                    cityInput.value = data.city;
+                if (data.success && data.data?.city && cityInput) {
+                    cityInput.value = data.data.city;
                     cityInput.classList.remove('bg-gray-50');
                     cityInput.classList.add('bg-green-50');
                 } else {

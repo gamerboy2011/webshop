@@ -84,39 +84,18 @@ foreach ($cart as $cartItem) {
                             <p class="font-medium mt-1 text-sm sm:text-base">
                                 <?= number_format($item['price'], 0, ',', ' ') ?> Ft
                             </p>
-                            
-                            <!-- MOBIL: Törlés gomb -->
-                            <form method="post" action="/webshop/index.php" class="mt-2 sm:hidden">
-                                <?= csrf_field() ?>
-                                <input type="hidden" name="action" value="cart_remove">
-                                <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
-                                <input type="hidden" name="size_id" value="<?= $item['size_id'] ?>">
-                                <button type="submit" class="text-red-500 text-xs hover:text-red-700 transition">
-                                    <i class="las la-trash-alt mr-1"></i>Törlés
-                                </button>
-                            </form>
                         </div>
                         
-                        <!-- DESKTOP: Részösszeg és törlés -->
-                        <div class="hidden sm:block text-right">
-                            <p class="font-bold text-lg">
+                        <!-- Részösszeg -->
+                        <div class="text-right">
+                            <p class="font-bold text-sm sm:text-lg">
                                 <?= number_format($item['subtotal'], 0, ',', ' ') ?> Ft
                             </p>
-                            <form method="post" action="/webshop/index.php" class="mt-2">
-                                <?= csrf_field() ?>
-                                <input type="hidden" name="action" value="cart_remove">
-                                <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
-                                <input type="hidden" name="size_id" value="<?= $item['size_id'] ?>">
-                                <button type="submit" class="text-red-500 text-sm hover:text-red-700 transition">
-                                    <i class="las la-trash-alt mr-1"></i>Törlés
-                                </button>
-                            </form>
                         </div>
                     </div>
                     
-                    <!-- MENNYISÉG és MOBIL ár -->
-                    <div class="flex items-center justify-between mt-3 pt-3 border-t sm:border-0 sm:pt-0 sm:mt-0 sm:justify-end">
-                        <!-- Mennyiség -->
+                    <!-- MENNYISÉG -->
+                    <div class="flex items-center justify-end mt-3 pt-3 border-t">
                         <div class="flex items-center gap-2">
                             <form method="post" action="/webshop/index.php" class="inline">
                                 <?= csrf_field() ?>
@@ -143,11 +122,6 @@ foreach ($cart as $cartItem) {
                                 </button>
                             </form>
                         </div>
-                        
-                        <!-- MOBIL: Részösszeg -->
-                        <p class="font-bold sm:hidden">
-                            <?= number_format($item['subtotal'], 0, ',', ' ') ?> Ft
-                        </p>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -200,28 +174,17 @@ foreach ($cart as $cartItem) {
     <div class="absolute inset-0 bg-black/50" onclick="closeClearCartModal()"></div>
     <div class="absolute inset-0 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center transform scale-95 opacity-0 transition-all duration-300" id="clearCartModalContent">
-            <!-- Figyelmeztető ikon -->
             <div class="w-20 h-20 mx-auto mb-6 bg-red-100 rounded-full flex items-center justify-center">
                 <i class="las la-exclamation-triangle text-5xl text-red-500"></i>
             </div>
-            
             <h3 class="text-xl font-bold text-gray-900 mb-2">Kosár kiürítése</h3>
-            <p class="text-gray-500 mb-6">
-                Biztosan ki szeretnéd üríteni a kosarad? Ez a művelet nem vonható vissza.
-            </p>
-            
+            <p class="text-gray-500 mb-6">Biztosan ki szeretnéd üríteni a kosarad?</p>
             <div class="flex gap-3">
-                <button onclick="closeClearCartModal()" 
-                        class="flex-1 border border-gray-300 py-3 px-6 rounded-lg font-medium text-gray-600 hover:bg-gray-50 transition">
-                    Mégsem
-                </button>
+                <button onclick="closeClearCartModal()" class="flex-1 border border-gray-300 py-3 px-6 rounded-lg font-medium text-gray-600 hover:bg-gray-50 transition">Mégsem</button>
                 <form method="post" action="/webshop/index.php" class="flex-1">
                     <?= csrf_field() ?>
                     <input type="hidden" name="action" value="cart_clear">
-                    <button type="submit" 
-                            class="w-full bg-red-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-red-600 transition">
-                        Kiürítés
-                    </button>
+                    <button type="submit" class="w-full bg-red-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-red-600 transition">Kiürítés</button>
                 </form>
             </div>
         </div>
@@ -239,7 +202,6 @@ function showClearCartModal() {
         content.classList.add('scale-100', 'opacity-100');
     }, 10);
 }
-
 function closeClearCartModal() {
     const modal = document.getElementById('clearCartModal');
     const content = document.getElementById('clearCartModalContent');

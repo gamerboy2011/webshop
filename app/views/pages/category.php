@@ -309,16 +309,11 @@ $colorCodes = [
                                             -20%
                                         </span>
                                     <?php endif; ?>
-                                    <?php if (!empty($product['image'])): ?>
-                                        <img src="/webshop/<?= htmlspecialchars($product['image']) ?>" 
-                                             alt="<?= htmlspecialchars($product['name']) ?>"
-                                             class="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
-                                             loading="lazy">
-                                    <?php else: ?>
-                                        <div class="w-full h-full flex items-center justify-center text-gray-400">
-                                            <i class="las la-image text-4xl"></i>
-                                        </div>
-                                    <?php endif; ?>
+                                    <img src="/webshop/<?= !empty($product['image']) ? htmlspecialchars($product['image']) : 'public/images/placeholder.svg' ?>" 
+                                         alt="<?= htmlspecialchars($product['name']) ?>"
+                                         class="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                                         onerror="this.onerror=null; this.src='/webshop/public/images/placeholder.svg';"
+                                         loading="lazy">
                                 </div>
                             
                                 <div class="p-3">
