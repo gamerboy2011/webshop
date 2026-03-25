@@ -1,92 +1,11 @@
 <?php
-// Fejlesztési mód - VIZSGA ELŐTT EZEKET KIKAPCSOLNI!
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+/**
+ * YoursyWear - Fő belépési pont
+ * MVC architektúra
+ */
 
-// 1. CUSTOM FUNCTIONS BIZTONSÁGOS BETÖLTÉSE - ÚJ, JAVÍTOTT
-$customFunctionsPath = __DIR__ . '/app/library/customfunctions.php';
-
-if (!file_exists($customFunctionsPath)) {
-    // Ha nem létezik, hozzuk létre automatikusan
-    $libraryDir = dirname($customFunctionsPath);
-    if (!is_dir($libraryDir)) {
-        mkdir($libraryDir, 0755, true);
-    }
-    
-    $content = '<?php
-// CSRF token generálása
-function generate_csrf_token(): string {
-    if (empty($_SESSION["csrf_token"])) {
-        $_SESSION["csrf_token"] = bin2hex(random_bytes(32));
-    }
-    return $_SESSION["csrf_token"];
-}
-
-// CSRF token ellenőrzése
-function verify_csrf_token($token): bool {
-    return !empty($_SESSION["csrf_token"]) && hash_equals($_SESSION["csrf_token"], $token);
-}
-
-// Form mező generálása CSRF token számára
-function csrf_field(): string {
-    return "<input type=\"hidden\" name=\"csrf_token\" value=\"" . generate_csrf_token() . "\">";
-}
-
-// Session biztonságos indítása
-function secure_session_start(): void {
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-        if (empty($_SESSION["last_regeneration"])) {
-            session_regenerate_id(true);
-            $_SESSION["last_regeneration"] = time();
-        }
-    }
-}
-
-// Redirect helper
-function redirect($path) {
-    $basePath = rtrim(dirname($_SERVER["SCRIPT_NAME"]), "/") . "/";
-    if ($basePath === "//") $basePath = "/";
-    header("Location: " . $basePath . ltrim($path, "/"));
-    exit;
-}
-';
-    
-    file_put_contents($customFunctionsPath, $content);
-}
-
-require_once $customFunctionsPath;
-
-// 2. SESSION INDÍTÁS
-secure_session_start();
-
-// 3. ADATBÁZIS KAPCSOLAT
-require_once __DIR__ . '/app/config/database.php';
-
-// 4. AUTOLOADER - KIJAVÍTVA
-spl_autoload_register(function ($class) {
-    $directories = ['app/controllers', 'app/models'];
-    
-    foreach ($directories as $dir) {
-        // Először próbálkozzunk az eredeti névvel
-        $file = __DIR__ . '/' . $dir . '/' . $class . '.php';
-        if (file_exists($file)) {
-            require_once $file;
-            return;
-        }
-        
-        // Ha nem található, próbálkozzunk kisbetűs névvel
-        $file = __DIR__ . '/' . $dir . '/' . strtolower($class) . '.php';
-        if (file_exists($file)) {
-            require_once $file;
-            return;
-        }
-    }
-    
-    // Ha nem találtuk, logoljuk (csak fejlesztés közben)
-    // error_log("Autoloader: Nem található osztály: $class");
-});
+// Bootstrap betöltése
+require_once __DIR__ . '/app/bootstrap.php';
 
 // 5. ROUTING
 require_once __DIR__ . '/router.php';
@@ -191,10 +110,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $userFavoriteIds = array_column($userFavs, 'product_id');
     }
     
-    // Főoldal esetén termékek betöltése
+    // Főoldal esetén termékek betöltése (színváltozatokkal)
     if ($page === 'home') {
         $productModel = new ProductModel($pdo);
-        $products = $productModel->getAll();
+        $products = $productModel->getAllWithVariants();
     }
     
     // Kategória oldal esetén termékek betöltése

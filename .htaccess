@@ -2,11 +2,34 @@
     RewriteEngine On
     RewriteBase /webshop/
 
-    # API mappa kivétele a router alól
-    RewriteRule ^app/api/(.*)$ app/api/$1 [L]
+    # RESTful API v1 routing
+    RewriteRule ^api/v1/(.*)$ api/v1/index.php [L,QSA]
 
+    # Public assets (CSS, JS, images)
+    RewriteRule ^public/(.*)$ public/$1 [L]
+
+    # Storage uploads engedélyezése (képek)
+    RewriteRule ^storage/uploads/(.*)$ storage/uploads/$1 [L]
+
+    # App mappa védelem
+    RewriteRule ^app/ - [F,L]
+    
+    # Storage védelem (kivéve uploads)
+    RewriteRule ^storage/(?!uploads/)(.*)$ - [F,L]
+
+    # Front controller
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Biztonsági beállítások
+<FilesMatch "\.(php|ini|log|sh)$">
+    # Csak a front controllerek láthatóak
+</FilesMatch>
+
+# .env fájl védelem
+<Files ".env">
+    Order allow,deny
+    Deny from all
+</Files>

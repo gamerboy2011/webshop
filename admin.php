@@ -4,26 +4,8 @@
  * Belépési pont: /webshop/yw-admin
  */
 
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-
-// Session és alap függvények
-require_once __DIR__ . '/app/library/customfunctions.php';
-secure_session_start();
-
-// Adatbázis
-require_once __DIR__ . '/app/config/database.php';
-
-// Autoloader
-spl_autoload_register(function ($class) {
-    $dirs = ['app/controllers', 'app/models'];
-    foreach ($dirs as $dir) {
-        $file = __DIR__ . '/' . $dir . '/' . $class . '.php';
-        if (file_exists($file)) { require_once $file; return; }
-        $file = __DIR__ . '/' . $dir . '/' . strtolower($class) . '.php';
-        if (file_exists($file)) { require_once $file; return; }
-    }
-});
+// Bootstrap betöltése (session, db, autoload, helper functions)
+require_once __DIR__ . '/app/bootstrap.php';
 
 // Admin controller
 $admin = new AdminController($pdo);
