@@ -484,7 +484,8 @@ class ProductModel
             $slugMap = [
                 'ruhazat' => 'Ruházat', 'cipok' => 'Cipők', 'kiegeszitok' => 'Kiegészítők',
                 'polo' => 'póló', 'pulover' => 'pulóver', 'kabat' => 'kabát', 'nadrag' => 'nadrág',
-                'rovidnadrag' => 'rövidnadrág', 'melegito' => 'melegítő', 'cipo' => 'cipő', 'papucs' => 'papucs',
+                'rovidnadrag' => 'rövidnadrág', 'melegito' => 'melegítő', 'egyberuha' => 'egyberuha',
+                'cipo' => 'cipő', 'papucs' => 'papucs',
                 'sapka' => 'sapka', 'zokni' => 'zokni', 'taska' => 'táska', 'hatizsak' => 'hátizsák', 'figura' => 'figura',
             ];
             $catName = $slugMap[strtolower($category)] ?? $category;
@@ -602,6 +603,7 @@ class ProductModel
                 'nadrag' => 'nadrág',
                 'rovidnadrag' => 'rövidnadrág',
                 'melegito' => 'melegítő',
+                'egyberuha' => 'egyberuha',
                 // Cipők alkategóriák
                 'cipo' => 'cipő',
                 'papucs' => 'papucs',
