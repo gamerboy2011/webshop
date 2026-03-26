@@ -73,13 +73,14 @@ if ($showHero) {
                             <?php if (!empty($product['variants'])): ?>
                                 <?php
                                 $colorHex = [
-                                    'Black' => '#000000', 'White' => '#FFFFFF', 'Red' => '#EF4444',
-                                    'Blue' => '#3B82F6', 'Green' => '#22C55E', 'Brown' => '#92400E',
-                                    'Yellow' => '#EAB308', 'Orange' => '#F97316', 'Gray' => '#6B7280',
-                                    'Pink' => '#EC4899', 'Purple' => '#A855F7', 'Beige' => '#D4C4A8',
-                                    'Navy' => '#1E3A5F', 'Cream' => '#FFFDD0', 'Oatmeal' => '#C9B99A',
-                                    'Iron' => '#48494B', 'Olive' => '#808000', 'Teal' => '#14B8A6',
-                                    'Multicolor' => 'linear-gradient(135deg, #EF4444, #EAB308, #22C55E, #3B82F6)',
+                                    'Fekete' => '#000000', 'Fehér' => '#FFFFFF', 'Piros' => '#EF4444',
+                                    'Kék' => '#3B82F6', 'Zöld' => '#22C55E', 'Barna' => '#92400E',
+                                    'Sárga' => '#EAB308', 'Narancssárga' => '#F97316', 'Szürke' => '#6B7280',
+                                    'Rózsaszín' => '#EC4899', 'Lila' => '#A855F7', 'Bézs' => '#D4C4A8',
+                                    'Sötétkék' => '#1E3A5F', 'Krém' => '#FFFDD0', 'Drapp' => '#C9B99A',
+                                    'Acélszürke' => '#48494B', 'Olívazöld' => '#808000', 'Türkiz' => '#14B8A6',
+                                    'Többszínű' => 'linear-gradient(135deg, #EF4444, #EAB308, #22C55E, #3B82F6)',
+                                    'Arany' => '#FFD700', 'Ezüst' => '#C0C0C0', 'Bordó' => '#800020', 'Korall' => '#FF7F50', 'Menta' => '#98FF98'
                                 ];
                                 ?>
                                 <div class="flex items-center gap-1 mt-2">
@@ -120,7 +121,168 @@ if ($showHero) {
     </div>
 </section>
 
+<!-- GY.I.K. - GYAKRAN ISMÉTELT KÉRDÉSEK -->
+<section id="gyik" class="py-6 bg-white">
+    <div class="max-w-4xl mx-auto px-6">
+        
+        <details class="faq-main group">
+            <summary class="flex items-center justify-center gap-3 cursor-pointer list-none py-4">
+                <i class="las la-question-circle text-3xl text-gray-400"></i>
+                <span class="text-xl font-semibold text-gray-700 group-hover:text-black transition">Gyakran Ismételt Kérdések</span>
+                <i class="las la-angle-down text-xl text-gray-400 faq-main-icon transition-transform"></i>
+            </summary>
+            
+            <div class="mt-8 space-y-4">
+            
+            <!-- Kérdés 1 -->
+            <details class="bg-white rounded-xl shadow-sm faq-item">
+                <summary class="flex items-center justify-between p-6 cursor-pointer list-none">
+                    <span class="font-semibold text-lg pr-4">Mennyi idő alatt érkezik meg a rendelésem?</span>
+                    <i class="las la-plus text-2xl text-gray-400 faq-icon transition-transform"></i>
+                </summary>
+                <div class="px-6 pb-6 text-gray-600 leading-relaxed">
+                    <p>A rendelések általában <strong>2-4 munkanapon</strong> belül megérkeznek. 
+                    GLS futárszolgálattal szállítunk, így munkanapokon 8:00-17:00 között várható a kézbesítés. 
+                    FoxPost csomagpontra rendelés esetén e-mailben értesítünk, amint a csomag átvehető.</p>
+                </div>
+            </details>
+            
+            <!-- Kérdés 2 -->
+            <details class="bg-white rounded-xl shadow-sm faq-item">
+                <summary class="flex items-center justify-between p-6 cursor-pointer list-none">
+                    <span class="font-semibold text-lg pr-4">Hogyan tudom visszaküldeni a terméket?</span>
+                    <i class="las la-plus text-2xl text-gray-400 faq-icon transition-transform"></i>
+                </summary>
+                <div class="px-6 pb-6 text-gray-600 leading-relaxed">
+                    <p>A vásárlástól számított <strong>14 napon belül</strong> indoklás nélkül visszaküldheted a terméket. 
+                    A fiókodban a "Rendeléseim" menüpont alatt találod a "Visszaküldés kérése" gombot. 
+                    A visszaküldés díjmentes, mi állunk a szállítási költséget. A pénzt 5 munkanapon belül 
+                    visszautaljuk az eredeti fizetési módra.</p>
+                </div>
+            </details>
+            
+            <!-- Kérdés 3 -->
+            <details class="bg-white rounded-xl shadow-sm faq-item">
+                <summary class="flex items-center justify-between p-6 cursor-pointer list-none">
+                    <span class="font-semibold text-lg pr-4">Milyen fizetési módokat fogadtok el?</span>
+                    <i class="las la-plus text-2xl text-gray-400 faq-icon transition-transform"></i>
+                </summary>
+                <div class="px-6 pb-6 text-gray-600 leading-relaxed">
+                    <p>Többféle fizetési módot elfogadunk:</p>
+                    <ul class="list-disc list-inside mt-2 space-y-1">
+                        <li><strong>Banki átutalás</strong> - előre utalással</li>
+                        <li><strong>Online bankkártyás fizetés</strong> - Stripe biztonságos fizetési rendszeren keresztül</li>
+                        <li><strong>Utánvét</strong> - fizetés a futárnál készpénzzel vagy kártyával (+490 Ft)</li>
+                    </ul>
+                </div>
+            </details>
+            
+            <!-- Kérdés 4 -->
+            <details class="bg-white rounded-xl shadow-sm faq-item">
+                <summary class="flex items-center justify-between p-6 cursor-pointer list-none">
+                    <span class="font-semibold text-lg pr-4">Eredeti termékeket árultok?</span>
+                    <i class="las la-plus text-2xl text-gray-400 faq-icon transition-transform"></i>
+                </summary>
+                <div class="px-6 pb-6 text-gray-600 leading-relaxed">
+                    <p><strong>Igen, kizárólag 100% eredeti termékeket értékesítünk.</strong> 
+                    Minden termék hivatalos forgalmazóktól származik és eredeti címkével, dobozzal érkezik. 
+                    Ha bármilyen kétséged van a termék eredetiségével kapcsolatban, írj nekünk és segítünk!</p>
+                </div>
+            </details>
+            
+            <!-- Kérdés 5 -->
+            <details class="bg-white rounded-xl shadow-sm faq-item">
+                <summary class="flex items-center justify-between p-6 cursor-pointer list-none">
+                    <span class="font-semibold text-lg pr-4">Hogyan választom ki a megfelelő méretet?</span>
+                    <i class="las la-plus text-2xl text-gray-400 faq-icon transition-transform"></i>
+                </summary>
+                <div class="px-6 pb-6 text-gray-600 leading-relaxed">
+                    <p>Minden termékoldalon találsz mérettáblázatot, ami segít a választásban. 
+                    <strong>Tipp:</strong> Ha két méret között vagy, válaszd a nagyobbat! 
+                    Ha mégsem jó a méret, 14 napon belül ingyenesen cserélheted.</p>
+                </div>
+            </details>
+            
+            <!-- Kérdés 6 -->
+            <details class="bg-white rounded-xl shadow-sm faq-item">
+                <summary class="flex items-center justify-between p-6 cursor-pointer list-none">
+                    <span class="font-semibold text-lg pr-4">Mikor ingyenes a szállítás?</span>
+                    <i class="las la-plus text-2xl text-gray-400 faq-icon transition-transform"></i>
+                </summary>
+                <div class="px-6 pb-6 text-gray-600 leading-relaxed">
+                    <p><strong>15 000 Ft feletti rendelés esetén a szállítás ingyenes!</strong> 
+                    Ez vonatkozik mind a házhoz szállításra, mind a FoxPost csomagpontra kért rendelésekre. 
+                    15 000 Ft alatt a szállítási díj 1 490 Ft (GLS) vagy 990 Ft (FoxPost).</p>
+                </div>
+            </details>
+            
+            <!-- Kérdés 7 -->
+            <details class="bg-white rounded-xl shadow-sm faq-item">
+                <summary class="flex items-center justify-between p-6 cursor-pointer list-none">
+                    <span class="font-semibold text-lg pr-4">Hogyan tudok kapcsolatba lépni veletek?</span>
+                    <i class="las la-plus text-2xl text-gray-400 faq-icon transition-transform"></i>
+                </summary>
+                <div class="px-6 pb-6 text-gray-600 leading-relaxed">
+                    <p>Több csatornán is elérsz minket:</p>
+                    <ul class="list-disc list-inside mt-2 space-y-1">
+                        <li><strong>Email:</strong> info@yoursywear.hu</li>
+                        <li><strong>Telefon:</strong> +36 30 123 4567 (H-P 9:00-17:00)</li>
+                        <li><strong>Instagram:</strong> @yoursywear</li>
+                    </ul>
+                    <p class="mt-2">Általában 24 órán belül válaszolunk minden megkeresésre.</p>
+                </div>
+            </details>
+            
+            <!-- Kérdés 8 -->
+            <details class="bg-white rounded-xl shadow-sm faq-item">
+                <summary class="flex items-center justify-between p-6 cursor-pointer list-none">
+                    <span class="font-semibold text-lg pr-4">Van fizikai üzletetek is?</span>
+                    <i class="las la-plus text-2xl text-gray-400 faq-icon transition-transform"></i>
+                </summary>
+                <div class="px-6 pb-6 text-gray-600 leading-relaxed">
+                    <p>Jelenleg <strong>kizárólag online webshopként</strong> működünk, így tudjuk a legjobb árakat biztosítani. 
+                    Tervezünk pop-up store eseményeket Budapesten - kövesd az Instagram oldalunkat, 
+                    hogy ne maradj le róluk!</p>
+                </div>
+            </details>
+
+        </div>
+        
+            <!-- További kérdés -->
+            <div class="text-center mt-8">
+                <p class="text-gray-500 text-sm">Nem találtad a választ? <a href="mailto:info@yoursywear.hu" class="text-black font-medium hover:underline">Írj nekünk!</a></p>
+            </div>
+            </div>
+        </details>
+        
+    </div>
+</section>
+
 <script>
+// GYIK ikon váltás
+document.querySelectorAll('.faq-item').forEach(item => {
+    item.addEventListener('toggle', () => {
+        const icon = item.querySelector('.faq-icon');
+        if (item.open) {
+            icon.classList.remove('la-plus');
+            icon.classList.add('la-minus');
+        } else {
+            icon.classList.remove('la-minus');
+            icon.classList.add('la-plus');
+        }
+    });
+});
+
+// Fő GYIK szekció ikon forgatás
+document.querySelector('.faq-main')?.addEventListener('toggle', function() {
+    const icon = this.querySelector('.faq-main-icon');
+    if (this.open) {
+        icon.style.transform = 'rotate(180deg)';
+    } else {
+        icon.style.transform = 'rotate(0deg)';
+    }
+});
+
 function toggleFavorite(productId, btn, event) {
     event.preventDefault();
     event.stopPropagation();

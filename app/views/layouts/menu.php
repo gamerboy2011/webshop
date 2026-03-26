@@ -31,32 +31,33 @@ if (in_array('noi', $parts)) {
 $menuCategories = [
     [
         'name' => 'Ruházat',
-        'slug' => 'clothe',
+        'slug' => 'ruhazat',
         'subtypes' => [
-            ['name' => 'Pólók', 'slug' => 't-shirt'],
-            ['name' => 'Pulcsik', 'slug' => 'hoodie'],
-            ['name' => 'Pulóverek', 'slug' => 'sweater'],
-            ['name' => 'Farmerek', 'slug' => 'jeans'],
-            ['name' => 'Kabátok', 'slug' => 'jacket'],
-            ['name' => 'Télikabátok', 'slug' => 'winter coat'],
-            ['name' => 'Leggingsek', 'slug' => 'leggings'],
+            ['name' => 'Pólók', 'slug' => 'polo'],
+            ['name' => 'Pulóverek', 'slug' => 'pulover'],
+            ['name' => 'Kabátok', 'slug' => 'kabat'],
+            ['name' => 'Nadrágok', 'slug' => 'nadrag'],
+            ['name' => 'Rövidnadrágok', 'slug' => 'rovidnadrag'],
+            ['name' => 'Melegítők', 'slug' => 'melegito'],
         ]
     ],
     [
         'name' => 'Cipők',
-        'slug' => 'shoe',
+        'slug' => 'cipok',
         'subtypes' => [
-            ['name' => 'Cipők', 'slug' => 'shoes'],
-            ['name' => 'Szandálok', 'slug' => 'sandals'],
+            ['name' => 'Cipők', 'slug' => 'cipo'],
+            ['name' => 'Papucsok', 'slug' => 'papucs'],
         ]
     ],
     [
         'name' => 'Kiegészítők',
-        'slug' => 'accessory',
+        'slug' => 'kiegeszitok',
         'subtypes' => [
-            ['name' => 'Sapkák', 'slug' => 'cap'],
-            ['name' => 'Kalapok', 'slug' => 'hat'],
-            ['name' => 'Táskák', 'slug' => 'bag'],
+            ['name' => 'Sapkák', 'slug' => 'sapka'],
+            ['name' => 'Zoknik', 'slug' => 'zokni'],
+            ['name' => 'Táskák', 'slug' => 'taska'],
+            ['name' => 'Hátizsákok', 'slug' => 'hatizsak'],
+            ['name' => 'Figurák', 'slug' => 'figura'],
         ]
     ],
 ];

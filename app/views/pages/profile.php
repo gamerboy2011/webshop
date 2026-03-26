@@ -85,76 +85,131 @@ $error   = "";
 
 /* ===== MENTÉS ===== */
 if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
-
-    // Szállítási cím (mindig kötelező)
-    $shipping_postcode      = trim($_POST['shipping_postcode'] ?? '');
-    $shipping_city          = trim($_POST['shipping_city'] ?? '');
-    $shipping_street_name   = trim($_POST['shipping_street_name'] ?? '');
-    $shipping_street_type   = trim($_POST['shipping_street_type'] ?? '');
-    $shipping_house_number  = trim($_POST['shipping_house_number'] ?? '');
-    $shipping_floor_door    = trim($_POST['shipping_floor_door'] ?? '');
-
-    // Számlázási cím (pipálható)
-    $sameBilling = isset($_POST['sameBilling']);
-
-    if ($sameBilling) {
-        $billing_postcode      = $shipping_postcode;
-        $billing_city          = $shipping_city;
-        $billing_street_name   = $shipping_street_name;
-        $billing_street_type   = $shipping_street_type;
-        $billing_house_number  = $shipping_house_number;
-        $billing_floor_door    = $shipping_floor_door;
-    } else {
-        $billing_postcode      = trim($_POST['billing_postcode'] ?? '');
-        $billing_city          = trim($_POST['billing_city'] ?? '');
-        $billing_street_name   = trim($_POST['billing_street_name'] ?? '');
-        $billing_street_type   = trim($_POST['billing_street_type'] ?? '');
-        $billing_house_number  = trim($_POST['billing_house_number'] ?? '');
-        $billing_floor_door    = trim($_POST['billing_floor_door'] ?? '');
+    $action = $_POST['form_action'] ?? 'address';
+    
+    // EMAIL VÁLTOZTATÁS
+    if ($action === 'change_email') {
+        $newEmail = trim($_POST['new_email'] ?? '');
+        $password = $_POST['email_password'] ?? '';
+        
+        // Jelszó ellenőrzése
+        $stmt = $pdo->prepare("SELECT password FROM users WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        $userData = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!password_verify($password, $userData['password'])) {
+            $error = "Hibás jelszó!";
+        } elseif (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
+            $error = "Érvénytelen email cím formátum!";
+        } else {
+            // Ellenőrizzük, hogy az email már foglalt-e
+            $stmt = $pdo->prepare("SELECT user_id FROM users WHERE email = ? AND user_id != ?");
+            $stmt->execute([$newEmail, $userId]);
+            if ($stmt->fetch()) {
+                $error = "Ez az email cím már foglalt!";
+            } else {
+                $stmt = $pdo->prepare("UPDATE users SET email = ? WHERE user_id = ?");
+                $stmt->execute([$newEmail, $userId]);
+                $success = "Email cím sikeresen megváltoztatva.";
+            }
+        }
     }
+    // JELSZÓ VÁLTOZTATÁS
+    elseif ($action === 'change_password') {
+        $currentPassword = $_POST['current_password'] ?? '';
+        $newPassword = $_POST['new_password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
+        
+        // Jelszó ellenőrzése
+        $stmt = $pdo->prepare("SELECT password FROM users WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        $userData = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!password_verify($currentPassword, $userData['password'])) {
+            $error = "A jelenlegi jelszó helytelen!";
+        } elseif (strlen($newPassword) < 6) {
+            $error = "Az új jelszónak legalább 6 karakter hosszúnak kell lennie!";
+        } elseif ($newPassword !== $confirmPassword) {
+            $error = "A két jelszó nem egyezik!";
+        } else {
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+            $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE user_id = ?");
+            $stmt->execute([$hashedPassword, $userId]);
+            $success = "Jelszó sikeresen megváltoztatva.";
+        }
+    }
+    // CÍM MENTÉS
+    else {
+        // Szállítási cím (mindig kötelező)
+        $shipping_postcode      = trim($_POST['shipping_postcode'] ?? '');
+        $shipping_city          = trim($_POST['shipping_city'] ?? '');
+        $shipping_street_name   = trim($_POST['shipping_street_name'] ?? '');
+        $shipping_street_type   = trim($_POST['shipping_street_type'] ?? '');
+        $shipping_house_number  = trim($_POST['shipping_house_number'] ?? '');
+        $shipping_floor_door    = trim($_POST['shipping_floor_door'] ?? '');
 
-    $phone = trim($_POST['phone'] ?? '');
+        // Számlázási cím (pipálható)
+        $sameBilling = isset($_POST['sameBilling']);
 
-    $stmt = $pdo->prepare("
-        UPDATE users SET
-            shipping_postcode = ?,
-            shipping_city = ?,
-            shipping_street_name = ?,
-            shipping_street_type = ?,
-            shipping_house_number = ?,
-            shipping_floor_door = ?,
+        if ($sameBilling) {
+            $billing_postcode      = $shipping_postcode;
+            $billing_city          = $shipping_city;
+            $billing_street_name   = $shipping_street_name;
+            $billing_street_type   = $shipping_street_type;
+            $billing_house_number  = $shipping_house_number;
+            $billing_floor_door    = $shipping_floor_door;
+        } else {
+            $billing_postcode      = trim($_POST['billing_postcode'] ?? '');
+            $billing_city          = trim($_POST['billing_city'] ?? '');
+            $billing_street_name   = trim($_POST['billing_street_name'] ?? '');
+            $billing_street_type   = trim($_POST['billing_street_type'] ?? '');
+            $billing_house_number  = trim($_POST['billing_house_number'] ?? '');
+            $billing_floor_door    = trim($_POST['billing_floor_door'] ?? '');
+        }
 
-            billing_postcode = ?,
-            billing_city = ?,
-            billing_street_name = ?,
-            billing_street_type = ?,
-            billing_house_number = ?,
-            billing_floor_door = ?,
+        $phone = trim($_POST['phone'] ?? '');
 
-            phone = ?
-        WHERE user_id = ?
-    ");
+        $stmt = $pdo->prepare("
+            UPDATE users SET
+                shipping_postcode = ?,
+                shipping_city = ?,
+                shipping_street_name = ?,
+                shipping_street_type = ?,
+                shipping_house_number = ?,
+                shipping_floor_door = ?,
 
-    $stmt->execute([
-        $shipping_postcode,
-        $shipping_city,
-        $shipping_street_name,
-        $shipping_street_type,
-        $shipping_house_number,
-        $shipping_floor_door,
+                billing_postcode = ?,
+                billing_city = ?,
+                billing_street_name = ?,
+                billing_street_type = ?,
+                billing_house_number = ?,
+                billing_floor_door = ?,
 
-        $billing_postcode,
-        $billing_city,
-        $billing_street_name,
-        $billing_street_type,
-        $billing_house_number,
-        $billing_floor_door,
+                phone = ?
+            WHERE user_id = ?
+        ");
 
-        $phone,
-        $userId
-    ]);
+        $stmt->execute([
+            $shipping_postcode,
+            $shipping_city,
+            $shipping_street_name,
+            $shipping_street_type,
+            $shipping_house_number,
+            $shipping_floor_door,
 
-    $success = "Profil adatok sikeresen mentve.";
+            $billing_postcode,
+            $billing_city,
+            $billing_street_name,
+            $billing_street_type,
+            $billing_house_number,
+            $billing_floor_door,
+
+            $phone,
+            $userId
+        ]);
+
+        $success = "Profil adatok sikeresen mentve.";
+    }
 }
 
 /* ===== FELHASZNÁLÓ ADATOK ===== */
@@ -507,9 +562,49 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             <?php if ($success): ?>
                 <div class="bg-green-100 text-green-700 p-4 rounded mb-6 text-sm">
-                    <?= htmlspecialchars($success) ?>
+                    <i class="las la-check-circle mr-1"></i><?= htmlspecialchars($success) ?>
                 </div>
             <?php endif; ?>
+            
+            <?php if ($error): ?>
+                <div class="bg-red-100 text-red-700 p-4 rounded mb-6 text-sm">
+                    <i class="las la-exclamation-circle mr-1"></i><?= htmlspecialchars($error) ?>
+                </div>
+            <?php endif; ?>
+
+            <!-- FIÓK ADATOK -->
+            <div class="mb-10 pb-10 border-b">
+                <h3 class="text-lg font-medium mb-4"><i class="las la-user-circle mr-2"></i>Fiók adatok</h3>
+                
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <p class="text-sm text-gray-600">Felhasználónév</p>
+                    <p class="font-medium"><?= htmlspecialchars($user['username']) ?></p>
+                </div>
+                
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-sm text-gray-600">Email cím</p>
+                            <p class="font-medium"><?= htmlspecialchars($user['email']) ?></p>
+                        </div>
+                        <button type="button" onclick="openEmailModal()" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                            <i class="las la-edit mr-1"></i>Módosítás
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-sm text-gray-600">Jelszó</p>
+                            <p class="font-medium">••••••••</p>
+                        </div>
+                        <button type="button" onclick="openPasswordModal()" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                            <i class="las la-key mr-1"></i>Módosítás
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             <form method="post" action="/webshop/profil?section=security" class="space-y-10">
                 <?= csrf_field() ?>
@@ -866,5 +961,110 @@ document.getElementById('returnForm')?.addEventListener('submit', async function
     }
 });
 
+/* ===== EMAIL MODAL ===== */
+function openEmailModal() {
+    document.getElementById('emailModal').classList.remove('hidden');
+    document.getElementById('emailModal').classList.add('flex');
+}
+
+function closeEmailModal() {
+    document.getElementById('emailModal').classList.add('hidden');
+    document.getElementById('emailModal').classList.remove('flex');
+}
+
+/* ===== JELSZÓ MODAL ===== */
+function openPasswordModal() {
+    document.getElementById('passwordModal').classList.remove('hidden');
+    document.getElementById('passwordModal').classList.add('flex');
+}
+
+function closePasswordModal() {
+    document.getElementById('passwordModal').classList.add('hidden');
+    document.getElementById('passwordModal').classList.remove('flex');
+}
+
 </script>
+
+<!-- EMAIL MÓDOSÍTÁS MODAL -->
+<div id="emailModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-semibold mb-4">
+            <i class="las la-envelope mr-2"></i>Email cím módosítása
+        </h3>
+        <form method="POST" action="/webshop/profil?section=security">
+            <?= csrf_field() ?>
+            <input type="hidden" name="form_action" value="change_email">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Új email cím</label>
+                <input type="email" name="new_email" required
+                       class="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none"
+                       placeholder="pelda@email.com">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Jelenlegi jelszó (megerősítéshez)</label>
+                <input type="password" name="email_password" required
+                       class="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none"
+                       placeholder="••••••••">
+            </div>
+            
+            <div class="flex gap-3">
+                <button type="button" onclick="closeEmailModal()" 
+                        class="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50">
+                    Mégse
+                </button>
+                <button type="submit" 
+                        class="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">
+                    Mentés
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- JELSZÓ MÓDOSÍTÁS MODAL -->
+<div id="passwordModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-semibold mb-4">
+            <i class="las la-key mr-2"></i>Jelszó módosítása
+        </h3>
+        <form method="POST" action="/webshop/profil?section=security">
+            <?= csrf_field() ?>
+            <input type="hidden" name="form_action" value="change_password">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Jelenlegi jelszó</label>
+                <input type="password" name="current_password" required
+                       class="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none"
+                       placeholder="••••••••">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Új jelszó</label>
+                <input type="password" name="new_password" required minlength="6"
+                       class="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none"
+                       placeholder="Min. 6 karakter">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Új jelszó megerősítése</label>
+                <input type="password" name="confirm_password" required minlength="6"
+                       class="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none"
+                       placeholder="Írd be újra">
+            </div>
+            
+            <div class="flex gap-3">
+                <button type="button" onclick="closePasswordModal()" 
+                        class="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50">
+                    Mégse
+                </button>
+                <button type="submit" 
+                        class="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800">
+                    Jelszó megváltoztatása
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 

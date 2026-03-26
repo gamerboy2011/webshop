@@ -67,12 +67,23 @@ $activeFilterCount += count($activeFilters['colors']);
 $activeFilterCount += count($activeFilters['sizes']);
 if ($activeFilters['min_price'] || $activeFilters['max_price']) $activeFilterCount++;
 
+// Kategória nevek (slug -> magyar)
+$categoryNames = [
+    'ruhazat' => 'Ruházat', 'cipok' => 'Cipők', 'kiegeszitok' => 'Kiegészítők',
+    'polo' => 'Pólók', 'pulover' => 'Pulóverek', 'kabat' => 'Kabátok', 'nadrag' => 'Nadrágok',
+    'rovidnadrag' => 'Rövidnadrágok', 'melegito' => 'Melegítők', 'cipo' => 'Cipők', 'papucs' => 'Papucsok',
+    'sapka' => 'Sapkák', 'zokni' => 'Zoknik', 'taska' => 'Táskák', 'hatizsak' => 'Hátizsákok', 'figura' => 'Figurák',
+];
+$categoryDisplayName = $category ? ($categoryNames[strtolower($category)] ?? ucfirst($category)) : '';
+
 // Szín kódok
 $colorCodes = [
-    'Red' => '#EF4444', 'Blue' => '#3B82F6', 'Green' => '#22C55E', 'Brown' => '#92400E',
-    'Yellow' => '#EAB308', 'Orange' => '#F97316', 'White' => '#FFFFFF', 'Black' => '#000000',
-    'Gray' => '#6B7280', 'Pink' => '#EC4899', 'Purple' => '#A855F7', 'Beige' => '#D4C4A8',
-    'Navy' => '#1E3A5F', 'Cream' => '#FFFDD0'
+    'Piros' => '#EF4444', 'Kék' => '#3B82F6', 'Zöld' => '#22C55E', 'Barna' => '#92400E',
+    'Sárga' => '#EAB308', 'Narancssárga' => '#F97316', 'Fehér' => '#FFFFFF', 'Fekete' => '#000000',
+    'Szürke' => '#6B7280', 'Rózsaszín' => '#EC4899', 'Lila' => '#A855F7', 'Bézs' => '#D4C4A8',
+    'Sötétkék' => '#1E3A5F', 'Krém' => '#FFFDD0', 'Drapp' => '#C9B99A', 'Acélszürke' => '#48494B',
+    'Olívazöld' => '#808000', 'Türkiz' => '#14B8A6', 'Többszínű' => 'linear-gradient(135deg, #EF4444, #EAB308, #22C55E, #3B82F6, #A855F7)',
+    'Arany' => '#FFD700', 'Ezüst' => '#C0C0C0', 'Bordó' => '#800020', 'Korall' => '#FF7F50', 'Menta' => '#98FF98'
 ];
 ?>
 
@@ -83,7 +94,7 @@ $colorCodes = [
         <div>
             <h1 class="text-2xl font-bold">
                 <?= $gender === 'ferfi' ? 'Férfi' : ($gender === 'noi' ? 'Női' : 'Termékek') ?>
-                <?= $category ? ' – ' . ucfirst(str_replace('-', ' ', $category)) : '' ?>
+                <?= $categoryDisplayName ? ' – ' . $categoryDisplayName : '' ?>
             </h1>
             <p class="text-gray-500 text-sm mt-1"><?= count($products) ?> termék</p>
         </div>

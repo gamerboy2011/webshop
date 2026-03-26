@@ -88,8 +88,24 @@ if (isset($_SESSION['user_id'])) {
 
                 <!-- KÉPGALÉRIA -->
                 <div class="p-6 lg:p-8">
-                    <!-- Fő kép -->
-                    <div class="aspect-[3/4] bg-white rounded-lg overflow-hidden mb-4 flex items-center justify-center border">
+                    <!-- Fő kép nyilakkal -->
+                    <div class="relative aspect-[3/4] bg-white rounded-lg overflow-hidden mb-4 flex items-center justify-center border group">
+                        <?php if (count($images) > 1): ?>
+                            <!-- Bal nyíl -->
+                            <button type="button" onclick="prevImage()" 
+                                    class="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                <i class="las la-angle-left text-2xl"></i>
+                            </button>
+                            <!-- Jobb nyíl -->
+                            <button type="button" onclick="nextImage()" 
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                <i class="las la-angle-right text-2xl"></i>
+                            </button>
+                            <!-- Képszámláló -->
+                            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/60 text-white text-sm px-3 py-1 rounded-full">
+                                <span id="currentImageNum">1</span> / <?= count($images) ?>
+                            </div>
+                        <?php endif; ?>
                         <img id="mainImage"
                              src="/webshop/<?= $mainImage ? htmlspecialchars($mainImage) : 'public/images/placeholder.svg' ?>"
                              alt="<?= htmlspecialchars($product['name']) ?>"
@@ -103,7 +119,8 @@ if (isset($_SESSION['user_id'])) {
                             <?php foreach ($images as $index => $img): ?>
                                 <button
                                     type="button"
-                                    onclick="changeImage('/webshop/<?= htmlspecialchars($img['src']) ?>', this)"
+                                    onclick="changeImage(<?= $index ?>)"
+                                    data-index="<?= $index ?>"
                                     class="flex-shrink-0 w-20 h-24 rounded-md overflow-hidden border-2 transition-all thumbnail bg-white flex items-center justify-center <?= $index === 0 ? 'border-black' : 'border-transparent hover:border-gray-300' ?>">
                                     <img src="/webshop/<?= htmlspecialchars($img['src']) ?>"
                                          alt=""
@@ -169,13 +186,14 @@ if (isset($_SESSION['user_id'])) {
                             <?php if (!empty($colorVariants)): ?>
                                 <?php
                                 $colorHex = [
-                                    'Black' => '#000000', 'White' => '#FFFFFF', 'Red' => '#EF4444',
-                                    'Blue' => '#3B82F6', 'Green' => '#22C55E', 'Brown' => '#92400E',
-                                    'Yellow' => '#EAB308', 'Orange' => '#F97316', 'Gray' => '#6B7280',
-                                    'Pink' => '#EC4899', 'Purple' => '#A855F7', 'Beige' => '#D4C4A8',
-                                    'Navy' => '#1E3A5F', 'Cream' => '#FFFDD0', 'Oatmeal' => '#C9B99A',
-                                    'Iron' => '#48494B', 'Olive' => '#808000', 'Teal' => '#14B8A6',
-                                    'Multicolor' => 'linear-gradient(135deg, #EF4444, #EAB308, #22C55E, #3B82F6, #A855F7)',
+                                    'Fekete' => '#000000', 'Fehér' => '#FFFFFF', 'Piros' => '#EF4444',
+                                    'Kék' => '#3B82F6', 'Zöld' => '#22C55E', 'Barna' => '#92400E',
+                                    'Sárga' => '#EAB308', 'Narancssárga' => '#F97316', 'Szürke' => '#6B7280',
+                                    'Rózsaszín' => '#EC4899', 'Lila' => '#A855F7', 'Bézs' => '#D4C4A8',
+                                    'Sötétkék' => '#1E3A5F', 'Krém' => '#FFFDD0', 'Drapp' => '#C9B99A',
+                                    'Acélszürke' => '#48494B', 'Olívazöld' => '#808000', 'Türkiz' => '#14B8A6',
+                                    'Többszínű' => 'linear-gradient(135deg, #EF4444, #EAB308, #22C55E, #3B82F6, #A855F7)',
+                                    'Arany' => '#FFD700', 'Ezüst' => '#C0C0C0', 'Bordó' => '#800020', 'Korall' => '#FF7F50', 'Menta' => '#98FF98'
                                 ];
                                 ?>
                                 <div class="flex flex-wrap gap-2 mt-3">
@@ -357,15 +375,52 @@ if (isset($_SESSION['user_id'])) {
 </div>
 
 <script>
-function changeImage(src, btn) {
-    document.getElementById('mainImage').src = src;
-    document.querySelectorAll('.thumbnail').forEach(el => {
-        el.classList.remove('border-black');
-        el.classList.add('border-transparent');
+// Képek tömbje
+const productImages = [
+    <?php foreach ($images as $img): ?>
+        '/webshop/<?= htmlspecialchars($img['src']) ?>',
+    <?php endforeach; ?>
+];
+let currentImageIndex = 0;
+
+function changeImage(index) {
+    if (index < 0 || index >= productImages.length) return;
+    currentImageIndex = index;
+    document.getElementById('mainImage').src = productImages[index];
+    
+    // Thumbnail kiemelés
+    document.querySelectorAll('.thumbnail').forEach((el, i) => {
+        if (i === index) {
+            el.classList.remove('border-transparent');
+            el.classList.add('border-black');
+        } else {
+            el.classList.remove('border-black');
+            el.classList.add('border-transparent');
+        }
     });
-    btn.classList.remove('border-transparent');
-    btn.classList.add('border-black');
+    
+    // Számláló frissítése
+    const counter = document.getElementById('currentImageNum');
+    if (counter) counter.textContent = index + 1;
 }
+
+function prevImage() {
+    let newIndex = currentImageIndex - 1;
+    if (newIndex < 0) newIndex = productImages.length - 1;
+    changeImage(newIndex);
+}
+
+function nextImage() {
+    let newIndex = currentImageIndex + 1;
+    if (newIndex >= productImages.length) newIndex = 0;
+    changeImage(newIndex);
+}
+
+// Billentyűzet navigáció
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowLeft') prevImage();
+    if (e.key === 'ArrowRight') nextImage();
+});
 
 /* ===== KÍVÁNSÁGLISTA TOGGLE ===== */
 function toggleWishlist(productId) {

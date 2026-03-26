@@ -481,9 +481,16 @@ class ProductModel
         
         $categoryCondition = '';
         if (!empty($category)) {
+            $slugMap = [
+                'ruhazat' => 'Ruházat', 'cipok' => 'Cipők', 'kiegeszitok' => 'Kiegészítők',
+                'polo' => 'póló', 'pulover' => 'pulóver', 'kabat' => 'kabát', 'nadrag' => 'nadrág',
+                'rovidnadrag' => 'rövidnadrág', 'melegito' => 'melegítő', 'cipo' => 'cipő', 'papucs' => 'papucs',
+                'sapka' => 'sapka', 'zokni' => 'zokni', 'taska' => 'táska', 'hatizsak' => 'hátizsák', 'figura' => 'figura',
+            ];
+            $catName = $slugMap[strtolower($category)] ?? $category;
             $categoryCondition = "AND (LOWER(pt.name) = LOWER(:cat1) OR LOWER(ps.name) = LOWER(:cat2))";
-            $params['cat1'] = $category;
-            $params['cat2'] = $category;
+            $params['cat1'] = $catName;
+            $params['cat2'] = $catName;
         }
         
         // Márkák
@@ -581,11 +588,34 @@ class ProductModel
             $sql .= " AND g.gender IN ('f', 'u')";
         }
 
-        // Kategória szűrés
+        // Kategória szűrés (slug -> magyar név mapping)
         if (!empty($category)) {
+            $slugMap = [
+                // Főkategóriák
+                'ruhazat' => 'Ruházat',
+                'cipok' => 'Cipők',
+                'kiegeszitok' => 'Kiegészítők',
+                // Ruházat alkategóriák
+                'polo' => 'póló',
+                'pulover' => 'pulóver',
+                'kabat' => 'kabát',
+                'nadrag' => 'nadrág',
+                'rovidnadrag' => 'rövidnadrág',
+                'melegito' => 'melegítő',
+                // Cipők alkategóriák
+                'cipo' => 'cipő',
+                'papucs' => 'papucs',
+                // Kiegészítők alkategóriák
+                'sapka' => 'sapka',
+                'zokni' => 'zokni',
+                'taska' => 'táska',
+                'hatizsak' => 'hátizsák',
+                'figura' => 'figura',
+            ];
+            $catName = $slugMap[strtolower($category)] ?? $category;
             $sql .= " AND (LOWER(pt.name) = LOWER(:cat1) OR LOWER(ps.name) = LOWER(:cat2))";
-            $params['cat1'] = $category;
-            $params['cat2'] = $category;
+            $params['cat1'] = $catName;
+            $params['cat2'] = $catName;
         }
 
         // Akciós szűrés
