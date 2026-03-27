@@ -2,7 +2,7 @@
 $orderId = isset($_GET['order']) ? (int)$_GET['order'] : 0;
 $submitted = isset($_GET['submitted']);
 
-// Ellenőrizzük, hogy valid rendelés-e
+
 $order = null;
 $alreadyRated = false;
 if ($orderId) {
@@ -10,7 +10,7 @@ if ($orderId) {
     $stmt->execute([$orderId]);
     $order = $stmt->fetch();
     
-    // Ellenőrizzük, hogy már értékelték-e
+    
     if ($order) {
         try {
             $stmt = $pdo->prepare("SELECT rating FROM order_ratings WHERE order_id = ?");
@@ -18,10 +18,10 @@ if ($orderId) {
             $existingRating = $stmt->fetch();
             if ($existingRating) {
                 $alreadyRated = true;
-                $submitted = true; // Mutassuk a köszönő üzenetet
+                $submitted = true; 
             }
         } catch (PDOException $e) {
-            // Tábla még nem létezik - nem gond
+            
         }
     }
 }

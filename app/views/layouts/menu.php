@@ -1,7 +1,7 @@
 <?php
-/* =========================
-   KOSÁR DARABSZÁM
-   ========================= */
+
+
+
 $cartCount = 0;
 if (!empty($_SESSION['cart'])) {
     foreach ($_SESSION['cart'] as $item) {
@@ -9,14 +9,14 @@ if (!empty($_SESSION['cart'])) {
     }
 }
 
-/* =========================
-   AKTUÁLIS URL ELEMZÉS
-   ========================= */
+
+
+
 $uri = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
 $uri = str_replace('webshop/', '', $uri);
 $parts = explode('/', $uri);
 
-/* gender meghatározása URL-ből */
+
 $currentGender = null;
 if (in_array('ferfi', $parts)) {
     $currentGender = 'ferfi';
@@ -25,9 +25,9 @@ if (in_array('noi', $parts)) {
     $currentGender = 'noi';
 }
 
-/* =========================
-   KATEGÓRIÁK (FIX MAGYAR)
-   ========================= */
+
+
+
 $menuCategories = [
     [
         'name' => 'Ruházat',

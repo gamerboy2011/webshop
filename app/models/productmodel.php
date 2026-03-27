@@ -9,9 +9,9 @@ class ProductModel
         $this->pdo = $pdo;
     }
 
-    /**
-     * Termék adatainak lekérése ID alapján
-     */
+    
+
+
     public function getProductById(int $productId): ?array
     {
         $stmt = $this->pdo->prepare("
@@ -43,9 +43,9 @@ class ProductModel
         return $product ?: null;
     }
 
-    /**
-     * Termék képeinek lekérése
-     */
+    
+
+
     public function getImages(int $productId): array
     {
         $stmt = $this->pdo->prepare("
@@ -59,9 +59,9 @@ class ProductModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Termék elérhető méretei + készlet
-     */
+    
+
+
     public function getSizes(int $productId): array
     {
         $stmt = $this->pdo->prepare("
@@ -83,9 +83,9 @@ class ProductModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Ajánlott termékek lekérése
-     */
+    
+
+
     public function getRelated(int $subtypeId, int $productId): array
     {
         $stmt = $this->pdo->prepare("
@@ -114,9 +114,9 @@ class ProductModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Megnézi, hogy a termék kedvenc-e a felhasználónál
-     */
+    
+
+
     public function isFavorite(int $userId, int $productId): bool
     {
         $stmt = $this->pdo->prepare("
@@ -133,9 +133,9 @@ class ProductModel
         return (bool)$stmt->fetch();
     }
 
-    /**
-     * Összes aktív termék lekérése (főoldal)
-     */
+    
+
+
     public function getAll(): array
     {
         $stmt = $this->pdo->query("
@@ -157,9 +157,9 @@ class ProductModel
         return $stmt->fetchAll() ?: [];
     }
 
-    /**
-     * Termékek szűrése gender és kategória alapján
-     */
+    
+
+
     public function filter(string $gender, ?string $category, array $filters): array
     {
         $sql = "
@@ -193,39 +193,39 @@ class ProductModel
 
         $params = [];
 
-        // Gender szűrés (uniszex termékek mindkét nemnél megjelennek)
+        
         if ($gender === 'ferfi') {
             $sql .= " AND g.gender IN ('m', 'u')";
         } elseif ($gender === 'noi') {
             $sql .= " AND g.gender IN ('f', 'u')";
         }
 
-        // Kategória szűrés (típus vagy altípus)
+        
         if (!empty($category)) {
             $sql .= " AND (LOWER(pt.name) = LOWER(:cat1) OR LOWER(ps.name) = LOWER(:cat2))";
             $params['cat1'] = $category;
             $params['cat2'] = $category;
         }
 
-        // Márka szűrés
+        
         if (!empty($filters['brand'])) {
             $sql .= " AND v.name = :brand";
             $params['brand'] = $filters['brand'];
         }
 
-        // Szín szűrés
+        
         if (!empty($filters['color'])) {
             $sql .= " AND c.name = :color";
             $params['color'] = $filters['color'];
         }
 
-        // Méret szűrés
+        
         if (!empty($filters['size'])) {
             $sql .= " AND sz.size_value = :size";
             $params['size'] = $filters['size'];
         }
 
-        // Ár szűrés
+        
         if (!empty($filters['min'])) {
             $sql .= " AND p.price >= :min";
             $params['min'] = (int)$filters['min'];
@@ -243,9 +243,9 @@ class ProductModel
         return $stmt->fetchAll() ?: [];
     }
 
-    /**
-     * Keresés - márka, típus, név, szín alapján
-     */
+    
+
+
     public function search(string $q): array
     {
         if ($q === '') {
@@ -299,9 +299,9 @@ class ProductModel
         return $stmt->fetchAll() ?: [];
     }
 
-    /**
-     * Kategóriák és alkategóriák lekérése (menühöz)
-     */
+    
+
+
     public function getCategories(): array
     {
         $stmt = $this->pdo->query("
@@ -338,9 +338,9 @@ class ProductModel
         return array_values($categories);
     }
 
-    /**
-     * Akciós termékek (20% kedvezmény)
-     */
+    
+
+
     public function getSaleProducts(): array
     {
         $stmt = $this->pdo->query("
@@ -363,9 +363,9 @@ class ProductModel
         return $stmt->fetchAll() ?: [];
     }
 
-    /**
-     * Új termékek (utolsó 30 nap)
-     */
+    
+
+
     public function getNewProducts(): array
     {
         $stmt = $this->pdo->query("
@@ -388,12 +388,12 @@ class ProductModel
         return $stmt->fetchAll() ?: [];
     }
 
-    /**
-     * Színváltozatok lekérése (parent + siblings)
-     */
+    
+
+
     public function getColorVariants(int $productId): array
     {
-        // Először lekérjük a termék parent_product_id-ját
+        
         $stmt = $this->pdo->prepare("
             SELECT product_id, parent_product_id 
             FROM product 
@@ -404,8 +404,8 @@ class ProductModel
         
         if (!$current) return [];
         
-        // Ha van parent, akkor a parent és az összes child
-        // Ha nincs parent, akkor megnézzük van-e child
+        
+        
         $parentId = $current['parent_product_id'] ?: $current['product_id'];
         
         $stmt = $this->pdo->prepare("
@@ -424,14 +424,14 @@ class ProductModel
         $stmt->execute(['parent_id' => $parentId, 'parent_id2' => $parentId]);
         $variants = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Csak ha több mint 1 változat van
+        
         return count($variants) > 1 ? $variants : [];
     }
 
-    /**
-     * Összes termék lekérése színváltozatokkal (főoldal)
-     * Csak a parent/első termékeket mutatjuk, de jelezzük a variánsok számát
-     */
+    
+
+
+
     public function getAllWithVariants(): array
     {
         $stmt = $this->pdo->query("
@@ -457,7 +457,7 @@ class ProductModel
         ");
         $products = $stmt->fetchAll() ?: [];
         
-        // Színváltozatok hozzáadása minden termékhez
+        
         foreach ($products as &$product) {
             $product['variants'] = $this->getColorVariants($product['product_id']);
         }
@@ -465,9 +465,9 @@ class ProductModel
         return $products;
     }
 
-    /**
-     * Szűrő opciók lekérése (márkák, színek, méretek)
-     */
+    
+
+
     public function getFilterOptions(?string $gender = null, ?string $category = null): array
     {
         $genderCondition = '';
@@ -494,7 +494,7 @@ class ProductModel
             $params['cat2'] = $catName;
         }
         
-        // Márkák
+        
         $sql = "SELECT DISTINCT v.vendor_id, v.name 
                 FROM product p 
                 JOIN vendor v ON p.vendor_id = v.vendor_id
@@ -507,7 +507,7 @@ class ProductModel
         $stmt->execute($params);
         $brands = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Színek
+        
         $sql = "SELECT DISTINCT c.color_id, c.name 
                 FROM product p 
                 JOIN color c ON p.color_id = c.color_id
@@ -520,7 +520,7 @@ class ProductModel
         $stmt->execute($params);
         $colors = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Méretek
+        
         $sql = "SELECT DISTINCT sz.size_id, sz.size_value, sz.product_type_id
                 FROM product p 
                 JOIN stock s ON p.product_id = s.product_id
@@ -534,7 +534,7 @@ class ProductModel
         $stmt->execute($params);
         $sizes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Ár tartomány
+        
         $sql = "SELECT MIN(p.price) as min_price, MAX(p.price) as max_price
                 FROM product p
                 JOIN gender g ON p.gender_id = g.gender_id
@@ -554,9 +554,9 @@ class ProductModel
         ];
     }
 
-    /**
-     * Termékek szűrése bővített filterekkel
-     */
+    
+
+
     public function filterAdvanced(string $gender, ?string $category, array $filters): array
     {
         $sql = "
@@ -582,21 +582,21 @@ class ProductModel
 
         $params = [];
 
-        // Gender szűrés
+        
         if ($gender === 'ferfi') {
             $sql .= " AND g.gender IN ('m', 'u')";
         } elseif ($gender === 'noi') {
             $sql .= " AND g.gender IN ('f', 'u')";
         }
 
-        // Kategória szűrés (slug -> magyar név mapping)
+        
         if (!empty($category)) {
             $slugMap = [
-                // Főkategóriák
+                
                 'ruhazat' => 'Ruházat',
                 'cipok' => 'Cipők',
                 'kiegeszitok' => 'Kiegészítők',
-                // Ruházat alkategóriák
+                
                 'polo' => 'póló',
                 'pulover' => 'pulóver',
                 'kabat' => 'kabát',
@@ -604,10 +604,10 @@ class ProductModel
                 'rovidnadrag' => 'rövidnadrág',
                 'melegito' => 'melegítő',
                 'egyberuha' => 'egyberuha',
-                // Cipők alkategóriák
+                
                 'cipo' => 'cipő',
                 'papucs' => 'papucs',
-                // Kiegészítők alkategóriák
+                
                 'sapka' => 'sapka',
                 'zokni' => 'zokni',
                 'taska' => 'táska',
@@ -620,12 +620,12 @@ class ProductModel
             $params['cat2'] = $catName;
         }
 
-        // Akciós szűrés
+        
         if (!empty($filters['sale'])) {
             $sql .= " AND p.is_sale = 1";
         }
 
-        // Márka szűrés (több márka is kiválasztható)
+        
         if (!empty($filters['brands']) && is_array($filters['brands'])) {
             $brandPlaceholders = [];
             foreach ($filters['brands'] as $i => $brand) {
@@ -636,7 +636,7 @@ class ProductModel
             $sql .= " AND v.name IN (" . implode(',', $brandPlaceholders) . ")";
         }
 
-        // Szín szűrés (több szín is kiválasztható)
+        
         if (!empty($filters['colors']) && is_array($filters['colors'])) {
             $colorPlaceholders = [];
             foreach ($filters['colors'] as $i => $color) {
@@ -647,7 +647,7 @@ class ProductModel
             $sql .= " AND c.name IN (" . implode(',', $colorPlaceholders) . ")";
         }
 
-        // Méret szűrés (több méret is kiválasztható)
+        
         if (!empty($filters['sizes']) && is_array($filters['sizes'])) {
             $sizePlaceholders = [];
             foreach ($filters['sizes'] as $i => $size) {
@@ -662,7 +662,7 @@ class ProductModel
             )";
         }
 
-        // Ár szűrés
+        
         if (!empty($filters['min_price'])) {
             $sql .= " AND p.price >= :min_price";
             $params['min_price'] = (int)$filters['min_price'];
@@ -672,7 +672,7 @@ class ProductModel
             $params['max_price'] = (int)$filters['max_price'];
         }
 
-        // Rendezés
+        
         $sort = $filters['sort'] ?? 'newest';
         switch ($sort) {
             case 'price_asc':
@@ -684,7 +684,7 @@ class ProductModel
             case 'name_asc':
                 $sql .= " GROUP BY p.product_id ORDER BY p.name ASC";
                 break;
-            default: // newest
+            default: 
                 $sql .= " GROUP BY p.product_id ORDER BY p.product_id DESC";
         }
 

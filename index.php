@@ -1,35 +1,35 @@
 <?php
-/**
- * YoursyWear - Fő belépési pont
- * MVC architektúra
- */
 
-// Bootstrap betöltése
+
+
+
+
+
 require_once __DIR__ . '/app/bootstrap.php';
 
-// 5. ROUTING
+
 require_once __DIR__ . '/router.php';
 
-// 6. HERO SECTION BEÁLLÍTÁSA
-// Alapértelmezett: nem rejtjük el a hero-t
+
+
 $hideHero = false;
 
-// Ha bejelentkezési vagy regisztrációs oldalon vagyunk, elrejtjük
+
 $currentPage = $_GET['page'] ?? 'home';
 if (in_array($currentPage, ['login', 'register', 'cart', 'checkout', 'profile', 'logout', 'order-success', 'email-sent', 'ertekeles'])) {
     $hideHero = true;
 }
 
-// 7. POST KÉRÉSEK KEZELÉSE
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
-    // CSRF token ellenőrzés MINDEN POST kérésnél
+    
     if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
         http_response_code(403);
         die('<h1>403 - CSRF token érvénytelen</h1><p>Kérjük, frissítsd az oldalt és próbáld újra.</p>');
     }
     
-    // Action alapján vezérlés
+    
     $action = $_POST['action'] ?? '';
     
     switch ($action) {
@@ -73,11 +73,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
             
         case 'profile_save':
-            // Profile mentés - továbbengedjük, a profile.php kezeli
+            
             break;
             
         case 'logout':
-            // Kijelentkezés POST kérésként
+            
             session_destroy();
             redirect('/?logout=success');
             exit;
@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $page = $_GET['page'] ?? 'home';
     $viewPath = __DIR__ . '/app/views/pages/' . $page . '.php';
     
-    // Kedvencek betöltése (bejelentkezett felhasználónak)
+    
     $userFavoriteIds = [];
     if (!empty($_SESSION['user_id'])) {
         $favModel = new FavouriteModel($pdo);
@@ -110,18 +110,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $userFavoriteIds = array_column($userFavs, 'product_id');
     }
     
-    // Főoldal esetén termékek betöltése (színváltozatokkal)
+    
     if ($page === 'home') {
         $productModel = new ProductModel($pdo);
         $products = $productModel->getAllWithVariants();
     }
     
-    // Kategória oldal esetén termékek betöltése
+    
     if ($page === 'category') {
         $gender = $_GET['gender'] ?? null;
         $category = $_GET['category'] ?? null;
         
-        // Szűrők feldolgozása
+        
         $filters = [
             'sale' => isset($_GET['sale']) ? true : false,
             'brands' => isset($_GET['brands']) ? (array)$_GET['brands'] : [],
@@ -138,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $activeFilters = $filters;
     }
     
-    // Keresés oldal esetén
+    
     if ($page === 'search') {
         $q = trim($_GET['q'] ?? '');
         $productModel = new ProductModel($pdo);
@@ -146,13 +146,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $searchQuery = $q;
     }
     
-    // Akciós termékek
+    
     if ($page === 'sale') {
         $productModel = new ProductModel($pdo);
         $products = $productModel->getSaleProducts();
     }
     
-    // Újdonságok
+    
     if ($page === 'new') {
         $productModel = new ProductModel($pdo);
         $products = $productModel->getNewProducts();
@@ -161,7 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (file_exists($viewPath)) {
         require $viewPath;
     } else {
-        // 404 - oldal nem található
+        
         http_response_code(404);
         require __DIR__ . '/app/views/components/404.php';
     }

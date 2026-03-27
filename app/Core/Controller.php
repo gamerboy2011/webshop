@@ -1,8 +1,8 @@
 <?php
-/**
- * Base Controller Class
- * Alap funkcionalitás minden kontrollerhez
- */
+
+
+
+
 
 namespace App\Core;
 
@@ -18,12 +18,12 @@ abstract class Controller
         $this->db = $db;
     }
     
-    /**
-     * View renderelése
-     */
+    
+
+
     protected function view(string $view, array $data = []): void
     {
-        // Adatok elérhetővé tétele a view-ban
+        
         extract(array_merge($this->data, $data));
         
         $viewPath = APP_PATH . '/Views/' . $view . '.php';
@@ -35,9 +35,9 @@ abstract class Controller
         }
     }
     
-    /**
-     * View renderelése layout-tal
-     */
+    
+
+
     protected function render(string $view, array $data = [], string $layout = 'main'): void
     {
         $this->data = array_merge($this->data, $data);
@@ -53,9 +53,9 @@ abstract class Controller
         }
     }
     
-    /**
-     * JSON válasz küldése
-     */
+    
+
+
     protected function json(array $data, int $statusCode = 200): void
     {
         http_response_code($statusCode);
@@ -64,18 +64,18 @@ abstract class Controller
         exit;
     }
     
-    /**
-     * Átirányítás
-     */
+    
+
+
     protected function redirect(string $url): void
     {
         header('Location: ' . BASE_URL . '/' . ltrim($url, '/'));
         exit;
     }
     
-    /**
-     * Session ellenőrzés - bejelentkezett felhasználó
-     */
+    
+
+
     protected function requireAuth(): void
     {
         if (empty($_SESSION['user_id'])) {
@@ -83,9 +83,9 @@ abstract class Controller
         }
     }
     
-    /**
-     * Session ellenőrzés - admin felhasználó
-     */
+    
+
+
     protected function requireAdmin(): void
     {
         if (empty($_SESSION['user_id']) || empty($_SESSION['is_admin'])) {
@@ -93,9 +93,9 @@ abstract class Controller
         }
     }
     
-    /**
-     * CSRF token generálás
-     */
+    
+
+
     protected function generateCsrfToken(): string
     {
         if (empty($_SESSION['csrf_token'])) {
@@ -104,50 +104,50 @@ abstract class Controller
         return $_SESSION['csrf_token'];
     }
     
-    /**
-     * CSRF token ellenőrzés
-     */
+    
+
+
     protected function validateCsrfToken(): bool
     {
         $token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
         return !empty($token) && hash_equals($_SESSION['csrf_token'] ?? '', $token);
     }
     
-    /**
-     * Input sanitizálás
-     */
+    
+
+
     protected function sanitize($input): string
     {
         return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
     }
     
-    /**
-     * POST adatok lekérése
-     */
+    
+
+
     protected function post(string $key, $default = null)
     {
         return $_POST[$key] ?? $default;
     }
     
-    /**
-     * GET adatok lekérése
-     */
+    
+
+
     protected function get(string $key, $default = null)
     {
         return $_GET[$key] ?? $default;
     }
     
-    /**
-     * Request method ellenőrzés
-     */
+    
+
+
     protected function isPost(): bool
     {
         return $_SERVER['REQUEST_METHOD'] === 'POST';
     }
     
-    /**
-     * AJAX request ellenőrzés
-     */
+    
+
+
     protected function isAjax(): bool
     {
         return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 

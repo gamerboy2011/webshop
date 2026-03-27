@@ -1,34 +1,34 @@
 #!/usr/bin/php
 <?php
-/**
- * CRON JOB: Kupon értesítő emailek küldése
- * 
- * Futtatás: Naponta egyszer (pl. reggel 8:00)
- * Crontab: 0 8 * * * /usr/bin/php /Applications/XAMPP/xamppfiles/htdocs/webshop/cron/send-coupon-emails.php
- * 
- * Ez a script:
- * 1. Megkeresi az aznap aktívvá váló kuponokat
- * 2. Összegyűjti őket egy emailbe
- * 3. Kiküldi minden regisztrált felhasználónak
- */
 
-// Alap beállítások
+
+
+
+
+
+
+
+
+
+
+
+
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-// Útvonalak
+
 define('BASE_PATH', dirname(__DIR__));
 
-// Adatbázis kapcsolat
+
 require_once BASE_PATH . '/app/config/database.php';
 
-// Mail helper
+
 require_once BASE_PATH . '/app/helpers/Mail.php';
 
 $today = date('Y-m-d');
 echo "[$today] Kupon értesítő futtatása...\n";
 
-// 1. Aznap aktívvá váló kuponok keresése
+
 $stmt = $pdo->prepare("
     SELECT c.*, pt.name as product_type_name
     FROM coupons c
@@ -47,14 +47,14 @@ if (empty($todaysCoupons)) {
 
 echo count($todaysCoupons) . " új kupon található.\n";
 
-// Típus nevek magyarul
+
 $typeNames = [
     'Accessory' => 'Kiegészítők',
     'Clothe' => 'Ruházat',
     'Shoe' => 'Cipők'
 ];
 
-// 2. Regisztrált felhasználók lekérdezése
+
 $stmt = $pdo->query("SELECT user_id, email, username FROM users WHERE is_activated = 1");
 $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -65,7 +65,7 @@ if (empty($users)) {
 
 echo count($users) . " felhasználónak küldünk emailt.\n";
 
-// 3. Email sablon generálása
+
 $couponsHtml = '';
 foreach ($todaysCoupons as $coupon) {
     $typeName = 'Minden termék';
@@ -98,7 +98,7 @@ $subject = count($todaysCoupons) > 1
     ? "🎉 " . count($todaysCoupons) . " új kupon vár rád a YoursyWear-nél!"
     : "🎁 Új kupon érkezett: -" . $todaysCoupons[0]['amount'] . "% kedvezmény!";
 
-// 4. Emailek küldése
+
 $successCount = 0;
 $errorCount = 0;
 
@@ -159,8 +159,8 @@ foreach ($users as $user) {
         echo "✗ Hiba ({$user['email']}): {$result['error']}\n";
     }
     
-    // Rate limiting - ne terheljük túl a szervert
-    usleep(100000); // 100ms várakozás
+    
+    usleep(100000); 
 }
 
 echo "\n=== ÖSSZESÍTÉS ===\n";

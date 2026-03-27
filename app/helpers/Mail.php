@@ -1,23 +1,23 @@
 <?php
-/**
- * Mail Helper - Resend API
- */
+
+
+
 
 class Mail
 {
     private static $apiKey = 're_hhHTJpeV_NMxHi7QSdFBNDryb54WAEnjy';
-    private static $fromEmail = 'onboarding@resend.dev'; // Resend test email
+    private static $fromEmail = 'onboarding@resend.dev'; 
     private static $fromName = 'YoursyWear';
 
-    /**
-     * Email küldése Resend API-val
-     * 
-     * @param string $to Címzett email
-     * @param string $subject Tárgy
-     * @param string $htmlBody HTML tartalom
-     * @param string|null $toName Címzett neve (opcionális)
-     * @return array ['success' => bool, 'error' => string|null]
-     */
+    
+
+
+
+
+
+
+
+
     public static function send($to, $subject, $htmlBody, $toName = null)
     {
         $data = [

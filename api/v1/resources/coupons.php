@@ -1,19 +1,19 @@
 <?php
-/**
- * Coupons API
- * GET /api/v1/coupons/{code}/validate - Kupon ellenőrzése
- */
+
+
+
+
 
 global $pdo;
 $couponCode = $segments[1] ?? null;
 $action = $segments[2] ?? null;
 
-// User ID
+
 $userId = $_SESSION['user_id'] ?? null;
 
 switch ($method) {
     case 'GET':
-        // GET /api/v1/coupons/{code}/validate
+        
         if (!$couponCode) {
             ApiResponse::badRequest('Hiányzó kuponkód');
         }
@@ -22,7 +22,7 @@ switch ($method) {
             ApiResponse::notFound('Ismeretlen művelet');
         }
         
-        // Kupon keresése
+        
         $stmt = $pdo->prepare("
             SELECT c.*, uc.user_id as owner_user_id, uc.used_at
             FROM coupons c
@@ -37,7 +37,7 @@ switch ($method) {
             ApiResponse::notFound('A kupon nem található');
         }
         
-        // Dátum ellenőrzés
+        
         $today = date('Y-m-d');
         if ($today < $coupon['start_date']) {
             ApiResponse::badRequest('A kupon még nem aktív');
@@ -46,12 +46,12 @@ switch ($method) {
             ApiResponse::badRequest('A kupon lejárt');
         }
         
-        // Felhasználva van-e már?
+        
         if (!empty($coupon['used_at'])) {
             ApiResponse::badRequest('A kupon már fel lett használva');
         }
         
-        // Kedvezmény számítása (százalékos)
+        
         $cartTotal = (float)($queryParams['cart_total'] ?? 0);
         $discountPercent = (int)$coupon['amount'];
         $discountAmount = $cartTotal * ($discountPercent / 100);

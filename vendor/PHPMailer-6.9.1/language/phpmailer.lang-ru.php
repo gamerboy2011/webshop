@@ -1,11 +1,11 @@
 <?php
 
-/**
- * Russian PHPMailer language file: refer to English translation for definitive list
- * @package PHPMailer
- * @author Alexey Chumakov <alex@chumakov.ru>
- * @author Foster Snowhill <i18n@forstwoof.ru>
- */
+
+
+
+
+
+
 
 $PHPMAILER_LANG['authenticate']         = 'Ошибка SMTP: ошибка авторизации.';
 $PHPMAILER_LANG['connect_host']         = 'Ошибка SMTP: не удается подключиться к SMTP-серверу.';

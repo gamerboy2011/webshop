@@ -1,5 +1,5 @@
 <?php
-// Értékelések lekérdezése
+
 try {
     $stmt = $pdo->query("
         SELECT r.*, o.order_id, u.username, u.email
@@ -10,11 +10,11 @@ try {
     ");
     $ratings = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
-    // Tábla még nem létezik
+    
     $ratings = [];
 }
 
-// Statisztikák
+
 $totalRatings = count($ratings);
 $avgRating = $totalRatings > 0 ? array_sum(array_column($ratings, 'rating')) / $totalRatings : 0;
 $ratingCounts = array_count_values(array_column($ratings, 'rating'));

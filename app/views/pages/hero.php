@@ -1,6 +1,6 @@
 <?php
-// A $hideHero változó az index.php-ből jön.
-// Ha nincs beállítva, alapértelmezésként false (mutatjuk a hero-t)
+
+
 if (!isset($hideHero)) {
     $hideHero = false;
 }

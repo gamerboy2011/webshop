@@ -1,10 +1,10 @@
 <?php
-// app/views/pages/home.php
-// EZ A VIEW FUT – ide kerül minden, ami a főoldalon látszik
 
-// BIZTONSÁGI INICIALIZÁLÁS
-// Ha a controller nem adott át termékeket,
-// akkor ne haljon el a nézet
+
+
+
+
+
 if (!isset($products) || !is_array($products)) {
     $products = [];
 }

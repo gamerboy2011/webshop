@@ -1,24 +1,24 @@
 <?php
-/**
- * Kijelentkezés kezelése (POST kérésre)
- */
 
-// Csak POST kérés engedélyezett
+
+
+
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405); // Method Not Allowed
+    http_response_code(405); 
     die('Csak POST kérés engedélyezett.');
 }
 
-// CSRF token ellenőrzése
+
 if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
     http_response_code(403);
     die('CSRF token érvénytelen.');
 }
 
-// Session megsemmisítése
+
 $_SESSION = [];
 
-// Session cookie törlése
+
 if (ini_get("session.use_cookies")) {
     $params = session_get_cookie_params();
     setcookie(
@@ -32,9 +32,9 @@ if (ini_get("session.use_cookies")) {
     );
 }
 
-// Session megsemmisítése
+
 session_destroy();
 
-// Átirányítás a főoldalra
+
 header("Location: /?logout=success");
 exit;

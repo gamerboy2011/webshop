@@ -12,7 +12,7 @@ class CartController
 
         $productId    = (int)($_POST['product_id'] ?? 0);
         $sizeValueId  = (int)($_POST['size_id'] ?? 0);
-        $quantity     = max(1, min(10, (int)($_POST['quantity'] ?? 1))); // 1-10 között
+        $quantity     = max(1, min(10, (int)($_POST['quantity'] ?? 1))); 
 
         if ($productId <= 0) {
             header('Location: /webshop/?error=invalid_product');
@@ -24,12 +24,12 @@ class CartController
             exit;
         }
 
-        // Készlet ellenőrzés
+        
         $stmt = $pdo->prepare("SELECT quantity FROM stock WHERE product_id = ? AND size_id = ?");
         $stmt->execute([$productId, $sizeValueId]);
         $stockResult = $stmt->fetchColumn();
         
-        // Ha nincs stock rekord, lehet hogy új termék - engedjük át alap készlettel
+        
         $stockQty = ($stockResult !== false) ? (int)$stockResult : 10;
         
         if ($stockQty <= 0) {
@@ -37,7 +37,7 @@ class CartController
             exit;
         }
         
-        // Mennyi van már a kosárban ebből?
+        
         $inCartQty = 0;
         foreach ($_SESSION['cart'] as $item) {
             if ($item['product_id'] === $productId && $item['size_id'] === $sizeValueId) {
@@ -46,17 +46,17 @@ class CartController
             }
         }
         
-        // Maximum rendelheto mennyiség
+        
         $maxCanAdd = $stockQty - $inCartQty;
         if ($maxCanAdd <= 0) {
             header('Location: /webshop/kosar?error=out_of_stock');
             exit;
         }
         
-        // Korlátozzák a kért mennyiséget a készlet alapján
+        
         $quantity = min($quantity, $maxCanAdd);
 
-        // Ha már van ilyen termék+méret a kosárban, növeljük a mennyiséget
+        
         foreach ($_SESSION['cart'] as &$item) {
             if (
                 $item['product_id'] === $productId &&
@@ -68,7 +68,7 @@ class CartController
             }
         }
 
-        // Új tétel hozzáadása
+        
         $_SESSION['cart'][] = [
             'product_id'    => $productId,
             'size_id' => $sizeValueId,
@@ -89,7 +89,7 @@ class CartController
 
         foreach ($cart as $item) {
 
-            // TERMÉK
+            
             $stmt = $pdo->prepare("
             SELECT
                 p.name,
@@ -111,7 +111,7 @@ class CartController
                 continue;
             }
 
-            // MÉRET (NINCS size_value TÁBLA!)
+            
             $stmt = $pdo->prepare("
             SELECT size_value
             FROM size

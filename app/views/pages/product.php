@@ -1,5 +1,5 @@
 <?php
-// $pdo és az autoloader már az index.php-ból elérhető
+
 
 $productId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($productId <= 0) {
@@ -10,9 +10,9 @@ if ($productId <= 0) {
 
 $model = new ProductModel($pdo);
 
-/* =========================
-   TERMÉK ADATOK
-   ========================= */
+
+
+
 $product = $model->getProductById($productId);
 if (!$product) {
     http_response_code(404);
@@ -20,35 +20,35 @@ if (!$product) {
     return;
 }
 
-// Gender megjelenítés
+
 $genderLabels = ['m' => 'Férfi', 'f' => 'Női', 'u' => 'Uniszex'];
 $genderLabel = $genderLabels[$product['gender']] ?? 'Uniszex';
 $genderUrl = $product['gender'] === 'm' ? 'ferfi' : 'noi';
 
-/* =========================
-   KÉPEK
-   ========================= */
+
+
+
 $images = $model->getImages($productId);
 $mainImage = $images[0]['src'] ?? null;
 
-/* =========================
-   MÉRETEK
-   ========================= */
+
+
+
 $sizes = $model->getSizes($productId);
 
-/* =========================
-   SZÍNVÁLTOZATOK
-   ========================= */
+
+
+
 $colorVariants = $model->getColorVariants($productId);
 
-/* =========================
-   AJÁNLOTT TERMÉKEK
-   ========================= */
+
+
+
 $related = $model->getRelated($product['subtype_id'], $productId);
 
-/* =========================
-   KEDVENC-E
-   ========================= */
+
+
+
 $isFavorite = false;
 if (isset($_SESSION['user_id'])) {
     $isFavorite = $model->isFavorite($_SESSION['user_id'], $productId);

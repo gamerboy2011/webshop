@@ -1,16 +1,16 @@
 <?php
-/**
- * ADMIN PANEL - Yoursy Wear
- * Belépési pont: /webshop/yw-admin
- */
 
-// Bootstrap betöltése (session, db, autoload, helper functions)
+
+
+
+
+
 require_once __DIR__ . '/app/bootstrap.php';
 
-// Admin controller
+
 $admin = new AdminController($pdo);
 
-// URL feldolgozás
+
 $uri = $_SERVER['REQUEST_URI'];
 $uri = str_replace('/webshop/yw-admin', '', $uri);
 $uri = trim(parse_url($uri, PHP_URL_PATH), '/');
@@ -19,10 +19,10 @@ $page = $parts[0] ?? 'dashboard';
 $action = $parts[1] ?? null;
 $id = $parts[2] ?? null;
 
-// POST kérések kezelése
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
-    // CSRF ellenőrzés
+    
     if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
         die('CSRF token érvénytelen');
     }
@@ -105,11 +105,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $newStatus = $_POST['new_status'] ?? '';
             
             if ($orderId && in_array($newStatus, ['confirmed', 'shipped', 'delivered'])) {
-                // Státusz frissítése
+                
                 $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE order_id = ?");
                 $stmt->execute([$newStatus, $orderId]);
                 
-                // Felhasználó adatai
+                
                 $stmt = $pdo->prepare("
                     SELECT o.*, u.username, u.email 
                     FROM orders o 
@@ -122,9 +122,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($order) {
                     require_once __DIR__ . '/app/helpers/Mail.php';
                     
-                    // Email küldése státusz alapján
+                    
                     if ($newStatus === 'shipped') {
-                        // FELADÁS EMAIL
+                        
                         $subject = "YoursyWear - Csomagod feladva! #$orderId";
                         $htmlBody = "
                         <!DOCTYPE html>
@@ -168,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                         
                     } elseif ($newStatus === 'delivered') {
-                        // KÉZBESÍTÉS + ELÉGEDETTSÉGI EMAIL
+                        
                         $subject = "YoursyWear - Csomagod megérkezett! #$orderId";
                         $feedbackUrl = "http://{$_SERVER['HTTP_HOST']}/webshop/ertekeles?order=$orderId";
                         $htmlBody = "
@@ -230,11 +230,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $pdo->prepare("UPDATE returns SET status = ? WHERE return_id = ?");
                 $stmt->execute([$status, $returnId]);
                 
-                // Email küldése jóváhagyás esetén
+                
                 if ($status === 'approved') {
                     require_once __DIR__ . '/app/helpers/Mail.php';
                     
-                    // Visszaküldés és felhasználó adatai
+                    
                     $stmt = $pdo->prepare("
                         SELECT r.*, u.username, u.email, o.order_id
                         FROM returns r
@@ -323,7 +323,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $productTypeId = null;
             $productSubtypeId = null;
             
-            // Kategória típus alapján állítjuk be
+            
             if ($categoryType === 'type' && !empty($_POST['product_type_id'])) {
                 $productTypeId = (int)$_POST['product_type_id'];
             } elseif ($categoryType === 'subtype' && !empty($_POST['product_subtype_id'])) {
@@ -334,12 +334,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $endDate = $_POST['end_date'] ?? date('Y-m-d', strtotime('+30 days'));
             $isActive = isset($_POST['is_active']) ? 1 : 0;
             
-            // QR kód generálás
+            
             $qrCodePath = null;
             if ($couponPass) {
                 $qrUrl = "https://" . ($_SERVER['HTTP_HOST'] ?? 'localhost') . "/webshop/kuponok/$couponPass";
                 
-                // goqr.me API használata cURL-lel
+                
                 $qrApiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($qrUrl);
                 
                 $qrDir = __DIR__ . '/storage/uploads/qrcodes';
@@ -350,7 +350,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $qrFileName = 'qr_' . $couponPass . '_' . time() . '.png';
                 $qrFilePath = $qrDir . '/' . $qrFileName;
                 
-                // QR kép letöltése cURL-lel
+                
                 $ch = curl_init($qrApiUrl);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
@@ -367,7 +367,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             if ($couponId > 0) {
-                // Update
+                
                 $sql = "UPDATE coupons SET name = ?, description = ?, coupon_pass = ?, amount = ?, 
                         product_type_id = ?, product_subtype_id = ?, start_date = ?, end_date = ?, is_active = ?";
                 $params = [$name, $description, $couponPass, $amount, $productTypeId, $productSubtypeId, $startDate, $endDate, $isActive];
@@ -382,7 +382,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($params);
             } else {
-                // Insert
+                
                 $stmt = $pdo->prepare("
                     INSERT INTO coupons (name, description, coupon_pass, amount, product_type_id, product_subtype_id, start_date, end_date, is_active, qr_code_path)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -397,7 +397,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $admin->requireAdmin();
             $couponId = (int)$_POST['coupon_id'];
             if ($couponId > 0) {
-                // QR kép törlése
+                
                 $stmt = $pdo->prepare("SELECT qr_code_path FROM coupons WHERE id = ?");
                 $stmt->execute([$couponId]);
                 $qrPath = $stmt->fetchColumn();
@@ -405,7 +405,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     unlink(__DIR__ . '/' . $qrPath);
                 }
                 
-                // Kupon törlése
+                
                 $stmt = $pdo->prepare("DELETE FROM user_coupons WHERE coupon_id = ?");
                 $stmt->execute([$couponId]);
                 $stmt = $pdo->prepare("DELETE FROM coupons WHERE id = ?");
@@ -468,16 +468,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Login oldal - nem kell admin ellenőrzés
+
 if ($page === 'login') {
     require __DIR__ . '/app/views/admin/login.php';
     exit;
 }
 
-// Minden más oldalhoz admin kell
+
 $admin->requireAdmin();
 
-// Adatok betöltése az aktuális oldalhoz
+
 switch ($page) {
     case 'dashboard':
         $stats = $admin->getDashboardStats();
@@ -517,15 +517,15 @@ switch ($page) {
         break;
         
     case 'returns':
-        // A returns.php maga betölti az adatokat
+        
         break;
         
     case 'ratings':
-        // A ratings.php maga betölti az adatokat
+        
         break;
         
     case 'coupons':
-        // A coupons.php maga betölti az adatokat
+        
         break;
         
     case 'coupon-edit':
@@ -538,7 +538,7 @@ switch ($page) {
         break;
 }
 
-// View renderelés
+
 $viewFile = __DIR__ . '/app/views/admin/' . $page . '.php';
 if (!file_exists($viewFile)) {
     $viewFile = __DIR__ . '/app/views/admin/dashboard.php';

@@ -1,15 +1,15 @@
 <?php
-// Változók az index.php-ból
+
 $gender = $gender ?? $_GET['gender'] ?? null;
 $category = $category ?? $_GET['category'] ?? null;
 $products = $products ?? [];
 $filterOptions = $filterOptions ?? ['brands' => [], 'colors' => [], 'sizes' => [], 'price_min' => 0, 'price_max' => 100000];
 $activeFilters = $activeFilters ?? ['sale' => false, 'brands' => [], 'colors' => [], 'sizes' => [], 'min_price' => null, 'max_price' => null, 'sort' => 'newest'];
 
-// Aktuális URL alap (szűrők nélkül)
+
 $baseUrl = "/webshop/" . ($gender ?? '') . ($category ? "/$category" : '');
 
-// Segédfüggvény: szűrő URL generálás
+
 function buildFilterUrl($baseUrl, $filters, $exclude = null, $excludeValue = null) {
     $params = [];
     
@@ -59,7 +59,7 @@ function buildFilterUrl($baseUrl, $filters, $exclude = null, $excludeValue = nul
     return $baseUrl . ($query ? '?' . $query : '');
 }
 
-// Aktív szűrők száma
+
 $activeFilterCount = 0;
 if ($activeFilters['sale']) $activeFilterCount++;
 $activeFilterCount += count($activeFilters['brands']);
@@ -67,7 +67,7 @@ $activeFilterCount += count($activeFilters['colors']);
 $activeFilterCount += count($activeFilters['sizes']);
 if ($activeFilters['min_price'] || $activeFilters['max_price']) $activeFilterCount++;
 
-// Kategória nevek (slug -> magyar)
+
 $categoryNames = [
     'ruhazat' => 'Ruházat', 'cipok' => 'Cipők', 'kiegeszitok' => 'Kiegészítők',
     'polo' => 'Pólók', 'pulover' => 'Pulóverek', 'kabat' => 'Kabátok', 'nadrag' => 'Nadrágok',
@@ -77,7 +77,7 @@ $categoryNames = [
 ];
 $categoryDisplayName = $category ? ($categoryNames[strtolower($category)] ?? ucfirst($category)) : '';
 
-// Szín kódok
+
 $colorCodes = [
     'Piros' => '#EF4444', 'Kék' => '#3B82F6', 'Zöld' => '#22C55E', 'Barna' => '#92400E',
     'Sárga' => '#EAB308', 'Narancssárga' => '#F97316', 'Fehér' => '#FFFFFF', 'Fekete' => '#000000',

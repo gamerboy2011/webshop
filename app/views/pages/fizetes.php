@@ -1,5 +1,5 @@
 <?php
-// Fizetési adatok ellenőrzése
+
 if (empty($_SESSION['pending_payment'])) {
     header('Location: /webshop/checkout');
     exit;

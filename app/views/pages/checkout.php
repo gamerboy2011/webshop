@@ -1,27 +1,27 @@
 <?php
-// Bejelentkezés ellenőrzése
+
 if (empty($_SESSION['user_id'])) {
     header('Location: /webshop/login?redirect=checkout');
     exit;
 }
 
-// Kosár ellenőrzése
+
 $cart = $_SESSION['cart'] ?? [];
 if (empty($cart)) {
     header('Location: /webshop/kosar');
     exit;
 }
 
-// Felhasználó adatai
+
 $stmt = $pdo->prepare("SELECT * FROM users WHERE user_id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
 
-// Kosár elemek betöltése
+
 $items = [];
 $subtotal = 0;
-$cartProductTypeIds = []; // Kosárban lévő terméktípusok ID-i
-$cartProductSubtypeIds = []; // Kosárban lévő alkategóriák ID-i
+$cartProductTypeIds = []; 
+$cartProductSubtypeIds = []; 
 
 foreach ($cart as $cartItem) {
     $stmt = $pdo->prepare("
@@ -37,7 +37,7 @@ foreach ($cart as $cartItem) {
     
     if (!$product) continue;
     
-    // Termék típus és alkategória ID gyűjtése
+    
     if (!empty($product['product_type_id'])) {
         $cartProductTypeIds[$product['product_type_id']] = true;
     }
@@ -69,8 +69,8 @@ foreach ($cart as $cartItem) {
 $cartProductTypeIds = array_keys($cartProductTypeIds);
 $cartProductSubtypeIds = array_keys($cartProductSubtypeIds);
 
-// Felhasználó elérhető kuponjai (aktivált, nem használt, érvényes)
-// Szűrés: általános VAGY megfelelő főkategória VAGY megfelelő alkategória
+
+
 $userCoupons = [];
 $stmt = $pdo->prepare("
     SELECT c.*, pt.name as product_type_name, ps.name as product_subtype_name
@@ -87,21 +87,21 @@ $stmt = $pdo->prepare("
 $stmt->execute([$_SESSION['user_id']]);
 $allCoupons = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Szűrjük a kuponokat a kosár tartalma alapján
+
 foreach ($allCoupons as $coupon) {
-    // Általános kupon (nincs kategória megkötés)
+    
     if (empty($coupon['product_type_id']) && empty($coupon['product_subtype_id'])) {
         $userCoupons[] = $coupon;
         continue;
     }
-    // Alkategória kupon
+    
     if (!empty($coupon['product_subtype_id'])) {
         if (in_array($coupon['product_subtype_id'], $cartProductSubtypeIds)) {
             $userCoupons[] = $coupon;
         }
         continue;
     }
-    // Főkategória kupon
+    
     if (!empty($coupon['product_type_id'])) {
         if (in_array($coupon['product_type_id'], $cartProductTypeIds)) {
             $userCoupons[] = $coupon;
@@ -109,7 +109,7 @@ foreach ($allCoupons as $coupon) {
     }
 }
 
-// Típus nevek magyarul
+
 $typeNames = [
     'Accessory' => 'Kiegészítők',
     'Clothe' => 'Ruházat',
@@ -134,7 +134,7 @@ $subtypeNames = [
 $shippingCost = $subtotal >= 15000 ? 0 : 1490;
 $total = $subtotal + $shippingCost;
 
-// Közterület típusok betöltése
+
 $streetTypes = [];
 try {
     $stmt = $pdo->query("SELECT * FROM street_type ORDER BY CASE WHEN name = 'utca' THEN 0 WHEN name = 'út' THEN 1 ELSE 2 END, name");

@@ -40,7 +40,7 @@
     <?php endif; ?>
     
     <?php
-    // Termékek csoportosítása
+    
     $groupedStock = [];
     foreach ($stockItems as $item) {
         $pid = $item['product_id'];

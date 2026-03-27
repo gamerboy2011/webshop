@@ -1,9 +1,9 @@
 <?php
 
-/**
- * Polish PHPMailer language file: refer to English translation for definitive list
- * @package PHPMailer
- */
+
+
+
+
 
 $PHPMAILER_LANG['authenticate']         = 'Błąd SMTP: Nie można przeprowadzić uwierzytelnienia.';
 $PHPMAILER_LANG['buggy_php']            = 'Twoja wersja PHP zawiera błąd, który może powodować uszkodzenie wiadomości. Aby go naprawić, przełącz się na wysyłanie za pomocą SMTP, wyłącz opcję mail.add_x_header w php.ini, przełącz się na MacOS lub Linux lub zaktualizuj PHP do wersji 7.0.17+ lub 7.1.3+.';

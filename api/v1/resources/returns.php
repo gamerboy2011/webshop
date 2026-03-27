@@ -1,15 +1,15 @@
 <?php
-/**
- * Returns API
- * POST /api/v1/returns - Visszáru kérelem leadása
- * GET /api/v1/returns - Visszáru kérelmek listázása
- * GET /api/v1/returns/{id} - Visszáru kérelem részletei
- */
+
+
+
+
+
+
 
 global $pdo;
 $resourceId = $segments[1] ?? null;
 
-// User ID ellenőrzése
+
 $userId = $_SESSION['user_id'] ?? null;
 
 if (!$userId) {
@@ -19,7 +19,7 @@ if (!$userId) {
 switch ($method) {
     case 'GET':
         if ($resourceId) {
-            // GET /api/v1/returns/{id}
+            
             $stmt = $pdo->prepare("
                 SELECT r.*, o.created_at as order_date
                 FROM returns r
@@ -35,7 +35,7 @@ switch ($method) {
             
             ApiResponse::success($return);
         } else {
-            // GET /api/v1/returns
+            
             $stmt = $pdo->prepare("
                 SELECT r.*, o.created_at as order_date
                 FROM returns r
@@ -54,7 +54,7 @@ switch ($method) {
         break;
         
     case 'POST':
-        // POST /api/v1/returns
+        
         $orderId = $input['order_id'] ?? null;
         $reason = $input['reason'] ?? null;
         $description = $input['description'] ?? null;
@@ -63,7 +63,7 @@ switch ($method) {
             ApiResponse::badRequest('Hiányzó paraméterek: order_id, reason');
         }
         
-        // Rendelés ellenőrzése
+        
         $stmt = $pdo->prepare("SELECT * FROM orders WHERE order_id = ? AND user_id = ?");
         $stmt->execute([$orderId, $userId]);
         $order = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -72,7 +72,7 @@ switch ($method) {
             ApiResponse::notFound('A rendelés nem található');
         }
         
-        // Visszáru kérelem létrehozása
+        
         $stmt = $pdo->prepare("
             INSERT INTO returns (user_id, order_id, problem_type, reason, status, created_at)
             VALUES (?, ?, ?, ?, 'pending', NOW())

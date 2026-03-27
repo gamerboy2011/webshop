@@ -2,9 +2,9 @@
 
 class OrderModel
 {
-    /* =========================
-       KOSÁR ÖSSZEGZÉS (CHECKOUT)
-       ========================= */
+    
+
+
     public static function getCartSummary(array $cart): array
     {
         global $pdo;
@@ -52,9 +52,9 @@ class OrderModel
         ];
     }
 
-    /* =========================
-       ORDER LÉTREHOZÁS
-       ========================= */
+    
+
+
     public static function createOrder(array $data, PDO $pdo): int
     {
         $stmt = $pdo->prepare("
@@ -84,12 +84,12 @@ class OrderModel
         return (int)$pdo->lastInsertId();
     }
 
-    /* =========================
-       ORDER TÉTEL + KÉSZLET
-       ========================= */
+    
+
+
     public static function addOrderItem(int $orderId, array $item, PDO $pdo): void
     {
-        // ár lekérés DB-ből
+        
         $stmt = $pdo->prepare("
             SELECT price
             FROM product
@@ -102,7 +102,7 @@ class OrderModel
             throw new Exception('Érvénytelen termék ár.');
         }
 
-        // order_item beszúrás
+        
         $stmt = $pdo->prepare("
             INSERT INTO order_item
             (order_id, product_id, quantity, unit_price)
@@ -115,7 +115,7 @@ class OrderModel
             $price
         ]);
 
-        // készlet csökkentés
+        
         $stmt = $pdo->prepare("
             UPDATE stock
             SET quantity = quantity - ?

@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../app/bootstrap.php';
 
-// Ellenőrzés
+
 if (empty($_SESSION['pending_order']) || empty($_SESSION['pending_payment'])) {
     header('Location: /webshop/checkout');
     exit;
@@ -13,7 +13,7 @@ $userId = $order['user_id'];
 $pdo->beginTransaction();
 
 try {
-    // Rendelés létrehozása
+    
     $stmt = $pdo->prepare("
         INSERT INTO orders (
             user_id, payment_method_id, delivery_method_id,
@@ -40,20 +40,20 @@ try {
     $orderTotal = 0;
     $orderItems = [];
     
-    // Rendelés tételek
+    
     foreach ($order['cart'] as $item) {
-        // Termék adatok
+        
         $stmt = $pdo->prepare("SELECT price, name FROM product WHERE product_id = ?");
         $stmt->execute([$item['product_id']]);
         $product = $stmt->fetch();
         $price = (float)$product['price'];
         
-        // Méret
+        
         $stmt = $pdo->prepare("SELECT size_value FROM size WHERE size_id = ?");
         $stmt->execute([$item['size_id']]);
         $sizeValue = $stmt->fetchColumn() ?: '-';
         
-        // Stock ID lekérése
+        
         $stmt = $pdo->prepare("SELECT stock_id FROM stock WHERE product_id = ? AND size_id = ?");
         $stmt->execute([$item['product_id'], $item['size_id']]);
         $stockId = $stmt->fetchColumn();
@@ -62,11 +62,11 @@ try {
             throw new Exception('Stock not found');
         }
         
-        // Order item beszúrása
+        
         $stmt = $pdo->prepare("INSERT INTO order_item (order_id, stock_id, quantity) VALUES (?, ?, ?)");
         $stmt->execute([$orderId, $stockId, $item['quantity']]);
         
-        // Készlet csökkentése
+        
         $stmt = $pdo->prepare("UPDATE stock SET quantity = quantity - ? WHERE stock_id = ?");
         $stmt->execute([$item['quantity'], $stockId]);
         
@@ -84,7 +84,7 @@ try {
     
     $pdo->commit();
     
-    // Felhasználó adatok (email és számlázási cím)
+    
     $stmt = $pdo->prepare("
         SELECT email, username,
                billing_postcode, billing_city, billing_street_name, 
@@ -94,7 +94,7 @@ try {
     $stmt->execute([$userId]);
     $user = $stmt->fetch();
     
-    // Számlázási cím összeállítása
+    
     $billingAddress = '';
     if ($user['billing_postcode'] && $user['billing_city']) {
         $billingAddress = $user['billing_postcode'] . ' ' . $user['billing_city'];
@@ -112,7 +112,7 @@ try {
         }
     }
     
-    // Email küldése
+    
     $deliveryAddress = $order['foxpost_point_name'] ?: ($order['shipping_city'] . ', ' . $order['shipping_address']);
     
     require_once __DIR__ . '/../helpers/Mail.php';
@@ -261,12 +261,12 @@ try {
     
     Mail::send($email, $subject, $htmlBody, $name);
     
-    // Session tisztítás
+    
     unset($_SESSION['pending_order']);
     unset($_SESSION['pending_payment']);
     unset($_SESSION['cart']);
     
-    // Sikeres rendelés
+    
     $_SESSION['order_success'] = $orderId;
     header('Location: /webshop/rendeles-sikeres');
     exit;

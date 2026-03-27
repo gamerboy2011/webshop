@@ -1,9 +1,9 @@
 <?php
 
-/**
- * Norwegian Bokmål PHPMailer language file: refer to English translation for definitive list
- * @package PHPMailer
- */
+
+
+
+
 
  $PHPMAILER_LANG['authenticate']         = 'SMTP-feil: Kunne ikke autentiseres.';
  $PHPMAILER_LANG['buggy_php']            = 'Din versjon av PHP er berørt av en feil som kan føre til ødelagte meldinger. For å løse problemet kan du bytte til SMTP, deaktivere alternativet mail.add_x_header i php.ini, bytte til MacOS eller Linux eller oppgradere PHP til versjon 7.0.17+ eller 7.1.3+.';

@@ -1,5 +1,5 @@
 <?php
-// Kuponok lekérdezése
+
 $statusFilter = $_GET['status'] ?? '';
 $dateFilter = $_GET['date'] ?? '';
 $search = $_GET['q'] ?? '';
@@ -17,7 +17,7 @@ $query = "
 ";
 $params = [];
 
-// Keresés
+
 if ($search) {
     $query .= " AND (c.name LIKE ? OR c.coupon_pass LIKE ? OR c.description LIKE ?)";
     $searchTerm = "%$search%";
@@ -26,7 +26,7 @@ if ($search) {
     $params[] = $searchTerm;
 }
 
-// Státusz szűrés
+
 if ($statusFilter === 'active') {
     $query .= " AND c.is_active = 1 AND CURDATE() BETWEEN c.start_date AND c.end_date";
 } elseif ($statusFilter === 'inactive') {
@@ -37,7 +37,7 @@ if ($statusFilter === 'active') {
     $query .= " AND c.start_date > CURDATE()";
 }
 
-// Dátum szűrés
+
 if ($dateFilter) {
     $query .= " AND ? BETWEEN c.start_date AND c.end_date";
     $params[] = $dateFilter;
@@ -49,7 +49,7 @@ $stmt = $pdo->prepare($query);
 $stmt->execute($params);
 $coupons = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Terméktípusok
+
 $productTypes = $pdo->query("SELECT * FROM product_type")->fetchAll(PDO::FETCH_ASSOC);
 $typeNames = [
     'Accessory' => 'Kiegészítők',

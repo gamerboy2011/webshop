@@ -1,5 +1,5 @@
 <?php
-// Visszaküldések lekérdezése
+
 $stmt = $pdo->query("
     SELECT r.*, 
            o.created_at as order_date,

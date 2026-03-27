@@ -13,9 +13,9 @@ class ProductController
         $this->productModel = new ProductModel($pdo);
     }
 
-    /* =========================
-       FŐOLDAL
-       ========================= */
+    
+
+
     public function index(): void
     {
         global $pdo;
@@ -41,9 +41,9 @@ class ProductController
         require __DIR__ . '/../views/pages/home.php';
     }
 
-    /* =========================
-       TERMÉKOLDAL
-       ========================= */
+    
+
+
     public function show(): void
     {
         global $pdo;
@@ -53,7 +53,7 @@ class ProductController
             die('Érvénytelen termék');
         }
 
-        /* ===== TERMÉK ===== */
+        
         $stmt = $pdo->prepare("
             SELECT
                 p.product_id,
@@ -81,7 +81,7 @@ class ProductController
             die('A termék nem található');
         }
 
-        /* ===== KÉPEK ===== */
+        
         $stmt = $pdo->prepare("
             SELECT src
             FROM product_img
@@ -91,7 +91,7 @@ class ProductController
         $stmt->execute([$productId]);
         $images = $stmt->fetchAll();
 
-        /* ===== MÉRETEK ===== */
+        
         $stmt = $pdo->prepare("
             SELECT
                 sz.size_id,
@@ -112,9 +112,9 @@ class ProductController
         require __DIR__ . '/../views/pages/product.php';
     }
 
-    /* =========================
-       KERESÉS
-       ========================= */
+    
+
+
     public function search(): void
     {
         $q = trim($_GET['q'] ?? '');
@@ -124,9 +124,9 @@ class ProductController
     }
 
 
-    /* =========================
-       KATEGÓRIA + SZŰRŐK
-       ========================= */
+    
+
+
     public function category(string $gender, ?string $category): void
     {
         $filters = [

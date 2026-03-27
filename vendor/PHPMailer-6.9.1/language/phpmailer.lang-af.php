@@ -1,9 +1,9 @@
 <?php
 
-/**
- * Afrikaans PHPMailer language file: refer to English translation for definitive list
- * @package PHPMailer
- */
+
+
+
+
 
 $PHPMAILER_LANG['authenticate']         = 'SMTP-fout: kon nie geverifieer word nie.';
 $PHPMAILER_LANG['connect_host']         = 'SMTP-fout: kon nie aan SMTP-verbind nie.';

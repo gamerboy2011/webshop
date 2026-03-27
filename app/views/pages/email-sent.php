@@ -3,7 +3,7 @@ $email = $_SESSION['registration_email'] ?? null;
 $name = $_SESSION['registration_name'] ?? null;
 $devLink = $_SESSION['dev_activation_link'] ?? null;
 
-// Session adatok törlése (csak egyszer jelenjen meg)
+
 unset($_SESSION['registration_email'], $_SESSION['registration_name'], $_SESSION['dev_activation_link']);
 
 if (!$email) {

@@ -25,7 +25,7 @@ class ActivationController
 
         $this->userModel->activateUser($user['user_id']);
 
-        // Tailwind + automatikus átirányítás
+        
         echo "
 <!DOCTYPE html>
 <html lang='hu'>

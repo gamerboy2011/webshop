@@ -118,14 +118,14 @@ class AuthController
         if ($success) {
             $activationLink = "http://{$_SERVER['HTTP_HOST']}/webshop/activate?token=$token";
             
-            // Email küldése
+            
             $emailSent = $this->sendActivationEmail($email, $fullName, $activationLink);
             
-            // Session-be mentjük az adatokat az email-sent oldalhoz
+            
             $_SESSION['registration_email'] = $email;
             $_SESSION['registration_name'] = $fullName;
             
-            // Fejlesztői mód: ha nincs email szerver, mentjük az aktivációs linket is
+            
             if (!$emailSent) {
                 $_SESSION['dev_activation_link'] = $activationLink;
             }

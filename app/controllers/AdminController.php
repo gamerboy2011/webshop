@@ -9,17 +9,17 @@ class AdminController
         $this->pdo = $pdo;
     }
 
-    /**
-     * Ellenőrzi, hogy a felhasználó admin-e
-     */
+    
+
+
     public function isAdmin(): bool
     {
         return !empty($_SESSION['user_id']) && !empty($_SESSION['role_id']) && $_SESSION['role_id'] == 2;
     }
 
-    /**
-     * Admin belépés ellenőrzés - átirányít ha nem admin
-     */
+    
+
+
     public function requireAdmin(): void
     {
         if (!$this->isAdmin()) {
@@ -28,34 +28,34 @@ class AdminController
         }
     }
 
-    /**
-     * Dashboard statisztikák
-     */
+    
+
+
     public function getDashboardStats(): array
     {
         $stats = [];
 
-        // Termékek száma
+        
         $stmt = $this->pdo->query("SELECT COUNT(*) FROM product WHERE is_active = 1");
         $stats['products'] = $stmt->fetchColumn();
 
-        // Akciós termékek
+        
         $stmt = $this->pdo->query("SELECT COUNT(*) FROM product WHERE is_active = 1 AND is_sale = 1");
         $stats['sale_products'] = $stmt->fetchColumn();
 
-        // Felhasználók száma
+        
         $stmt = $this->pdo->query("SELECT COUNT(*) FROM users");
         $stats['users'] = $stmt->fetchColumn();
 
-        // Rendelések száma
+        
         $stmt = $this->pdo->query("SELECT COUNT(*) FROM orders");
         $stats['orders'] = $stmt->fetchColumn();
 
-        // Mai rendelések
+        
         $stmt = $this->pdo->query("SELECT COUNT(*) FROM orders WHERE DATE(created_at) = CURDATE()");
         $stats['orders_today'] = $stmt->fetchColumn();
 
-        // Összes bevétel (order_item + product árból)
+        
         $stmt = $this->pdo->query("
             SELECT COALESCE(SUM(p.price * oi.quantity), 0) 
             FROM order_item oi
@@ -67,9 +67,9 @@ class AdminController
         return $stats;
     }
 
-    /**
-     * Legutóbbi rendelések
-     */
+    
+
+
     public function getRecentOrders(int $limit = 10): array
     {
         $stmt = $this->pdo->prepare("
@@ -95,9 +95,9 @@ class AdminController
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Összes termék lekérése (admin lista)
-     */
+    
+
+
     public function getProducts(?string $search = null, ?int $limit = 50): array
     {
         $sql = "
@@ -132,9 +132,9 @@ class AdminController
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Egyetlen termék lekérése
-     */
+    
+
+
     public function getProduct(int $id): ?array
     {
         $stmt = $this->pdo->prepare("
@@ -148,13 +148,13 @@ class AdminController
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    /**
-     * Termék mentése (új vagy módosítás)
-     */
+    
+
+
     public function saveProduct(array $data): bool
     {
         if (!empty($data['product_id'])) {
-            // UPDATE
+            
             $stmt = $this->pdo->prepare("
                 UPDATE product SET
                     name = ?,
@@ -181,7 +181,7 @@ class AdminController
                 $data['product_id']
             ]);
         } else {
-            // INSERT
+            
             $stmt = $this->pdo->prepare("
                 INSERT INTO product (name, description, price, is_sale, vendor_id, color_id, gender_id, subtype_id, is_active)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -200,27 +200,27 @@ class AdminController
         }
     }
 
-    /**
-     * Termék törlése (soft delete)
-     */
+    
+
+
     public function deleteProduct(int $id): bool
     {
         $stmt = $this->pdo->prepare("UPDATE product SET is_active = 0 WHERE product_id = ?");
         return $stmt->execute([$id]);
     }
 
-    /**
-     * Akció toggle
-     */
+    
+
+
     public function toggleSale(int $id): bool
     {
         $stmt = $this->pdo->prepare("UPDATE product SET is_sale = NOT is_sale WHERE product_id = ?");
         return $stmt->execute([$id]);
     }
 
-    /**
-     * Felhasználók lekérése
-     */
+    
+
+
     public function getUsers(): array
     {
         $stmt = $this->pdo->query("
@@ -232,46 +232,46 @@ class AdminController
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Felhasználó role módosítása
-     */
+    
+
+
     public function setUserRole(int $userId, int $roleId): bool
     {
         $stmt = $this->pdo->prepare("UPDATE users SET role_id = ? WHERE user_id = ?");
         return $stmt->execute([$roleId, $userId]);
     }
 
-    /**
-     * Felhasználó törlése
-     */
+    
+
+
     public function deleteUser(int $userId): bool
     {
-        // Ne törölhesse önmagát
+        
         if ($userId == $_SESSION['user_id']) {
             return false;
         }
         
-        // Kedvencek törlése
+        
         $stmt = $this->pdo->prepare("DELETE FROM favorites WHERE user_id = ?");
         $stmt->execute([$userId]);
         
-        // Felhasználó törlése
+        
         $stmt = $this->pdo->prepare("DELETE FROM users WHERE user_id = ?");
         return $stmt->execute([$userId]);
     }
     
-    /**
-     * Felhasználó aktiválása
-     */
+    
+
+
     public function activateUser(int $userId): bool
     {
         $stmt = $this->pdo->prepare("UPDATE users SET is_active = 1, activation_token = NULL WHERE user_id = ?");
         return $stmt->execute([$userId]);
     }
 
-    /**
-     * Összes rendelés
-     */
+    
+
+
     public function getOrders(): array
     {
         $stmt = $this->pdo->query("
@@ -291,9 +291,9 @@ class AdminController
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Rendelés részletei
-     */
+    
+
+
     public function getOrderDetails(int $orderId): array
     {
         $stmt = $this->pdo->prepare("
@@ -308,9 +308,9 @@ class AdminController
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Dropdown adatok lekérése
-     */
+    
+
+
     public function getVendors(): array
     {
         return $this->pdo->query("SELECT * FROM vendor ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
@@ -336,9 +336,9 @@ class AdminController
         ")->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Készletek lekérése (termékhez)
-     */
+    
+
+
     public function getStock(?int $productId = null, ?string $search = null): array
     {
         $sql = "
@@ -372,18 +372,18 @@ class AdminController
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Készlet frissítése
-     */
+    
+
+
     public function updateStock(int $stockId, int $quantity): bool
     {
         $stmt = $this->pdo->prepare("UPDATE stock SET quantity = ? WHERE stock_id = ?");
         return $stmt->execute([$quantity, $stockId]);
     }
 
-    /**
-     * Tömeges készlet frissítés
-     */
+    
+
+
     public function bulkUpdateStock(array $stockData): bool
     {
         $stmt = $this->pdo->prepare("UPDATE stock SET quantity = ? WHERE stock_id = ?");
@@ -393,9 +393,9 @@ class AdminController
         return true;
     }
 
-    /**
-     * Termék képeinek lekérése
-     */
+    
+
+
     public function getProductImages(int $productId): array
     {
         $stmt = $this->pdo->prepare("
@@ -407,9 +407,9 @@ class AdminController
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Kép feltöltése
-     */
+    
+
+
     public function uploadProductImage(int $productId, array $file): array
     {
         $uploadDir = __DIR__ . '/../../uploads/products/' . $productId;
@@ -417,7 +417,7 @@ class AdminController
             mkdir($uploadDir, 0755, true);
         }
 
-        // Validáció
+        
         $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
         if (!in_array($file['type'], $allowedTypes)) {
             return ['success' => false, 'error' => 'Nem támogatott fájltípus'];
@@ -427,7 +427,7 @@ class AdminController
             return ['success' => false, 'error' => 'Max 5MB méret engedélyezett'];
         }
 
-        // Fájlnév generálás
+        
         $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
         $filename = uniqid('img_') . '.' . $ext;
         $filepath = $uploadDir . '/' . $filename;
@@ -437,12 +437,12 @@ class AdminController
             return ['success' => false, 'error' => 'Feltöltés sikertelen'];
         }
 
-        // Következő pozíció meghatározása
+        
         $stmt = $this->pdo->prepare("SELECT COALESCE(MAX(position), 0) + 1 FROM product_img WHERE product_id = ?");
         $stmt->execute([$productId]);
         $position = $stmt->fetchColumn();
 
-        // Adatbázisba mentés
+        
         $stmt = $this->pdo->prepare("INSERT INTO product_img (product_id, src, position) VALUES (?, ?, ?)");
         $stmt->execute([$productId, $relativePath, $position]);
         $imageId = $this->pdo->lastInsertId();
@@ -457,35 +457,35 @@ class AdminController
         ];
     }
 
-    /**
-     * Kép törlése
-     */
+    
+
+
     public function deleteProductImage(int $imageId): bool
     {
-        // Kép adatai
+        
         $stmt = $this->pdo->prepare("SELECT * FROM product_img WHERE product_img_id = ?");
         $stmt->execute([$imageId]);
         $image = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$image) return false;
 
-        // Fájl törlése
+        
         $filepath = __DIR__ . '/../../' . $image['src'];
         if (file_exists($filepath)) {
             unlink($filepath);
         }
 
-        // Adatbázisból törlés
+        
         $stmt = $this->pdo->prepare("DELETE FROM product_img WHERE product_img_id = ?");
         $stmt->execute([$imageId]);
 
-        // Pozíciók újraszámozása
+        
         $stmt = $this->pdo->prepare("
             SET @pos := 0;
             UPDATE product_img SET position = (@pos := @pos + 1) 
             WHERE product_id = ? ORDER BY position
         ");
-        // MySQL nem támogatja így, szóval külön
+        
         $stmt = $this->pdo->prepare("
             SELECT product_img_id FROM product_img 
             WHERE product_id = ? ORDER BY position
@@ -501,9 +501,9 @@ class AdminController
         return true;
     }
 
-    /**
-     * Képek sorrendjének frissítése
-     */
+    
+
+
     public function reorderProductImages(array $imageIds): bool
     {
         $stmt = $this->pdo->prepare("UPDATE product_img SET position = ? WHERE product_img_id = ?");

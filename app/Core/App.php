@@ -1,8 +1,8 @@
 <?php
-/**
- * Application Class
- * Az alkalmazás fő belépési pontja és inicializálása
- */
+
+
+
+
 
 namespace App\Core;
 
@@ -24,9 +24,9 @@ class App
         $this->router = new Router();
     }
     
-    /**
-     * Singleton instance
-     */
+    
+
+
     public static function getInstance(): self
     {
         if (self::$instance === null) {
@@ -35,12 +35,12 @@ class App
         return self::$instance;
     }
     
-    /**
-     * Konfiguráció betöltése
-     */
+    
+
+
     private function loadConfig(): void
     {
-        // Alapértelmezett értékek
+        
         $this->config = [
             'app' => [
                 'name' => 'YoursyWear',
@@ -51,7 +51,7 @@ class App
             'mail' => []
         ];
         
-        // Config fájlok betöltése
+        
         $configPath = APP_PATH . '/Config/';
         
         if (file_exists($configPath . 'app.php')) {
@@ -65,9 +65,9 @@ class App
         }
     }
     
-    /**
-     * Adatbázis kapcsolat inicializálása
-     */
+    
+
+
     private function initDatabase(): void
     {
         $config = $this->config['database'];
@@ -94,9 +94,9 @@ class App
         }
     }
     
-    /**
-     * Session inicializálása
-     */
+    
+
+
     private function initSession(): void
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -104,25 +104,25 @@ class App
         }
     }
     
-    /**
-     * Router elérése
-     */
+    
+
+
     public function getRouter(): Router
     {
         return $this->router;
     }
     
-    /**
-     * Database elérése
-     */
+    
+
+
     public function getDb(): PDO
     {
         return $this->db;
     }
     
-    /**
-     * Config érték lekérése
-     */
+    
+
+
     public function config(string $key, $default = null)
     {
         $keys = explode('.', $key);
@@ -138,9 +138,9 @@ class App
         return $value;
     }
     
-    /**
-     * Alkalmazás futtatása
-     */
+    
+
+
     public function run(): void
     {
         $uri = $_SERVER['REQUEST_URI'];

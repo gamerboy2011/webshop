@@ -1,14 +1,14 @@
 <?php
-// Kuponkód az URL-ből
+
 $couponCode = $_GET['code'] ?? $_GET['id'] ?? null;
 
 $message = null;
 $messageType = null;
 $coupon = null;
 
-// Ha van kuponkód
+
 if ($couponCode) {
-    // Kupon keresése
+    
     $stmt = $pdo->prepare("
         SELECT c.*, 
                pt.name as product_type_name,
@@ -25,7 +25,7 @@ if ($couponCode) {
         $message = "Nincs ilyen kupon vagy már nem érvényes.";
         $messageType = "error";
     } else {
-        // Dátum ellenőrzés
+        
         $today = date('Y-m-d');
         if ($today < $coupon['start_date']) {
             $message = "Ez a kupon még nem aktív. Érvényesség kezdete: " . date('Y.m.d', strtotime($coupon['start_date']));
@@ -34,12 +34,12 @@ if ($couponCode) {
             $message = "Ez a kupon már lejárt. Érvényesség vége: " . date('Y.m.d', strtotime($coupon['end_date']));
             $messageType = "error";
         } else {
-            // Kupon érvényes - bejelentkezés ellenőrzés
+            
             if (empty($_SESSION['user_id'])) {
                 $message = "A kupon aktiválásához kérjük, jelentkezz be!";
                 $messageType = "login_required";
             } else {
-                // Ellenőrzés: már aktiválta-e
+                
                 $stmt = $pdo->prepare("SELECT * FROM user_coupons WHERE user_id = ? AND coupon_id = ?");
                 $stmt->execute([$_SESSION['user_id'], $coupon['id']]);
                 $existing = $stmt->fetch();
@@ -53,7 +53,7 @@ if ($couponCode) {
                         $messageType = "success";
                     }
                 } else {
-                    // Aktiválás
+                    
                     $stmt = $pdo->prepare("INSERT INTO user_coupons (user_id, coupon_id) VALUES (?, ?)");
                     $stmt->execute([$_SESSION['user_id'], $coupon['id']]);
                     
@@ -65,7 +65,7 @@ if ($couponCode) {
     }
 }
 
-// Felhasználó aktivált kuponjai (ha be van jelentkezve)
+
 $userCoupons = [];
 if (!empty($_SESSION['user_id'])) {
     $stmt = $pdo->prepare("
@@ -83,7 +83,7 @@ if (!empty($_SESSION['user_id'])) {
     $userCoupons = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// Típus nevek magyarul
+
 $typeNames = [
     'Accessory' => 'Kiegészítők',
     'Clothe' => 'Ruházat',

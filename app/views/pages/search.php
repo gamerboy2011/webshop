@@ -1,5 +1,5 @@
 <?php
-// $products és $searchQuery változók az index.php-ból jönnek
+
 $products = $products ?? [];
 $searchQuery = $searchQuery ?? '';
 ?>

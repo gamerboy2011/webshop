@@ -6,7 +6,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $userId  = $_SESSION['user_id'];
 
-// Közterület típusok betöltése
+
 $streetTypes = [];
 try {
     $stmt = $pdo->query("SELECT * FROM street_type ORDER BY CASE WHEN name = 'utca' THEN 0 WHEN name = 'út' THEN 1 ELSE 2 END, name");
@@ -14,14 +14,14 @@ try {
 } catch (PDOException $e) {}
 $section = $_GET['section'] ?? 'favorites';
 
-/* ===== KEDVENCEK BETÖLTÉSE ===== */
+
 $favorites = [];
 if ($section === 'favorites') {
     $favModel = new FavouriteModel($pdo);
     $favorites = $favModel->getUserFavorites($userId);
 }
 
-/* ===== RENDELÉSEK BETÖLTÉSE ===== */
+
 $orders = [];
 if ($section === 'orders') {
     $stmt = $pdo->prepare("
@@ -37,7 +37,7 @@ if ($section === 'orders') {
     $stmt->execute([$userId]);
     $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Rendelés tételek betöltése
+    
     foreach ($orders as &$order) {
         $stmt = $pdo->prepare("
             SELECT oi.*, s.product_id, p.name as product_name, p.price, p.is_sale,
@@ -52,21 +52,21 @@ if ($section === 'orders') {
         $stmt->execute([$order['order_id']]);
         $order['items'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Összeg számítása
+        
         $order['total'] = 0;
         foreach ($order['items'] as $item) {
-            $price = $item['is_sale'] ? ($item['price'] * 0.8) : $item['price']; // 20% kedvezmény
+            $price = $item['is_sale'] ? ($item['price'] * 0.8) : $item['price']; 
             $order['total'] += $price * $item['quantity'];
         }
         
-        // Van-e már visszaküldés ehhez?
+        
         $stmt = $pdo->prepare("SELECT * FROM returns WHERE order_id = ? AND user_id = ?");
         $stmt->execute([$order['order_id'], $userId]);
         $order['return'] = $stmt->fetch(PDO::FETCH_ASSOC);
     }
 }
 
-/* ===== VISSZAKÜLDÉSEK BETÖLTÉSE ===== */
+
 $returns = [];
 if ($section === 'returns') {
     $stmt = $pdo->prepare("
@@ -83,16 +83,16 @@ if ($section === 'returns') {
 $success = "";
 $error   = "";
 
-/* ===== MENTÉS ===== */
+
 if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
     $action = $_POST['form_action'] ?? 'address';
     
-    // EMAIL VÁLTOZTATÁS
+    
     if ($action === 'change_email') {
         $newEmail = trim($_POST['new_email'] ?? '');
         $password = $_POST['email_password'] ?? '';
         
-        // Jelszó ellenőrzése
+        
         $stmt = $pdo->prepare("SELECT password FROM users WHERE user_id = ?");
         $stmt->execute([$userId]);
         $userData = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -102,7 +102,7 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
         } elseif (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
             $error = "Érvénytelen email cím formátum!";
         } else {
-            // Ellenőrizzük, hogy az email már foglalt-e
+            
             $stmt = $pdo->prepare("SELECT user_id FROM users WHERE email = ? AND user_id != ?");
             $stmt->execute([$newEmail, $userId]);
             if ($stmt->fetch()) {
@@ -114,13 +114,13 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
             }
         }
     }
-    // JELSZÓ VÁLTOZTATÁS
+    
     elseif ($action === 'change_password') {
         $currentPassword = $_POST['current_password'] ?? '';
         $newPassword = $_POST['new_password'] ?? '';
         $confirmPassword = $_POST['confirm_password'] ?? '';
         
-        // Jelszó ellenőrzése
+        
         $stmt = $pdo->prepare("SELECT password FROM users WHERE user_id = ?");
         $stmt->execute([$userId]);
         $userData = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -138,9 +138,9 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
             $success = "Jelszó sikeresen megváltoztatva.";
         }
     }
-    // CÍM MENTÉS
+    
     else {
-        // Szállítási cím (mindig kötelező)
+        
         $shipping_postcode      = trim($_POST['shipping_postcode'] ?? '');
         $shipping_city          = trim($_POST['shipping_city'] ?? '');
         $shipping_street_name   = trim($_POST['shipping_street_name'] ?? '');
@@ -148,7 +148,7 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
         $shipping_house_number  = trim($_POST['shipping_house_number'] ?? '');
         $shipping_floor_door    = trim($_POST['shipping_floor_door'] ?? '');
 
-        // Számlázási cím (pipálható)
+        
         $sameBilling = isset($_POST['sameBilling']);
 
         if ($sameBilling) {
@@ -212,7 +212,7 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 
-/* ===== FELHASZNÁLÓ ADATOK ===== */
+
 $stmt = $pdo->prepare("
     SELECT
         username,

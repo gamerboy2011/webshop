@@ -9,12 +9,12 @@ class FavouriteModel
         $this->pdo = $pdo;
     }
 
-    /**
-     * Kedvenc hozzáadása / eltávolítása
-     */
+    
+
+
     public function toggle(int $userId, int $productId): bool
     {
-        // Megnézzük, hogy már kedvenc-e
+        
         $stmt = $this->pdo->prepare("
             SELECT id 
             FROM favorites 
@@ -22,7 +22,7 @@ class FavouriteModel
         ");
         $stmt->execute([$userId, $productId]);
 
-        // Ha már kedvenc → töröljük
+        
         if ($stmt->fetch()) {
             $del = $this->pdo->prepare("
                 DELETE FROM favorites 
@@ -31,7 +31,7 @@ class FavouriteModel
             return $del->execute([$userId, $productId]);
         }
 
-        // Ha még nem kedvenc → hozzáadjuk
+        
         $add = $this->pdo->prepare("
             INSERT INTO favorites (user_id, product_id) 
             VALUES (?, ?)
@@ -39,9 +39,9 @@ class FavouriteModel
         return $add->execute([$userId, $productId]);
     }
 
-    /**
-     * Felhasználó kedvenceinek lekérése
-     */
+    
+
+
     public function getUserFavorites(int $userId): array
     {
         $stmt = $this->pdo->prepare("
@@ -70,9 +70,9 @@ class FavouriteModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Ellenőrzi, hogy egy termék kedvenc-e
-     */
+    
+
+
     public function isFavorite(int $userId, int $productId): bool
     {
         $stmt = $this->pdo->prepare("
@@ -83,9 +83,9 @@ class FavouriteModel
         return (bool)$stmt->fetch();
     }
 
-    /**
-     * Kedvenc eltávolítása
-     */
+    
+
+
     public function remove(int $userId, int $productId): bool
     {
         $stmt = $this->pdo->prepare("

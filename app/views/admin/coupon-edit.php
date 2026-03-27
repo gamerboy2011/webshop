@@ -1,8 +1,8 @@
 <?php
-// Terméktípusok lekérdezése
+
 $productTypes = $pdo->query("SELECT * FROM product_type")->fetchAll(PDO::FETCH_ASSOC);
 
-// Alkategóriák lekérdezése (csoportosítva típus szerint)
+
 $subtypes = $pdo->query("
     SELECT ps.*, pt.name as type_name 
     FROM product_subtype ps 

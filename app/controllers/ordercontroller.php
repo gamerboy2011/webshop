@@ -26,18 +26,18 @@ class OrderController
         $paymentMethodId = (int)($_POST['payment_method_id'] ?? 0);
         $deliveryMethodId = (int)($_POST['delivery_method_id'] ?? 0);
         
-        // Kupon adatok
+        
         $discountAmount = (int)($_POST['discount_amount'] ?? 0);
         $appliedCouponIds = array_filter(array_map('intval', explode(',', $_POST['applied_coupon_ids'] ?? '')));
         
-        // Szállítási adatok
+        
         $shippingName = trim($_POST['shipping_name'] ?? '');
         $shippingPhone = trim($_POST['shipping_phone'] ?? '');
         $shippingPostcode = trim($_POST['shipping_postcode'] ?? '');
         $shippingCity = trim($_POST['shipping_city'] ?? '');
         $shippingAddress = trim($_POST['shipping_address'] ?? '');
         
-        // FoxPost adatok
+        
         $foxpostPointId = trim($_POST['foxpost_point_id'] ?? '');
         $foxpostPointName = trim($_POST['foxpost_point_name'] ?? '');
         $foxpostPointAddress = trim($_POST['foxpost_point_address'] ?? '');
@@ -47,9 +47,9 @@ class OrderController
             exit;
         }
         
-        // Bankkártyás fizetés esetén először fizetési oldalra irányítás
+        
         if ($paymentMethodId == 1) {
-            // Rendelési adatok mentése session-be
+            
             $_SESSION['pending_order'] = [
                 'user_id' => $userId,
                 'payment_method_id' => $paymentMethodId,
@@ -67,7 +67,7 @@ class OrderController
                 'applied_coupon_ids' => $appliedCouponIds
             ];
             
-            // Összeg számítása
+            
             $orderTotal = 0;
             foreach ($_SESSION['cart'] as $item) {
                 $stmt = $this->pdo->prepare("SELECT price FROM product WHERE product_id = ?");
@@ -76,7 +76,7 @@ class OrderController
                 $orderTotal += $price * $item['quantity'];
             }
             
-            // Szállítási költség és kedvezmény
+            
             $shippingCost = $orderTotal >= 15000 ? 0 : ($deliveryMethodId == 3 ? 890 : 1490);
             $grandTotal = $orderTotal - $discountAmount + $shippingCost;
             
@@ -92,7 +92,7 @@ class OrderController
         $this->pdo->beginTransaction();
         
         try {
-            // Rendelés létrehozása
+            
             $stmt = $this->pdo->prepare("
                 INSERT INTO orders (
                     user_id, payment_method_id, delivery_method_id,
@@ -119,20 +119,20 @@ class OrderController
             $orderTotal = 0;
             $orderItems = [];
             
-            // Rendelés tételek
+            
             foreach ($_SESSION['cart'] as $item) {
-                // Termék adatok
+                
                 $stmt = $this->pdo->prepare("SELECT price, name FROM product WHERE product_id = ?");
                 $stmt->execute([$item['product_id']]);
                 $product = $stmt->fetch();
                 $price = (float)$product['price'];
                 
-                // Méret
+                
                 $stmt = $this->pdo->prepare("SELECT size_value FROM size WHERE size_id = ?");
                 $stmt->execute([$item['size_id']]);
                 $sizeValue = $stmt->fetchColumn() ?: '-';
                 
-                // Stock ID lekérése
+                
                 $stmt = $this->pdo->prepare("SELECT stock_id FROM stock WHERE product_id = ? AND size_id = ?");
                 $stmt->execute([$item['product_id'], $item['size_id']]);
                 $stockId = $stmt->fetchColumn();
@@ -141,14 +141,14 @@ class OrderController
                     throw new Exception('Stock not found for product ' . $item['product_id'] . ' size ' . $item['size_id']);
                 }
                 
-                // Order item beszúrása stock_id-val
+                
                 $stmt = $this->pdo->prepare("
                     INSERT INTO order_item (order_id, stock_id, quantity)
                     VALUES (?, ?, ?)
                 ");
                 $stmt->execute([$orderId, $stockId, $item['quantity']]);
                 
-                // Készlet csökkentése
+                
                 $stmt = $this->pdo->prepare("UPDATE stock SET quantity = quantity - ? WHERE stock_id = ?");
                 $stmt->execute([$item['quantity'], $stockId]);
                 
@@ -164,7 +164,7 @@ class OrderController
                 ];
             }
             
-            // Szállítási cím mentése a user profiljába (ha házhoz szállítás)
+            
             if ($deliveryMethodId == 2 && $shippingPostcode && $shippingCity) {
                 $stmt = $this->pdo->prepare("
                     UPDATE users SET 
@@ -183,7 +183,7 @@ class OrderController
                 ]);
             }
             
-            // Kuponok megjelölése felhasználtként
+            
             if (!empty($appliedCouponIds)) {
                 foreach ($appliedCouponIds as $couponId) {
                     $stmt = $this->pdo->prepare("
@@ -196,7 +196,7 @@ class OrderController
             
             $this->pdo->commit();
             
-            // Felhasználó adatok (email és számlázási cím)
+            
             $stmt = $this->pdo->prepare("
                 SELECT email, username,
                        billing_postcode, billing_city, billing_street_name, 
@@ -206,7 +206,7 @@ class OrderController
             $stmt->execute([$userId]);
             $user = $stmt->fetch();
             
-            // Számlázási cím összeállítása
+            
             $billingAddress = '';
             if ($user['billing_postcode'] && $user['billing_city']) {
                 $billingAddress = $user['billing_postcode'] . ' ' . $user['billing_city'];
@@ -224,7 +224,7 @@ class OrderController
                 }
             }
             
-            // Email küldése
+            
             $this->sendOrderConfirmationEmail(
                 $user['email'],
                 $user['username'],
@@ -237,10 +237,10 @@ class OrderController
                 $discountAmount
             );
             
-            // Kosár ürítése
+            
             unset($_SESSION['cart']);
             
-            // Sikeres rendelés oldal
+            
             $_SESSION['order_success'] = $orderId;
             header('Location: /webshop/rendeles-sikeres');
             exit;
@@ -266,16 +266,16 @@ class OrderController
     ): bool {
         $subject = "YoursyWear - Rendelés visszaigazolás #$orderId";
         
-        // Szállítási mód és költség
+        
         $deliveryText = $deliveryMethodId == 3 ? 'FoxPost csomagautomata' : 'Házhoz szállítás (GLS)';
         $shippingCost = $total >= 15000 ? 0 : ($deliveryMethodId == 3 ? 890 : 1490);
         $grandTotal = $total - $discountAmount + $shippingCost;
         
-        // Számla szám generálás
+        
         $invoiceNumber = 'YW-' . date('Y') . '-' . str_pad($orderId, 6, '0', STR_PAD_LEFT);
         $invoiceDate = date('Y. m. d.');
         
-        // Termékek HTML
+        
         $itemsHtml = '';
         foreach ($items as $item) {
             $unitPrice = number_format($item['price'], 0, ',', ' ');
@@ -425,7 +425,7 @@ class OrderController
         return $result['success'];
     }
     
-    // Régi checkout metódus (kompatibilitás)
+    
     public function checkout(): void
     {
         $this->placeOrder();

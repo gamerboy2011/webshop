@@ -1,10 +1,10 @@
 <?php
 
-/**
- * Malagasy PHPMailer language file: refer to English translation for definitive list
- * @package PHPMailer
- * @author Hackinet <piyushjha8164@gmail.com>
- */
+
+
+
+
+
 
 $PHPMAILER_LANG['authenticate']         = 'Hadisoana SMTP: Tsy nahomby ny fanamarinana.';
 $PHPMAILER_LANG['connect_host']         = 'SMTP Error: Tsy afaka mampifandray amin\'ny mpampiantrano SMTP.';

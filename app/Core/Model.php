@@ -1,8 +1,8 @@
 <?php
-/**
- * Base Model Class
- * Alap CRUD műveletek minden modellhez
- */
+
+
+
+
 
 namespace App\Core;
 
@@ -19,9 +19,9 @@ abstract class Model
         $this->db = $db;
     }
     
-    /**
-     * CREATE - Új rekord létrehozása
-     */
+    
+
+
     public function create(array $data): int|false
     {
         $columns = implode(', ', array_keys($data));
@@ -36,9 +36,9 @@ abstract class Model
         return false;
     }
     
-    /**
-     * READ - Egy rekord lekérése ID alapján
-     */
+    
+
+
     public function find(int $id): array|false
     {
         $sql = "SELECT * FROM {$this->table} WHERE {$this->primaryKey} = :id LIMIT 1";
@@ -47,9 +47,9 @@ abstract class Model
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
     
-    /**
-     * READ - Összes rekord lekérése
-     */
+    
+
+
     public function all(string $orderBy = null): array
     {
         $sql = "SELECT * FROM {$this->table}";
@@ -60,9 +60,9 @@ abstract class Model
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
-    /**
-     * READ - Rekordok keresése feltétel alapján
-     */
+    
+
+
     public function where(string $column, $value, string $operator = '='): array
     {
         $sql = "SELECT * FROM {$this->table} WHERE {$column} {$operator} :value";
@@ -71,9 +71,9 @@ abstract class Model
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
-    /**
-     * READ - Első találat keresése feltétel alapján
-     */
+    
+
+
     public function findBy(string $column, $value): array|false
     {
         $sql = "SELECT * FROM {$this->table} WHERE {$column} = :value LIMIT 1";
@@ -82,9 +82,9 @@ abstract class Model
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
     
-    /**
-     * UPDATE - Rekord frissítése
-     */
+    
+
+
     public function update(int $id, array $data): bool
     {
         $sets = [];
@@ -100,9 +100,9 @@ abstract class Model
         return $stmt->execute($data);
     }
     
-    /**
-     * DELETE - Rekord törlése
-     */
+    
+
+
     public function delete(int $id): bool
     {
         $sql = "DELETE FROM {$this->table} WHERE {$this->primaryKey} = :id";
@@ -110,9 +110,9 @@ abstract class Model
         return $stmt->execute(['id' => $id]);
     }
     
-    /**
-     * COUNT - Rekordok száma
-     */
+    
+
+
     public function count(string $where = null, array $params = []): int
     {
         $sql = "SELECT COUNT(*) FROM {$this->table}";
@@ -124,9 +124,9 @@ abstract class Model
         return (int) $stmt->fetchColumn();
     }
     
-    /**
-     * Egyedi SQL lekérdezés
-     */
+    
+
+
     public function query(string $sql, array $params = []): array
     {
         $stmt = $this->db->prepare($sql);
@@ -134,9 +134,9 @@ abstract class Model
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
-    /**
-     * PDO elérése
-     */
+    
+
+
     public function getDb(): PDO
     {
         return $this->db;

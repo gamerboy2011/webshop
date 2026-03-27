@@ -1,11 +1,11 @@
 <?php
 
-/**
- * Tagalog PHPMailer language file: refer to English translation for definitive list
- *
- *   @package PHPMailer
- *   @author Adriane Justine Tan <eidoriantan@gmail.com>
- */
+
+
+
+
+
+
 
 $PHPMAILER_LANG['authenticate']         = 'SMTP Error: Hindi mapatotohanan.';
 $PHPMAILER_LANG['connect_host']         = 'SMTP Error: Hindi makakonekta sa SMTP host.';

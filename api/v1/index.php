@@ -1,55 +1,55 @@
 <?php
-/**
- * RESTful API Router v1
- * Központi belépési pont az összes API kéréshez
- */
 
-// CORS headers
+
+
+
+
+
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-// OPTIONS preflight request kezelése
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
     exit;
 }
 
-// Bootstrap betöltése (session, db, autoload)
+
 require_once __DIR__ . '/../../app/bootstrap.php';
 require_once __DIR__ . '/ApiResponse.php';
 
-// Request adatok
+
 $method = $_SERVER['REQUEST_METHOD'];
 $requestUri = $_SERVER['REQUEST_URI'];
 
-// API base path eltávolítása
+
 $basePath = '/webshop/api/v1';
 $path = parse_url($requestUri, PHP_URL_PATH);
 $path = str_replace($basePath, '', $path);
 $path = trim($path, '/');
 
-// Path elemekre bontása
+
 $segments = $path ? explode('/', $path) : [];
 $resource = $segments[0] ?? null;
 
-// JSON body beolvasása POST/PUT kéréseknél
+
 $input = [];
 if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
     $rawInput = file_get_contents('php://input');
     if ($rawInput) {
         $input = json_decode($rawInput, true) ?? [];
     }
-    // Form data is fallback
+    
     if (empty($input) && !empty($_POST)) {
         $input = $_POST;
     }
 }
 
-// Query paraméterek
+
 $queryParams = $_GET;
 
-// Resource routing
+
 switch ($resource) {
     case 'products':
         require_once __DIR__ . '/resources/products.php';
@@ -84,7 +84,7 @@ switch ($resource) {
         break;
         
     case '':
-        // API info endpoint
+        
         ApiResponse::success([
             'name' => 'YoursyWear API',
             'version' => '1.0',

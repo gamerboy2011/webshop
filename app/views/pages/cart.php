@@ -1,11 +1,11 @@
 <?php
-// Kosár elemek betöltése session-ből
+
 $cart = $_SESSION['cart'] ?? [];
 $items = [];
 $total = 0;
 
 foreach ($cart as $cartItem) {
-    // Termék adatok lekérése
+    
     $stmt = $pdo->prepare("
         SELECT
             p.product_id,
@@ -20,7 +20,7 @@ foreach ($cart as $cartItem) {
     
     if (!$product) continue;
     
-    // Méret lekérése
+    
     $stmt = $pdo->prepare("SELECT size_value FROM size WHERE size_id = ?");
     $stmt->execute([$cartItem['size_id']]);
     $sizeValue = $stmt->fetchColumn() ?: '-';
