@@ -193,7 +193,7 @@
 <?php if (!empty($product)): ?>
 <script>
 const productId = <?= $product['product_id'] ?>;
-const csrfToken = '<?= generate_csrf_token() ?>';
+const csrfToken = '<?= csrf_token() ?>';
 
 // Kép feltöltés
 document.getElementById('uploadBtn')?.addEventListener('click', async function() {
@@ -263,6 +263,21 @@ function addImageToGallery(img) {
     initDragAndDrop();
 }
 
+// Toast üzenet
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-50 transition-all transform translate-y-0 opacity-100 ${
+        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+    }`;
+    toast.innerHTML = `<i class="las ${type === 'success' ? 'la-check-circle' : 'la-exclamation-circle'} mr-2"></i>${message}`;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
 // Kép törlése
 async function deleteImage(imageId) {
     if (!confirm('Biztosan törlöd ezt a képet?')) return;
@@ -282,12 +297,13 @@ async function deleteImage(imageId) {
         if (data.success) {
             document.querySelector(`.image-item[data-id="${imageId}"]`)?.remove();
             updatePositionNumbers();
+            showToast('Kép törölve!');
         } else {
-            alert('Törlés sikertelen!');
+            showToast('Törlés sikertelen', 'error');
         }
     } catch (err) {
         console.error(err);
-        alert('Hiba történt!');
+        showToast('Hiba történt', 'error');
     }
 }
 

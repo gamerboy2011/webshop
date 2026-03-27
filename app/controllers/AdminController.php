@@ -412,12 +412,11 @@ class AdminController
 
     public function uploadProductImage(int $productId, array $file): array
     {
-        $uploadDir = __DIR__ . '/../../uploads/products/' . $productId;
+        $uploadDir = __DIR__ . '/../../storage/uploads/products';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
 
-        
         $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
         if (!in_array($file['type'], $allowedTypes)) {
             return ['success' => false, 'error' => 'Nem támogatott fájltípus'];
@@ -427,11 +426,10 @@ class AdminController
             return ['success' => false, 'error' => 'Max 5MB méret engedélyezett'];
         }
 
-        
         $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $filename = uniqid('img_') . '.' . $ext;
+        $filename = 'product_' . $productId . '_' . uniqid() . '.' . $ext;
         $filepath = $uploadDir . '/' . $filename;
-        $relativePath = 'uploads/products/' . $productId . '/' . $filename;
+        $relativePath = 'storage/uploads/products/' . $filename;
 
         if (!move_uploaded_file($file['tmp_name'], $filepath)) {
             return ['success' => false, 'error' => 'Feltöltés sikertelen'];
@@ -462,30 +460,23 @@ class AdminController
 
     public function deleteProductImage(int $imageId): bool
     {
-        
         $stmt = $this->pdo->prepare("SELECT * FROM product_img WHERE product_img_id = ?");
         $stmt->execute([$imageId]);
         $image = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$image) return false;
 
+        $webshopRoot = dirname(__DIR__, 2);
+        $filepath = $webshopRoot . '/' . $image['src'];
         
-        $filepath = __DIR__ . '/../../' . $image['src'];
-        if (file_exists($filepath)) {
+        if (file_exists($filepath) && is_writable($filepath)) {
             unlink($filepath);
         }
 
-        
         $stmt = $this->pdo->prepare("DELETE FROM product_img WHERE product_img_id = ?");
         $stmt->execute([$imageId]);
 
-        
-        $stmt = $this->pdo->prepare("
-            SET @pos := 0;
-            UPDATE product_img SET position = (@pos := @pos + 1) 
-            WHERE product_id = ? ORDER BY position
-        ");
-        
+        // Pozíciók újraszámozása
         $stmt = $this->pdo->prepare("
             SELECT product_img_id FROM product_img 
             WHERE product_id = ? ORDER BY position
