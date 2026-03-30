@@ -97,30 +97,27 @@ foreach ($cart as $cartItem) {
                     <!-- MENNYISÉG -->
                     <div class="flex items-center justify-end mt-3 pt-3 border-t">
                         <div class="flex items-center gap-2">
-                            <form method="post" action="/webshop/index.php" class="inline">
-                                <?= csrf_field() ?>
-                                <input type="hidden" name="action" value="cart_update">
-                                <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
-                                <input type="hidden" name="size_id" value="<?= $item['size_id'] ?>">
-                                <input type="hidden" name="quantity" value="<?= max(1, $item['quantity'] - 1) ?>">
-                                <button type="submit" class="w-8 h-8 border rounded-lg hover:bg-gray-100 transition"
-                                        <?= $item['quantity'] <= 1 ? 'disabled' : '' ?>>
-                                    <i class="las la-minus text-xs"></i>
-                                </button>
-                            </form>
+                            <button type="button" 
+                                    onclick="updateQuantity('<?= $item['product_id'] ?>_<?= $item['size_id'] ?>', <?= $item['quantity'] - 1 ?>)"
+                                    class="w-8 h-8 border rounded-lg hover:bg-gray-100 transition"
+                                    <?= $item['quantity'] <= 1 ? 'disabled' : '' ?>>
+                                <i class="las la-minus text-xs"></i>
+                            </button>
                             
-                            <span class="w-8 text-center font-medium"><?= $item['quantity'] ?></span>
+                            <span id="qty-<?= $item['product_id'] ?>_<?= $item['size_id'] ?>" 
+                                  class="w-8 text-center font-medium"><?= $item['quantity'] ?></span>
                             
-                            <form method="post" action="/webshop/index.php" class="inline">
-                                <?= csrf_field() ?>
-                                <input type="hidden" name="action" value="cart_update">
-                                <input type="hidden" name="product_id" value="<?= $item['product_id'] ?>">
-                                <input type="hidden" name="size_id" value="<?= $item['size_id'] ?>">
-                                <input type="hidden" name="quantity" value="<?= $item['quantity'] + 1 ?>">
-                                <button type="submit" class="w-8 h-8 border rounded-lg hover:bg-gray-100 transition">
-                                    <i class="las la-plus text-xs"></i>
-                                </button>
-                            </form>
+                            <button type="button" 
+                                    onclick="updateQuantity('<?= $item['product_id'] ?>_<?= $item['size_id'] ?>', <?= $item['quantity'] + 1 ?>)"
+                                    class="w-8 h-8 border rounded-lg hover:bg-gray-100 transition">
+                                <i class="las la-plus text-xs"></i>
+                            </button>
+                            
+                            <button type="button" 
+                                    onclick="removeFromCart('<?= $item['product_id'] ?>_<?= $item['size_id'] ?>')"
+                                    class="w-8 h-8 border border-red-200 text-red-500 rounded-lg hover:bg-red-50 transition ml-2">
+                                <i class="las la-trash text-sm"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -192,6 +189,54 @@ foreach ($cart as $cartItem) {
 </div>
 
 <script>
+// Mennyiség módosítása PUT API-val
+async function updateQuantity(cartItemId, newQuantity) {
+    console.log('updateQuantity called:', cartItemId, newQuantity);
+    
+    if (newQuantity < 1) {
+        removeFromCart(cartItemId);
+        return;
+    }
+    
+    try {
+        const response = await fetch('/webshop/api/v1/cart/' + cartItemId, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ quantity: newQuantity })
+        });
+        
+        const data = await response.json();
+        console.log('Response:', response.status, data);
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Hiba: ' + (data.message || 'Ismeretlen hiba'));
+        }
+    } catch (err) {
+        console.error('Error:', err);
+        alert('Hálózati hiba: ' + err.message);
+    }
+}
+
+// Elem törlése DELETE API-val
+async function removeFromCart(cartItemId) {
+    try {
+        const response = await fetch('/webshop/api/v1/cart/' + cartItemId, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Hiba történt a törléskor');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Hálózati hiba');
+    }
+}
+
 function showClearCartModal() {
     const modal = document.getElementById('clearCartModal');
     const content = document.getElementById('clearCartModalContent');
@@ -202,6 +247,7 @@ function showClearCartModal() {
         content.classList.add('scale-100', 'opacity-100');
     }, 10);
 }
+
 function closeClearCartModal() {
     const modal = document.getElementById('clearCartModal');
     const content = document.getElementById('clearCartModalContent');

@@ -101,12 +101,25 @@ switch ($method) {
             ApiResponse::badRequest('Érvénytelen mennyiség');
         }
         
+        // Parse product_id and size_id from resourceId (format: productId_sizeId)
+        $parts = explode('_', $resourceId);
+        if (count($parts) !== 2) {
+            ApiResponse::badRequest('Érvénytelen kosár elem ID formátum');
+        }
+        $productId = (int)$parts[0];
+        $sizeId = (int)$parts[1];
         
-        if (isset($_SESSION['cart'][$resourceId])) {
-            $_SESSION['cart'][$resourceId]['quantity'] = $quantity;
-            $result = true;
-        } else {
-            $result = false;
+        // Find and update cart item
+        $result = false;
+        if (!empty($_SESSION['cart'])) {
+            foreach ($_SESSION['cart'] as $key => &$item) {
+                if ($item['product_id'] == $productId && $item['size_id'] == $sizeId) {
+                    $item['quantity'] = $quantity;
+                    $result = true;
+                    break;
+                }
+            }
+            unset($item);
         }
         
         if ($result) {
@@ -118,9 +131,28 @@ switch ($method) {
         
     case 'DELETE':
         if ($resourceId) {
+            // Parse product_id and size_id
+            $parts = explode('_', $resourceId);
+            if (count($parts) !== 2) {
+                ApiResponse::badRequest('Érvénytelen kosár elem ID formátum');
+            }
+            $productId = (int)$parts[0];
+            $sizeId = (int)$parts[1];
             
-            if (isset($_SESSION['cart'][$resourceId])) {
-                unset($_SESSION['cart'][$resourceId]);
+            // Find and remove cart item
+            $found = false;
+            if (!empty($_SESSION['cart'])) {
+                foreach ($_SESSION['cart'] as $key => $item) {
+                    if ($item['product_id'] == $productId && $item['size_id'] == $sizeId) {
+                        unset($_SESSION['cart'][$key]);
+                        $_SESSION['cart'] = array_values($_SESSION['cart']); // Re-index
+                        $found = true;
+                        break;
+                    }
+                }
+            }
+            
+            if ($found) {
                 ApiResponse::noContent();
             } else {
                 ApiResponse::notFound('A kosár elem nem található');

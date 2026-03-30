@@ -38,7 +38,6 @@ $menuCategories = [
             ['name' => 'Kabátok', 'slug' => 'kabat'],
             ['name' => 'Nadrágok', 'slug' => 'nadrag'],
             ['name' => 'Rövidnadrágok', 'slug' => 'rovidnadrag'],
-            ['name' => 'Melegítők', 'slug' => 'melegito'],
             ['name' => 'Egyberuhák', 'slug' => 'egyberuha', 'female_only' => true],
         ]
     ],
