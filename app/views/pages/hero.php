@@ -1,76 +1,21 @@
-<?php
-
-
-if (!isset($hideHero)) {
-    $hideHero = false;
-}
-?>
-
-<section
-    id="hero"
-    class="w-full transition-all duration-700 ease-in-out
-    <?php echo $hideHero 
-        ? 'opacity-0 -translate-y-10 max-h-0 overflow-hidden' 
-        : 'opacity-100 translate-y-0 max-h-[2000px]'; ?>"
->
-
-    <!-- FEHÉR FELSŐ RÉSZ -->
-    <div class="w-full bg-white">
-        <div
-            class="max-w-7xl mx-auto px-6 py-24 text-center
-                   opacity-0 translate-y-8
-                   transition-all duration-700 ease-out
-                   hero-animate"
-        >
-            <h1 class="text-6xl font-extrabold mb-6">
-                Yoursy Wear
-            </h1>
-
-            <p class="text-lg text-gray-600 mb-10 max-w-md mx-auto">
-                Your style speaks for you.
-            </p>
-
-            <a
-                href="#products"
-                class="inline-block bg-black text-white px-12 py-4 uppercase tracking-widest text-sm hover:bg-gray-900 transition"
-            >
+<!-- REKLÁM BANNER KÉPPEL -->
+<section id="hero" class="relative w-full">
+    <!-- Háttérkép -->
+    <div class="relative w-full">
+        <img src="/webshop/public/images/reklam.png" 
+             alt="Yoursy Wear - Lépj be a nyárba" 
+             class="w-full h-auto object-cover">
+        
+        <!-- Gombok a kép alján -->
+        <div class="absolute bottom-8 left-0 right-0 flex justify-center gap-4 px-4">
+            <a href="#products" 
+               class="bg-white text-gray-900 px-6 py-3 md:px-10 md:py-4 rounded-full font-bold text-sm md:text-base uppercase tracking-wide shadow-lg hover:bg-gray-100 hover:scale-105 transition-all">
                 Fedezd fel a termékeket
+            </a>
+            <a href="/webshop/akcio" 
+               class="bg-orange-500 text-white px-6 py-3 md:px-10 md:py-4 rounded-full font-bold text-sm md:text-base uppercase tracking-wide shadow-lg hover:bg-orange-600 hover:scale-105 transition-all">
+                Ugrás az akciókhoz
             </a>
         </div>
     </div>
-
-    <!-- FEKETE ALSÓ RÉSZ -->
-    <div class="w-full bg-black text-white">
-        <div
-            class="max-w-7xl mx-auto px-6 py-32 text-center
-                   opacity-0 translate-y-8
-                   transition-all duration-700 ease-out delay-150
-                   hero-animate"
-        >
-            <h2 class="text-4xl font-bold mb-6">
-                Yoursy Wear
-            </h2>
-
-            <p class="text-base leading-relaxed opacity-90 max-w-lg mx-auto">
-                Prémium streetwear és sneaker webshop.<br>
-                100% autentikus termékek.
-            </p>
-        </div>
-    </div>
-
 </section>
-
-<!-- JavaScript animáció a hero-hoz -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const heroElements = document.querySelectorAll('.hero-animate');
-    if (heroElements.length > 0) {
-        setTimeout(function() {
-            heroElements.forEach(el => {
-                el.style.opacity = '1';
-                el.style.transform = 'translateY(0)';
-            });
-        }, 100);
-    }
-});
-</script>

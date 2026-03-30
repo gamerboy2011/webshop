@@ -93,11 +93,11 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
         $password = $_POST['email_password'] ?? '';
         
         
-        $stmt = $pdo->prepare("SELECT password FROM users WHERE user_id = ?");
+        $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE user_id = ?");
         $stmt->execute([$userId]);
         $userData = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        if (!password_verify($password, $userData['password'])) {
+        if (!password_verify($password, $userData['password_hash'])) {
             $error = "Hibás jelszó!";
         } elseif (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
             $error = "Érvénytelen email cím formátum!";
@@ -121,11 +121,11 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
         $confirmPassword = $_POST['confirm_password'] ?? '';
         
         
-        $stmt = $pdo->prepare("SELECT password FROM users WHERE user_id = ?");
+        $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE user_id = ?");
         $stmt->execute([$userId]);
         $userData = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        if (!password_verify($currentPassword, $userData['password'])) {
+        if (!password_verify($currentPassword, $userData['password_hash'])) {
             $error = "A jelenlegi jelszó helytelen!";
         } elseif (strlen($newPassword) < 6) {
             $error = "Az új jelszónak legalább 6 karakter hosszúnak kell lennie!";
@@ -133,7 +133,7 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
             $error = "A két jelszó nem egyezik!";
         } else {
             $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE user_id = ?");
+            $stmt = $pdo->prepare("UPDATE users SET password_hash = ? WHERE user_id = ?");
             $stmt->execute([$hashedPassword, $userId]);
             $success = "Jelszó sikeresen megváltoztatva.";
         }

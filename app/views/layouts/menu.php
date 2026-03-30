@@ -39,7 +39,7 @@ $menuCategories = [
             ['name' => 'Nadrágok', 'slug' => 'nadrag'],
             ['name' => 'Rövidnadrágok', 'slug' => 'rovidnadrag'],
             ['name' => 'Melegítők', 'slug' => 'melegito'],
-            ['name' => 'Egyberuhák', 'slug' => 'egyberuha'],
+            ['name' => 'Egyberuhák', 'slug' => 'egyberuha', 'female_only' => true],
         ]
     ],
     [
@@ -58,7 +58,6 @@ $menuCategories = [
             ['name' => 'Zoknik', 'slug' => 'zokni'],
             ['name' => 'Táskák', 'slug' => 'taska'],
             ['name' => 'Hátizsákok', 'slug' => 'hatizsak'],
-            ['name' => 'Figurák', 'slug' => 'figura'],
         ]
     ],
 ];
@@ -217,6 +216,7 @@ $menuCategories = [
                                         Összes <?= $category['name'] ?>
                                     </a>
                                     <?php foreach ($category['subtypes'] as $subtype): ?>
+                                        <?php if (!empty($subtype['female_only']) && $currentGender !== 'noi') continue; ?>
                                         <a href="/webshop/<?= $currentGender ?>/<?= $subtype['slug'] ?>"
                                            class="block px-4 py-2 hover:bg-gray-50 text-gray-600 hover:text-black">
                                             <?= $subtype['name'] ?>
@@ -291,6 +291,7 @@ $menuCategories = [
                                     Összes <?= $category['name'] ?>
                                 </a>
                                 <?php foreach ($category['subtypes'] as $subtype): ?>
+                                    <?php if (!empty($subtype['female_only']) && $currentGender !== 'noi') continue; ?>
                                     <a href="/webshop/<?= $currentGender ?>/<?= $subtype['slug'] ?>"
                                        class="block px-6 py-2 text-sm text-gray-600 hover:text-black">
                                         <?= $subtype['name'] ?>
