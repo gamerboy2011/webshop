@@ -112,9 +112,12 @@ function closeLoginModal() {
 
         <!-- BOTTOM BAR -->
         <div class="border-t border-gray-700">
-            <div class="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row justify-between text-sm">
+            <div class="max-w-7xl mx-auto px-6 py-6 flex flex-col items-center text-center text-sm gap-2">
                 <span>© <?= date('Y') ?> Yoursy Wear. Minden jog fenntartva.</span>
-                <span class="mt-2 md:mt-0">
+                <span class="text-gray-500">
+                    Termékképek: <a href="https://balazskicks.com" target="_blank" class="hover:text-white transition">balazskicks.com</a>
+                </span>
+                <span>
                     <i class="las la-lock mr-1"></i> Biztonságos fizetés
                 </span>
             </div>

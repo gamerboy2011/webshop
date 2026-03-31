@@ -171,7 +171,7 @@ if ($showHero) {
                     <p>Többféle fizetési módot elfogadunk:</p>
                     <ul class="list-disc list-inside mt-2 space-y-1">
                         <li><strong>Banki átutalás</strong> - előre utalással</li>
-                        <li><strong>Online bankkártyás fizetés</strong> - Stripe biztonságos fizetési rendszeren keresztül</li>
+                        <li><strong>Online bankkártyás fizetés</strong> - Swiper biztonságos fizetési rendszeren keresztül</li>
                         <li><strong>Utánvét</strong> - fizetés a futárnál készpénzzel vagy kártyával (+490 Ft)</li>
                     </ul>
                 </div>

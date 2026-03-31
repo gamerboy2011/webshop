@@ -20,6 +20,8 @@ $success = $_GET['success'] ?? null;
         <div class="mb-4 p-3 bg-red-100 text-red-700 rounded">A fiók nincs aktiválva.</div>
     <?php elseif ($error === 'empty'): ?>
         <div class="mb-4 p-3 bg-red-100 text-red-700 rounded">Kérjük, töltsd ki mindkét mezőt.</div>
+    <?php elseif ($error === 'session'): ?>
+        <div class="mb-4 p-3 bg-yellow-100 text-yellow-700 rounded">Munkamenet lejárt. Kérjük, próbáld újra.</div>
     <?php endif; ?>
 
     <?php if ($success === 'registered'): ?>
@@ -39,7 +41,7 @@ $success = $_GET['success'] ?? null;
                    name="email"
                    placeholder="pelda@email.hu"
                    class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                   value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>"
+                   value="<?php echo htmlspecialchars($_GET['email'] ?? ''); ?>"
                    required>
         </div>
 

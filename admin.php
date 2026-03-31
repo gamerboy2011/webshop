@@ -337,7 +337,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $qrCodePath = null;
             if ($couponPass) {
-                $qrUrl = "https://" . ($_SERVER['HTTP_HOST'] ?? 'localhost') . "/webshop/kuponok/$couponPass";
+                // Hotspot IP cím a QR kódhoz
+                $qrUrl = "http://172.20.10.2/webshop/kuponok/$couponPass";
                 
                 
                 $qrApiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($qrUrl);

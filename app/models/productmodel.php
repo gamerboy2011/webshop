@@ -246,12 +246,30 @@ class ProductModel
     
 
 
+    /**
+     * Ékezetek eltávolítása a szövegből
+     */
+    private function removeAccents(string $str): string
+    {
+        $accents = [
+            'á' => 'a', 'Á' => 'A', 'é' => 'e', 'É' => 'E',
+            'í' => 'i', 'Í' => 'I', 'ó' => 'o', 'Ó' => 'O',
+            'ö' => 'o', 'Ö' => 'O', 'ő' => 'o', 'Ő' => 'O',
+            'ú' => 'u', 'Ú' => 'U', 'ü' => 'u', 'Ü' => 'U',
+            'ű' => 'u', 'Ű' => 'U'
+        ];
+        return strtr($str, $accents);
+    }
+
     public function search(string $q): array
     {
-        if ($q === '') {
+        if (trim($q) === '') {
             return [];
         }
 
+        // Ékezet nélküli változat
+        $qNormalized = $this->removeAccents(mb_strtolower(trim($q)));
+        
         $sql = "
             SELECT
                 p.product_id,
@@ -260,43 +278,40 @@ class ProductModel
                 ROUND(p.price * 0.8) AS sale_price,
                 p.is_sale,
                 pi.src AS image,
-                v.name AS vendor_name
+                v.name AS vendor_name,
+                ps.name AS subtype_name
             FROM product p
             LEFT JOIN product_img pi
                 ON p.product_id = pi.product_id
                 AND pi.position = 1
             LEFT JOIN vendor v
                 ON p.vendor_id = v.vendor_id
-            LEFT JOIN color c
-                ON p.color_id = c.color_id
             LEFT JOIN product_subtype ps
                 ON p.subtype_id = ps.product_subtype_id
-            LEFT JOIN product_type pt
-                ON ps.product_type_id = pt.product_type_id
             WHERE p.is_active = 1
-              AND (
-                    p.name LIKE :q1
-                    OR p.description LIKE :q2
-                    OR v.name LIKE :q3
-                    OR pt.name LIKE :q4
-                    OR ps.name LIKE :q5
-                    OR c.name LIKE :q6
-                  )
             ORDER BY p.product_id DESC
         ";
 
-        $searchTerm = "%$q%";
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            'q1' => $searchTerm,
-            'q2' => $searchTerm,
-            'q3' => $searchTerm,
-            'q4' => $searchTerm,
-            'q5' => $searchTerm,
-            'q6' => $searchTerm
-        ]);
+        $stmt->execute();
+        $allProducts = $stmt->fetchAll() ?: [];
 
-        return $stmt->fetchAll() ?: [];
+        // Szűrés: ékezet-érzéketlen keresés csak a termék nevében, márkában és kategóriában
+        $results = [];
+        foreach ($allProducts as $product) {
+            $nameNormalized = $this->removeAccents(mb_strtolower($product['name'] ?? ''));
+            $vendorNormalized = $this->removeAccents(mb_strtolower($product['vendor_name'] ?? ''));
+            $subtypeNormalized = $this->removeAccents(mb_strtolower($product['subtype_name'] ?? ''));
+            
+            // Pontos egyezés (ékezet nélkül)
+            if (str_contains($nameNormalized, $qNormalized) ||
+                str_contains($vendorNormalized, $qNormalized) ||
+                str_contains($subtypeNormalized, $qNormalized)) {
+                $results[] = $product;
+            }
+        }
+
+        return $results;
     }
 
     

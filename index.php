@@ -25,8 +25,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     
     if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
-        http_response_code(403);
-        die('<h1>403 - CSRF token érvénytelen</h1><p>Kérjük, frissítsd az oldalt és próbáld újra.</p>');
+        // CSRF hiba - új token generálása és vissza a form-ra
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        $action = $_POST['action'] ?? '';
+        if ($action === 'login') {
+            header('Location: /webshop/login?error=session');
+        } elseif ($action === 'register') {
+            header('Location: /webshop/register?error=session');
+        } else {
+            header('Location: /webshop/');
+        }
+        exit;
     }
     
     
@@ -90,16 +99,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php require __DIR__ . '/app/views/layouts/head.php'; ?>
 </head>
 
+<?php
+// Definiáljuk az oldalt korán
+$page = $_GET['page'] ?? 'home';
+
+// Ellenőrizzük, hogy a főoldalon vagyunk-e (hero megjelenítéséhez)
+$isHomePage = $page === 'home' && 
+              empty($_GET['gender']) && 
+              empty($_GET['type']) && 
+              empty($_GET['sale']) && 
+              empty($_GET['new']) &&
+              empty($_GET['q']);
+?>
 <body class="min-h-screen bg-white text-gray-900">
 
-<?php require __DIR__ . '/app/views/layouts/menu.php'; ?>
+<?php if ($isHomePage): ?>
+    <!-- FŐOLDAL: Mobilon normál menü, desktopon overlay -->
+    <div class="md:hidden">
+        <?php require __DIR__ . '/app/views/layouts/menu.php'; ?>
+    </div>
+    <div class="hidden md:block">
+        <?php require __DIR__ . '/app/views/layouts/menu-hero.php'; ?>
+    </div>
+<?php else: ?>
+    <!-- TÖBBI OLDAL: Normál menü -->
+    <?php require __DIR__ . '/app/views/layouts/menu.php'; ?>
+<?php endif; ?>
 
 <main class="w-full">
    
     
     <!-- TARTALOM -->
     <?php
-    $page = $_GET['page'] ?? 'home';
     $viewPath = __DIR__ . '/app/views/pages/' . $page . '.php';
     
     

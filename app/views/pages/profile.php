@@ -260,11 +260,6 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                       <?= $section === 'security' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700' ?>">
                 <i class="las la-user-shield mr-1"></i>Profil
             </a>
-            <a href="profil?section=settings"
-               class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
-                      <?= $section === 'settings' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700' ?>">
-                <i class="las la-cog mr-1"></i>Beállítások
-            </a>
             <a href="profil?section=returns"
                class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
                       <?= $section === 'returns' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700' ?>">
@@ -292,11 +287,6 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                     class="block px-4 py-2 rounded-lg font-medium 
                    <?= $section === 'security' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
                     Profil &amp; Biztonság
-                </a>
-                <a href="profil?section=settings"
-                    class="block px-4 py-2 rounded-lg font-medium 
-                   <?= $section === 'settings' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
-                    Beállítások
                 </a>
                 <a href="profil?section=returns"
                     class="block px-4 py-2 rounded-lg font-medium 

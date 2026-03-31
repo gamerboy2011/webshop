@@ -30,23 +30,24 @@ class AuthController
     {
         $email = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
+        $emailParam = '&email=' . urlencode($email);
 
         if (empty($email) || empty($password)) {
-            redirect('/login?error=empty');
+            redirect('/login?error=empty' . $emailParam);
         }
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            redirect('/login?error=invalid_email');
+            redirect('/login?error=invalid_email' . $emailParam);
         }
 
         $user = $this->userModel->findByEmail($email);
 
         if (!$user || !password_verify($password, $user['password_hash'])) {
-            redirect('/login?error=invalid');
+            redirect('/login?error=invalid' . $emailParam);
         }
 
         if ((int)$user['is_active'] !== 1) {
-            redirect('/login?error=inactive');
+            redirect('/login?error=inactive' . $emailParam);
         }
 
         session_regenerate_id(true);
