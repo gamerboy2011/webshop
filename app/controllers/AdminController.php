@@ -98,7 +98,7 @@ class AdminController
     
 
 
-    public function getProducts(?string $search = null, ?int $limit = 50): array
+    public function getProducts(?string $search = null, ?int $limit = 500): array
     {
         $sql = "
             SELECT 
