@@ -1,6 +1,5 @@
 <!-- HERO REKLÁM BANNER -->
-<!-- Mobilon: normál elrendezés, Desktopon: full-bleed overlay menüvel -->
-<section id="hero" class="relative w-full md:w-screen md:-ml-[calc((100vw-100%)/2)]">
+<section id="hero" class="relative w-full">
     <!-- Kép - külön mobil és desktop verzió -->
     <picture>
         <source media="(max-width: 767px)" srcset="/webshop/public/images/reklam-mobile.png">

@@ -111,7 +111,7 @@ $isHomePage = $page === 'home' &&
               empty($_GET['new']) &&
               empty($_GET['q']);
 ?>
-<body class="min-h-screen bg-white text-gray-900">
+<body class="min-h-screen bg-white text-gray-900 overflow-x-hidden">
 
 <?php if ($isHomePage): ?>
     <!-- FŐOLDAL: Mobilon normál menü, desktopon overlay -->

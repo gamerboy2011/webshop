@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="hu" class="scroll-smooth">
+<html lang="hu" class="scroll-smooth overflow-x-hidden">
 
 <head>
   <link rel="stylesheet" href="/webshop/public/css/hero.css">

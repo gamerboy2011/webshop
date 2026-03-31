@@ -47,7 +47,13 @@ $menuCategories = [
 
 <!-- HERO OVERLAY NAVIGÁCIÓ -->
 <nav id="heroNav" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
-    <div class="w-full py-4 px-4 lg:px-8">
+    <div class="w-full py-4 px-4 lg:px-8 relative">
+        
+        <!-- KÖZÉP: LOGÓ - abszolút középen -->
+        <a href="/webshop/" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-white tracking-wider drop-shadow-lg">
+            Yoursy Wear
+        </a>
+        
         <div class="flex items-center justify-between">
             
             <!-- BAL: HAMBURGER MENÜ GOMB -->
@@ -55,15 +61,14 @@ $menuCategories = [
                 <i class="las la-bars"></i>
             </button>
             
-            <!-- KÖZÉP: LOGÓ -->
-            <a href="/webshop/" class="text-2xl font-bold text-white tracking-wider drop-shadow-lg">
-                Yoursy Wear
-            </a>
-            
             <!-- JOBB: IKONOK -->
             <div class="flex gap-4 items-center">
-                <!-- KERESÉS -->
-                <button id="heroSearchBtn" class="text-white text-2xl hover:scale-110 transition-transform">
+                <!-- KERESÉS - desktop: mező, mobil: ikon -->
+                <form method="get" action="/webshop/" class="hidden md:block">
+                    <input type="text" name="q" placeholder="Keresés..." 
+                           class="w-48 lg:w-56 px-4 py-2 text-sm rounded-full bg-white/20 text-white placeholder-white/70 border border-white/30 focus:outline-none focus:border-white focus:bg-white/30 transition">
+                </form>
+                <button id="heroSearchBtn" class="md:hidden text-white text-2xl hover:scale-110 transition-transform">
                     <i class="las la-search"></i>
                 </button>
                 

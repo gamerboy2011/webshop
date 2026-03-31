@@ -66,10 +66,10 @@ $menuCategories = [
 
     <!-- ===== FELSŐ SÁV ===== -->
     <div class="w-full py-4">
-        <div class="flex items-center w-full px-4 lg:px-8">
+        <div class="flex items-center w-full px-4 lg:px-8 relative">
 
             <!-- MOBIL: HAMBURGER -->
-            <button id="mobileMenuBtn" class="lg:hidden text-2xl mr-4">
+            <button id="mobileMenuBtn" class="lg:hidden text-2xl">
                 <i class="las la-bars"></i>
             </button>
 
@@ -92,15 +92,13 @@ $menuCategories = [
 
             </div>
 
-            <!-- KÖZÉP: LOGÓ -->
-            <div class="flex-1 lg:w-1/3 flex justify-center lg:justify-center">
-                <a href="/webshop/" class="text-xl font-semibold tracking-wide">
-                    Yoursy Wear
-                </a>
-            </div>
+            <!-- KÖZÉP: LOGÓ - abszolút középen mobilon -->
+            <a href="/webshop/" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-semibold tracking-wide lg:static lg:translate-x-0 lg:translate-y-0 lg:w-1/3 lg:text-center">
+                Yoursy Wear
+            </a>
 
             <!-- JOBB: IKONOK -->
-            <div class="flex lg:w-1/3 gap-4 lg:gap-6 items-center justify-end">
+            <div class="flex lg:w-1/3 gap-4 lg:gap-6 items-center ml-auto justify-end">
 
                 <!-- KERESÉS (csak desktop) -->
                 <form method="get" action="/webshop/" class="hidden lg:block">
