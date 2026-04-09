@@ -167,7 +167,7 @@ $isHomePage = $page === 'home' &&
         
         $productModel = new ProductModel($pdo);
         $products = $productModel->filterAdvanced($gender, $category, $filters);
-        $filterOptions = $productModel->getFilterOptions($gender, $category);
+        $filterOptions = $productModel->getFilterOptions($gender, $category, $filters);
         $activeFilters = $filters;
     }
     

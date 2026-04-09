@@ -513,18 +513,19 @@ class ProductModel
     
 
 
-    public function getFilterOptions(?string $gender = null, ?string $category = null): array
+    public function getFilterOptions(?string $gender = null, ?string $category = null, array $activeFilters = []): array
     {
-        $genderCondition = '';
+        $baseConditions = "p.is_active = 1";
         $params = [];
         
+        // Gender szűrő
         if ($gender === 'ferfi') {
-            $genderCondition = "AND g.gender IN ('m', 'u')";
+            $baseConditions .= " AND g.gender IN ('m', 'u')";
         } elseif ($gender === 'noi') {
-            $genderCondition = "AND g.gender IN ('f', 'u')";
+            $baseConditions .= " AND g.gender IN ('f', 'u')";
         }
         
-        $categoryCondition = '';
+        // Kategória szűrő
         if (!empty($category)) {
             $slugMap = [
                 'ruhazat' => 'Ruházat', 'cipok' => 'Cipők', 'kiegeszitok' => 'Kiegészítők',
@@ -534,60 +535,123 @@ class ProductModel
                 'sapka' => 'sapka', 'zokni' => 'zokni', 'taska' => 'táska', 'hatizsak' => 'hátizsák', 'figura' => 'figura',
             ];
             $catName = $slugMap[strtolower($category)] ?? $category;
-            $categoryCondition = "AND (LOWER(pt.name) = LOWER(:cat1) OR LOWER(ps.name) = LOWER(:cat2))";
+            $baseConditions .= " AND (LOWER(pt.name) = LOWER(:cat1) OR LOWER(ps.name) = LOWER(:cat2))";
             $params['cat1'] = $catName;
             $params['cat2'] = $catName;
         }
         
+        // Akciós szűrő
+        $saleCondition = '';
+        if (!empty($activeFilters['sale'])) {
+            $saleCondition = " AND p.is_sale = 1";
+        }
         
+        // Márka szűrő feltétel
+        $brandCondition = '';
+        $brandParams = [];
+        if (!empty($activeFilters['brands']) && is_array($activeFilters['brands'])) {
+            $brandPlaceholders = [];
+            foreach ($activeFilters['brands'] as $i => $brand) {
+                $key = 'fbrand' . $i;
+                $brandPlaceholders[] = ':' . $key;
+                $brandParams[$key] = $brand;
+            }
+            $brandCondition = " AND v.name IN (" . implode(',', $brandPlaceholders) . ")";
+        }
+        
+        // Szín szűrő feltétel
+        $colorCondition = '';
+        $colorParams = [];
+        if (!empty($activeFilters['colors']) && is_array($activeFilters['colors'])) {
+            $colorPlaceholders = [];
+            foreach ($activeFilters['colors'] as $i => $color) {
+                $key = 'fcolor' . $i;
+                $colorPlaceholders[] = ':' . $key;
+                $colorParams[$key] = $color;
+            }
+            $colorCondition = " AND c.name IN (" . implode(',', $colorPlaceholders) . ")";
+        }
+        
+        // Méret szűrő feltétel
+        $sizeCondition = '';
+        $sizeParams = [];
+        if (!empty($activeFilters['sizes']) && is_array($activeFilters['sizes'])) {
+            $sizePlaceholders = [];
+            foreach ($activeFilters['sizes'] as $i => $size) {
+                $key = 'fsize' . $i;
+                $sizePlaceholders[] = ':' . $key;
+                $sizeParams[$key] = $size;
+            }
+            $sizeCondition = " AND p.product_id IN (SELECT s2.product_id FROM stock s2 JOIN size sz2 ON s2.size_id = sz2.size_id WHERE s2.quantity > 0 AND sz2.size_value IN (" . implode(',', $sizePlaceholders) . "))";
+        }
+        
+        // Ár szűrő feltétel
+        $priceCondition = '';
+        $priceParams = [];
+        if (!empty($activeFilters['min_price'])) {
+            $priceCondition .= " AND p.price >= :fmin_price";
+            $priceParams['fmin_price'] = (int)$activeFilters['min_price'];
+        }
+        if (!empty($activeFilters['max_price'])) {
+            $priceCondition .= " AND p.price <= :fmax_price";
+            $priceParams['fmax_price'] = (int)$activeFilters['max_price'];
+        }
+        
+        // MÁRKÁK - az összes többi szűrő alapján (kivéve márka)
         $sql = "SELECT DISTINCT v.vendor_id, v.name 
                 FROM product p 
                 JOIN vendor v ON p.vendor_id = v.vendor_id
                 JOIN gender g ON p.gender_id = g.gender_id
+                JOIN color c ON p.color_id = c.color_id
                 JOIN product_subtype ps ON p.subtype_id = ps.product_subtype_id
                 JOIN product_type pt ON ps.product_type_id = pt.product_type_id
-                WHERE p.is_active = 1 $genderCondition $categoryCondition
+                WHERE $baseConditions $saleCondition $colorCondition $sizeCondition $priceCondition
                 ORDER BY v.name";
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
+        $stmt->execute(array_merge($params, $colorParams, $sizeParams, $priceParams));
         $brands = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        
+        // SZÍNEK - az összes többi szűrő alapján (kivéve szín)
         $sql = "SELECT DISTINCT c.color_id, c.name 
                 FROM product p 
                 JOIN color c ON p.color_id = c.color_id
+                JOIN vendor v ON p.vendor_id = v.vendor_id
                 JOIN gender g ON p.gender_id = g.gender_id
                 JOIN product_subtype ps ON p.subtype_id = ps.product_subtype_id
                 JOIN product_type pt ON ps.product_type_id = pt.product_type_id
-                WHERE p.is_active = 1 $genderCondition $categoryCondition
+                WHERE $baseConditions $saleCondition $brandCondition $sizeCondition $priceCondition
                 ORDER BY c.name";
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
+        $stmt->execute(array_merge($params, $brandParams, $sizeParams, $priceParams));
         $colors = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        
+        // MÉRETEK - az összes többi szűrő alapján (kivéve méret)
         $sql = "SELECT DISTINCT sz.size_id, sz.size_value, sz.product_type_id
                 FROM product p 
                 JOIN stock s ON p.product_id = s.product_id
                 JOIN size sz ON s.size_id = sz.size_id
+                JOIN vendor v ON p.vendor_id = v.vendor_id
+                JOIN color c ON p.color_id = c.color_id
                 JOIN gender g ON p.gender_id = g.gender_id
                 JOIN product_subtype ps ON p.subtype_id = ps.product_subtype_id
                 JOIN product_type pt ON ps.product_type_id = pt.product_type_id
-                WHERE p.is_active = 1 AND s.quantity > 0 $genderCondition $categoryCondition
+                WHERE $baseConditions AND s.quantity > 0 $saleCondition $brandCondition $colorCondition $priceCondition
                 ORDER BY sz.product_type_id, sz.size_id";
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
+        $stmt->execute(array_merge($params, $brandParams, $colorParams, $priceParams));
         $sizes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        
+        // ÁR TARTOMÁNY - az összes többi szűrő alapján (kivéve ár)
         $sql = "SELECT MIN(p.price) as min_price, MAX(p.price) as max_price
                 FROM product p
+                JOIN vendor v ON p.vendor_id = v.vendor_id
+                JOIN color c ON p.color_id = c.color_id
                 JOIN gender g ON p.gender_id = g.gender_id
                 JOIN product_subtype ps ON p.subtype_id = ps.product_subtype_id
                 JOIN product_type pt ON ps.product_type_id = pt.product_type_id
-                WHERE p.is_active = 1 $genderCondition $categoryCondition";
+                WHERE $baseConditions $saleCondition $brandCondition $colorCondition $sizeCondition";
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
+        $stmt->execute(array_merge($params, $brandParams, $colorParams, $sizeParams));
         $priceRange = $stmt->fetch(PDO::FETCH_ASSOC);
         
         return [

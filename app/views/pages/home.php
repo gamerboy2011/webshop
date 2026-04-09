@@ -116,7 +116,49 @@ if ($showHero) {
     </div>
 </section>
 
-<!-- GY.I.K. - GYAKRAN ISMÉTELT KÉRDÉSEK -->
+<!-- VÁSÁRLÓI VÉLEMÉNYEK -->
+<?php
+$reviewsStmt = $pdo->query("
+    SELECT r.rating, r.comment, r.created_at, u.username
+    FROM order_ratings r
+    JOIN orders o ON r.order_id = o.order_id
+    JOIN users u ON o.user_id = u.user_id
+    WHERE r.comment IS NOT NULL AND r.comment != ''
+    ORDER BY r.created_at DESC
+    LIMIT 4
+");
+$homeReviews = $reviewsStmt->fetchAll(PDO::FETCH_ASSOC);
+?>
+
+<?php if (!empty($homeReviews)): ?>
+<section id="reviews" class="py-12 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-10">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Vásárlóink mondják</h2>
+            <p class="text-gray-500">Valódi értékelések elégedett vásárlóinktól</p>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <?php foreach ($homeReviews as $review): ?>
+                <div class="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="text-yellow-500 text-lg">
+                            <?php for ($i = 1; $i <= 5; $i++): ?>
+                                <?= $i <= $review['rating'] ? '★' : '☆' ?>
+                            <?php endfor; ?>
+                        </div>
+                        <span class="text-xs text-gray-400"><?= date('Y.m.d', strtotime($review['created_at'])) ?></span>
+                    </div>
+                    <p class="text-gray-700 text-sm italic line-clamp-3">"<?= htmlspecialchars($review['comment']) ?>"</p>
+                    <p class="text-xs text-gray-500 mt-3 font-medium">— <?= htmlspecialchars($review['username']) ?></p>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
+
+<!-- GY.I.K. -->
 <section id="gyik" class="py-6 bg-white">
     <div class="max-w-4xl mx-auto px-6">
         
@@ -247,9 +289,8 @@ if ($showHero) {
             <div class="text-center mt-8">
                 <p class="text-gray-500 text-sm">Nem találtad a választ? <a href="mailto:info@yoursywear.hu" class="text-black font-medium hover:underline">Írj nekünk!</a></p>
             </div>
-            </div>
+        </div>
         </details>
-        
     </div>
 </section>
 

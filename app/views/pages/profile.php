@@ -52,6 +52,11 @@ if ($section === 'orders') {
         $stmt->execute([$order['order_id']]);
         $order['items'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
+        // Ellenőrizzük, hogy van-e már értékelés
+        $stmt = $pdo->prepare("SELECT * FROM order_ratings WHERE order_id = ?");
+        $stmt->execute([$order['order_id']]);
+        $order['rating'] = $stmt->fetch(PDO::FETCH_ASSOC);
+        
         
         $order['total'] = 0;
         foreach ($order['items'] as $item) {
@@ -469,8 +474,8 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                     <?php endif; ?>
                                 </div>
                                 
-                                <!-- Visszaküldés gomb -->
-                                <div class="mt-4 pt-4 border-t">
+                                <!-- Visszaküldés és Értékelés -->
+                                <div class="mt-4 pt-4 border-t flex flex-wrap items-center gap-4">
                                     <?php if ($order['return']): ?>
                                         <?php
                                         $returnStatusColors = [
@@ -493,6 +498,23 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                         <button onclick="openReturnModal(<?= $order['order_id'] ?>)" 
                                                 class="text-sm text-red-600 hover:text-red-800 font-medium">
                                             <i class="las la-undo-alt mr-1"></i> Visszaküldés kérése
+                                        </button>
+                                    <?php endif; ?>
+                                    
+                                    <!-- Értékelés -->
+                                    <?php if ($order['rating']): ?>
+                                        <div class="flex items-center gap-2 text-sm">
+                                            <span class="text-yellow-500">
+                                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                    <?= $i <= $order['rating']['rating'] ? '★' : '☆' ?>
+                                                <?php endfor; ?>
+                                            </span>
+                                            <span class="text-gray-500">Már értékelted</span>
+                                        </div>
+                                    <?php else: ?>
+                                        <button onclick="openRatingModal(<?= $order['order_id'] ?>)" 
+                                                class="text-sm text-yellow-600 hover:text-yellow-700 font-medium">
+                                            <i class="las la-star mr-1"></i> Értékelés
                                         </button>
                                     <?php endif; ?>
                                 </div>
@@ -1080,6 +1102,50 @@ function closePasswordModal() {
     </div>
 </div>
 
+<!-- ÉRTÉKELÉS MODAL -->
+<div id="ratingModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-semibold mb-4">
+            <i class="las la-star text-yellow-500 mr-2"></i>Rendelés értékelése
+        </h3>
+        <form id="ratingForm">
+            <input type="hidden" name="order_id" id="rating_order_id">
+            
+            <div class="mb-6">
+                <label class="block text-sm font-medium mb-3">Mennyire voltál elégedett?</label>
+                <div class="flex justify-center gap-2" id="starContainer">
+                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="rating" value="<?= $i ?>" class="sr-only" required>
+                            <span class="text-4xl text-gray-300 hover:text-yellow-500 transition star-rating" data-star="<?= $i ?>">★</span>
+                        </label>
+                    <?php endfor; ?>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Véleményed (opcionális)</label>
+                <textarea name="comment" rows="3"
+                          class="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none resize-none"
+                          placeholder="Írd le tapasztalataidat..."></textarea>
+            </div>
+            
+            <div id="ratingMessage" class="mb-4 text-sm hidden"></div>
+            
+            <div class="flex gap-3">
+                <button type="button" onclick="closeRatingModal()" 
+                        class="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50">
+                    Mégse
+                </button>
+                <button type="submit" id="ratingSubmitBtn"
+                        class="flex-1 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600">
+                    Értékelés küldése
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 function togglePasswordVisibility(inputId, btn) {
     const input = document.getElementById(inputId);
@@ -1094,5 +1160,109 @@ function togglePasswordVisibility(inputId, btn) {
         icon.classList.add('la-eye');
     }
 }
+
+// Értékelés modal
+function openRatingModal(orderId) {
+    document.getElementById('rating_order_id').value = orderId;
+    document.getElementById('ratingModal').classList.remove('hidden');
+    document.getElementById('ratingModal').classList.add('flex');
+    // Reset form
+    document.getElementById('ratingForm').reset();
+    document.querySelectorAll('.star-rating').forEach(s => {
+        s.classList.remove('text-yellow-500');
+        s.classList.add('text-gray-300');
+    });
+    document.getElementById('ratingMessage').classList.add('hidden');
+}
+
+function closeRatingModal() {
+    document.getElementById('ratingModal').classList.add('hidden');
+    document.getElementById('ratingModal').classList.remove('flex');
+}
+
+// Csillagok interakció
+document.querySelectorAll('.star-rating').forEach(star => {
+    star.addEventListener('click', function() {
+        const starValue = parseInt(this.dataset.star);
+        document.querySelectorAll('.star-rating').forEach(s => {
+            const sValue = parseInt(s.dataset.star);
+            if (sValue <= starValue) {
+                s.classList.remove('text-gray-300');
+                s.classList.add('text-yellow-500');
+            } else {
+                s.classList.remove('text-yellow-500');
+                s.classList.add('text-gray-300');
+            }
+        });
+    });
+    
+    star.addEventListener('mouseenter', function() {
+        const starValue = parseInt(this.dataset.star);
+        document.querySelectorAll('.star-rating').forEach(s => {
+            const sValue = parseInt(s.dataset.star);
+            if (sValue <= starValue) {
+                s.classList.add('text-yellow-500');
+            }
+        });
+    });
+});
+
+document.getElementById('starContainer')?.addEventListener('mouseleave', function() {
+    const checkedInput = document.querySelector('#starContainer input:checked');
+    const checkedValue = checkedInput ? parseInt(checkedInput.value) : 0;
+    document.querySelectorAll('.star-rating').forEach(s => {
+        const sValue = parseInt(s.dataset.star);
+        if (sValue <= checkedValue) {
+            s.classList.remove('text-gray-300');
+            s.classList.add('text-yellow-500');
+        } else {
+            s.classList.remove('text-yellow-500');
+            s.classList.add('text-gray-300');
+        }
+    });
+});
+
+// Értékelés beküldése
+document.getElementById('ratingForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const messageEl = document.getElementById('ratingMessage');
+    const submitBtn = document.getElementById('ratingSubmitBtn');
+    
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Küldés...';
+    
+    fetch('/webshop/api/submit-rating.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        messageEl.classList.remove('hidden');
+        if (data.success) {
+            messageEl.className = 'mb-4 text-sm text-green-600';
+            messageEl.textContent = 'Köszönjük az értékelést!';
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            messageEl.className = 'mb-4 text-sm text-red-600';
+            messageEl.textContent = data.error || 'Hiba történt.';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Értékelés küldése';
+        }
+    })
+    .catch(err => {
+        messageEl.classList.remove('hidden');
+        messageEl.className = 'mb-4 text-sm text-red-600';
+        messageEl.textContent = 'Hiba történt. Próbáld újra!';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Értékelés küldése';
+    });
+});
+
+// Modal bezárása kívülre kattintásra
+document.getElementById('ratingModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeRatingModal();
+});
 </script>
 
