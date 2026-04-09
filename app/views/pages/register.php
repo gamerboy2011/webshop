@@ -40,46 +40,38 @@ $errorMessages = [
 
         <div class="mb-4">
             <label for="full_name" class="block text-sm font-medium mb-1">Teljes név *</label>
-            <div class="relative">
-                <input type="text"
-                       id="full_name"
-                       name="full_name"
-                       placeholder="Kovács János"
-                       minlength="2"
-                       maxlength="50"
-                       class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent pr-10 <?= $errorField === 'full_name' ? 'border-red-500' : '' ?>"
-                       value="<?php echo htmlspecialchars($oldInput['full_name']); ?>"
-                       required>
-                <?php if ($errorField === 'full_name'): ?>
-                    <div class="absolute inset-y-0 right-3 flex items-center group">
-                        <i class="las la-exclamation-circle text-red-500 text-xl cursor-help"></i>
-                        <div class="absolute right-8 top-1/2 -translate-y-1/2 bg-red-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                            <?= $errorMessages[$error] ?>
-                        </div>
-                    </div>
-                <?php endif; ?>
-            </div>
+            <input type="text"
+                   id="full_name"
+                   name="full_name"
+                   placeholder="Kovács János"
+                   minlength="2"
+                   maxlength="50"
+                   class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent <?= $errorField === 'full_name' ? 'border-red-500' : '' ?>"
+                   value="<?php echo htmlspecialchars($oldInput['full_name']); ?>"
+                   required>
+            <?php if ($errorField === 'full_name'): ?>
+                <p class="text-red-500 text-xs mt-1 flex items-center gap-1">
+                    <i class="las la-exclamation-circle"></i>
+                    <?= $errorMessages[$error] ?>
+                </p>
+            <?php endif; ?>
         </div>
 
         <div class="mb-4">
             <label for="email" class="block text-sm font-medium mb-1">Email cím *</label>
-            <div class="relative">
-                <input type="email"
-                       id="email"
-                       name="email"
-                       placeholder="pelda@email.hu"
-                       class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent pr-10 <?= $errorField === 'email' ? 'border-red-500' : '' ?>"
-                       value="<?php echo htmlspecialchars($oldInput['email']); ?>"
-                       required>
-                <?php if ($errorField === 'email'): ?>
-                    <div class="absolute inset-y-0 right-3 flex items-center group">
-                        <i class="las la-exclamation-circle text-red-500 text-xl cursor-help"></i>
-                        <div class="absolute right-8 top-1/2 -translate-y-1/2 bg-red-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                            <?= $errorMessages[$error] ?>
-                        </div>
-                    </div>
-                <?php endif; ?>
-            </div>
+            <input type="email"
+                   id="email"
+                   name="email"
+                   placeholder="pelda@email.hu"
+                   class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent <?= $errorField === 'email' ? 'border-red-500' : '' ?>"
+                   value="<?php echo htmlspecialchars($oldInput['email']); ?>"
+                   required>
+            <?php if ($errorField === 'email'): ?>
+                <p class="text-red-500 text-xs mt-1 flex items-center gap-1">
+                    <i class="las la-exclamation-circle"></i>
+                    <?= $errorMessages[$error] ?>
+                </p>
+            <?php endif; ?>
         </div>
 
         <!-- Jelszó -->
@@ -92,17 +84,8 @@ $errorMessages = [
                        name="password"
                        placeholder="Legalább 6 karakter, kis- és nagybetű, szám"
                        minlength="6"
-                       class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent pr-16 <?= $errorField === 'password' ? 'border-red-500' : '' ?>"
+                       class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent pr-10 <?= $errorField === 'password' ? 'border-red-500' : '' ?>"
                        required>
-
-                <?php if ($errorField === 'password'): ?>
-                    <div class="absolute inset-y-0 right-10 flex items-center group">
-                        <i class="las la-exclamation-circle text-red-500 text-xl cursor-help"></i>
-                        <div class="absolute right-8 top-1/2 -translate-y-1/2 bg-red-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                            <?= $errorMessages[$error] ?>
-                        </div>
-                    </div>
-                <?php endif; ?>
 
                 <button type="button"
                         onclick="togglePassword('reg_password', this)"
@@ -111,6 +94,12 @@ $errorMessages = [
                     <i class="las la-eye-slash text-lg hidden eye-off-icon"></i>
                 </button>
             </div>
+            <?php if ($errorField === 'password'): ?>
+                <p class="text-red-500 text-xs mt-1 flex items-center gap-1">
+                    <i class="las la-exclamation-circle"></i>
+                    <?= $errorMessages[$error] ?>
+                </p>
+            <?php endif; ?>
         </div>
 
         <!-- Jelszó megerősítése -->
@@ -122,17 +111,8 @@ $errorMessages = [
                        id="reg_password_confirm"
                        name="password_confirm"
                        placeholder="Ismételd meg a jelszót"
-                       class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent pr-16 <?= $errorField === 'password_confirm' ? 'border-red-500' : '' ?>"
+                       class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent pr-10 <?= $errorField === 'password_confirm' ? 'border-red-500' : '' ?>"
                        required>
-
-                <?php if ($errorField === 'password_confirm'): ?>
-                    <div class="absolute inset-y-0 right-10 flex items-center group">
-                        <i class="las la-exclamation-circle text-red-500 text-xl cursor-help"></i>
-                        <div class="absolute right-8 top-1/2 -translate-y-1/2 bg-red-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                            <?= $errorMessages[$error] ?>
-                        </div>
-                    </div>
-                <?php endif; ?>
 
                 <button type="button"
                         onclick="togglePassword('reg_password_confirm', this)"
@@ -141,6 +121,12 @@ $errorMessages = [
                     <i class="las la-eye-slash text-lg hidden eye-off-icon"></i>
                 </button>
             </div>
+            <?php if ($errorField === 'password_confirm'): ?>
+                <p class="text-red-500 text-xs mt-1 flex items-center gap-1">
+                    <i class="las la-exclamation-circle"></i>
+                    <?= $errorMessages[$error] ?>
+                </p>
+            <?php endif; ?>
         </div>
 
         <button type="submit"
