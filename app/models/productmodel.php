@@ -497,7 +497,7 @@ class ProductModel
             JOIN color c ON p.color_id = c.color_id
             WHERE p.is_active = 1
               AND p.parent_product_id IS NULL
-            ORDER BY p.product_id DESC
+            ORDER BY p.price DESC
             LIMIT 12
         ");
         $products = $stmt->fetchAll() ?: [];

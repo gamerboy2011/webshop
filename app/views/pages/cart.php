@@ -11,6 +11,8 @@ foreach ($cart as $cartItem) {
             p.product_id,
             p.name,
             p.price,
+            p.is_sale,
+            ROUND(p.price * 0.8) AS sale_price,
             (SELECT src FROM product_img WHERE product_id = p.product_id ORDER BY position LIMIT 1) AS image
         FROM product p
         WHERE p.product_id = ?
@@ -25,7 +27,9 @@ foreach ($cart as $cartItem) {
     $stmt->execute([$cartItem['size_id']]);
     $sizeValue = $stmt->fetchColumn() ?: '-';
     
-    $subtotal = $product['price'] * $cartItem['quantity'];
+    // Akciós ár használata ha akciós a termék
+    $actualPrice = $product['is_sale'] ? $product['sale_price'] : $product['price'];
+    $subtotal = $actualPrice * $cartItem['quantity'];
     $total += $subtotal;
     
     $items[] = [
@@ -33,6 +37,8 @@ foreach ($cart as $cartItem) {
         'size_id' => $cartItem['size_id'],
         'name' => $product['name'],
         'price' => $product['price'],
+        'sale_price' => $product['sale_price'],
+        'is_sale' => $product['is_sale'],
         'image' => $product['image'],
         'size' => $sizeValue,
         'quantity' => $cartItem['quantity'],
@@ -82,7 +88,12 @@ foreach ($cart as $cartItem) {
                                 Méret: <span class="font-medium"><?= htmlspecialchars($item['size']) ?></span>
                             </p>
                             <p class="font-medium mt-1 text-sm sm:text-base">
-                                <?= number_format($item['price'], 0, ',', ' ') ?> Ft
+                                <?php if ($item['is_sale']): ?>
+                                    <span class="text-gray-400 line-through text-xs"><?= number_format($item['price'], 0, ',', ' ') ?> Ft</span>
+                                    <span class="text-red-600 ml-1"><?= number_format($item['sale_price'], 0, ',', ' ') ?> Ft</span>
+                                <?php else: ?>
+                                    <?= number_format($item['price'], 0, ',', ' ') ?> Ft
+                                <?php endif; ?>
                             </p>
                         </div>
                         

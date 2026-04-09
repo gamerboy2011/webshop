@@ -25,7 +25,8 @@ $cartProductSubtypeIds = [];
 
 foreach ($cart as $cartItem) {
     $stmt = $pdo->prepare("
-        SELECT p.product_id, p.name, p.price, p.subtype_id as product_subtype_id,
+        SELECT p.product_id, p.name, p.price, p.is_sale, ROUND(p.price * 0.8) AS sale_price,
+               p.subtype_id as product_subtype_id,
                ps.product_type_id,
                (SELECT src FROM product_img WHERE product_id = p.product_id ORDER BY position LIMIT 1) AS image
         FROM product p
@@ -49,7 +50,9 @@ foreach ($cart as $cartItem) {
     $stmt->execute([$cartItem['size_id']]);
     $sizeValue = $stmt->fetchColumn() ?: '-';
     
-    $itemTotal = $product['price'] * $cartItem['quantity'];
+    // Akciós ár használata ha akciós a termék
+    $actualPrice = $product['is_sale'] ? $product['sale_price'] : $product['price'];
+    $itemTotal = $actualPrice * $cartItem['quantity'];
     $subtotal += $itemTotal;
     
     $items[] = [
@@ -57,6 +60,8 @@ foreach ($cart as $cartItem) {
         'size_id' => $cartItem['size_id'],
         'name' => $product['name'],
         'price' => $product['price'],
+        'sale_price' => $product['sale_price'],
+        'is_sale' => $product['is_sale'],
         'image' => $product['image'],
         'size' => $sizeValue,
         'quantity' => $cartItem['quantity'],

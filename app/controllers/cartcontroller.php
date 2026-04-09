@@ -94,6 +94,8 @@ class CartController
             SELECT
                 p.name,
                 p.price,
+                p.is_sale,
+                ROUND(p.price * 0.8) AS sale_price,
                 (
                     SELECT src
                     FROM product_img
@@ -121,7 +123,9 @@ class CartController
             $stmt->execute([$item['size_id']]);
             $sizeValue = $stmt->fetchColumn() ?: '–';
 
-            $subtotal = $product['price'] * $item['quantity'];
+            // Akciós ár használata ha akciós a termék
+            $actualPrice = $product['is_sale'] ? $product['sale_price'] : $product['price'];
+            $subtotal = $actualPrice * $item['quantity'];
             $total += $subtotal;
 
             $items[] = [
@@ -129,6 +133,8 @@ class CartController
                 'size_id'    => $item['size_id'],
                 'name'       => $product['name'],
                 'price'      => $product['price'],
+                'sale_price' => $product['sale_price'],
+                'is_sale'    => $product['is_sale'],
                 'image'      => $product['image'],
                 'size'       => $sizeValue,
                 'quantity'   => $item['quantity'],

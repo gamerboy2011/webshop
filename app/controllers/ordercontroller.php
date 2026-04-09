@@ -70,9 +70,10 @@ class OrderController
             
             $orderTotal = 0;
             foreach ($_SESSION['cart'] as $item) {
-                $stmt = $this->pdo->prepare("SELECT price FROM product WHERE product_id = ?");
+                $stmt = $this->pdo->prepare("SELECT price, is_sale, ROUND(price * 0.8) AS sale_price FROM product WHERE product_id = ?");
                 $stmt->execute([$item['product_id']]);
-                $price = (float)$stmt->fetchColumn();
+                $product = $stmt->fetch();
+                $price = $product['is_sale'] ? (float)$product['sale_price'] : (float)$product['price'];
                 $orderTotal += $price * $item['quantity'];
             }
             
@@ -122,10 +123,10 @@ class OrderController
             
             foreach ($_SESSION['cart'] as $item) {
                 
-                $stmt = $this->pdo->prepare("SELECT price, name FROM product WHERE product_id = ?");
+                $stmt = $this->pdo->prepare("SELECT price, name, is_sale, ROUND(price * 0.8) AS sale_price FROM product WHERE product_id = ?");
                 $stmt->execute([$item['product_id']]);
                 $product = $stmt->fetch();
-                $price = (float)$product['price'];
+                $price = $product['is_sale'] ? (float)$product['sale_price'] : (float)$product['price'];
                 
                 
                 $stmt = $this->pdo->prepare("SELECT size_value FROM size WHERE size_id = ?");
