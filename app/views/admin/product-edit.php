@@ -100,17 +100,45 @@
             </div>
             
             <!-- Szín -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Szín *</label>
-                <select name="color_id" required
-                        class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-gray-900 focus:outline-none">
-                    <option value="">Válassz...</option>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Színek * <span class="text-xs text-gray-400 font-normal">(többet is kiválaszthatsz)</span></label>
+                <div class="flex flex-wrap gap-2 p-3 border rounded-lg bg-gray-50 max-h-40 overflow-y-auto">
+                    <?php 
+                    // Betöltjük a termék meglévő színeit
+                    $selectedColors = [];
+                    if (!empty($product['product_id'])) {
+                        $stmt = $pdo->prepare("SELECT color_id FROM product_colors WHERE product_id = ?");
+                        $stmt->execute([$product['product_id']]);
+                        $selectedColors = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'color_id');
+                    }
+                    // Ha nincs a product_colors táblában, a régi color_id-t használjuk
+                    if (empty($selectedColors) && !empty($product['color_id'])) {
+                        $selectedColors = [$product['color_id']];
+                    }
+                    $colorHex = [
+                        'Fekete' => '#000000', 'Fehér' => '#FFFFFF', 'Piros' => '#EF4444',
+                        'Kék' => '#3B82F6', 'Zöld' => '#22C55E', 'Barna' => '#92400E',
+                        'Sárga' => '#EAB308', 'Narancssárga' => '#F97316', 'Szürke' => '#6B7280',
+                        'Rózsaszín' => '#EC4899', 'Lila' => '#A855F7', 'Bézs' => '#D4C4A8',
+                        'Sötétkék' => '#1E3A5F', 'Krém' => '#FFFDD0', 'Drapp' => '#C9B99A',
+                        'Acélszürke' => '#48494B', 'Olívazöld' => '#808000', 'Türkiz' => '#14B8A6',
+                        'Többszínű' => 'linear-gradient(135deg, #EF4444, #EAB308, #22C55E, #3B82F6, #A855F7)',
+                        'Arany' => '#FFD700', 'Ezüst' => '#C0C0C0', 'Bordó' => '#800020', 'Korall' => '#FF7F50', 'Menta' => '#98FF98'
+                    ];
+                    ?>
                     <?php foreach ($colors as $c): ?>
-                        <option value="<?= $c['color_id'] ?>" <?= ($product['color_id'] ?? '') == $c['color_id'] ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($c['name']) ?>
-                        </option>
+                        <label class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition
+                                     <?= in_array($c['color_id'], $selectedColors) ? 'bg-black text-white' : 'bg-white hover:bg-gray-100' ?>">
+                            <input type="checkbox" name="color_ids[]" value="<?= $c['color_id'] ?>"
+                                   <?= in_array($c['color_id'], $selectedColors) ? 'checked' : '' ?>
+                                   class="sr-only" onchange="this.parentElement.classList.toggle('bg-black'); this.parentElement.classList.toggle('text-white'); this.parentElement.classList.toggle('bg-white');">
+                            <span class="w-5 h-5 rounded-full border-2 <?= in_array($c['color_id'], $selectedColors) ? 'border-white' : 'border-gray-300' ?>"
+                                  style="background: <?= $colorHex[$c['name']] ?? '#ccc' ?>"></span>
+                            <span class="text-sm font-medium"><?= htmlspecialchars($c['name']) ?></span>
+                        </label>
                     <?php endforeach; ?>
-                </select>
+                </div>
+                <input type="hidden" name="color_id" value="<?= $product['color_id'] ?? '' ?>">
             </div>
             
             <!-- Nem -->

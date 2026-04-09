@@ -153,8 +153,16 @@ class AdminController
 
     public function saveProduct(array $data): bool
     {
+        // Színek kezelése
+        $colorIds = $data['color_ids'] ?? [];
+        if (!is_array($colorIds)) {
+            $colorIds = [$colorIds];
+        }
+        // Első szín a régi color_id mezőbe (backward compatibility)
+        $primaryColorId = !empty($colorIds) ? (int)$colorIds[0] : ($data['color_id'] ?? null);
+        
         if (!empty($data['product_id'])) {
-            
+            // UPDATE
             $stmt = $this->pdo->prepare("
                 UPDATE product SET
                     name = ?,
@@ -168,36 +176,60 @@ class AdminController
                     is_active = ?
                 WHERE product_id = ?
             ");
-            return $stmt->execute([
+            $result = $stmt->execute([
                 $data['name'],
                 $data['description'] ?? '',
                 $data['price'],
                 $data['is_sale'] ?? 0,
                 $data['vendor_id'],
-                $data['color_id'],
+                $primaryColorId,
                 $data['gender_id'],
                 $data['subtype_id'],
                 $data['is_active'] ?? 1,
                 $data['product_id']
             ]);
-        } else {
             
+            // Színek mentése a product_colors táblába
+            $productId = $data['product_id'];
+        } else {
+            // INSERT
             $stmt = $this->pdo->prepare("
                 INSERT INTO product (name, description, price, is_sale, vendor_id, color_id, gender_id, subtype_id, is_active)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
-            return $stmt->execute([
+            $result = $stmt->execute([
                 $data['name'],
                 $data['description'] ?? '',
                 $data['price'],
                 $data['is_sale'] ?? 0,
                 $data['vendor_id'],
-                $data['color_id'],
+                $primaryColorId,
                 $data['gender_id'],
                 $data['subtype_id'],
                 $data['is_active'] ?? 1
             ]);
+            $productId = $this->pdo->lastInsertId();
         }
+        
+        // Színek frissítése a product_colors táblában
+        if (!empty($productId) && !empty($colorIds)) {
+            // Régi színek törlése
+            $stmt = $this->pdo->prepare("DELETE FROM product_colors WHERE product_id = ?");
+            $stmt->execute([$productId]);
+            
+            // Új színek beszúrása
+            foreach ($colorIds as $colorId) {
+                if ($colorId) {
+                    $stmt = $this->pdo->prepare("
+                        INSERT INTO product_colors (product_id, color_id)
+                        VALUES (?, ?)
+                    ");
+                    $stmt->execute([$productId, (int)$colorId]);
+                }
+            }
+        }
+        
+        return $result;
     }
 
     
