@@ -32,6 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: /webshop/login?error=session');
         } elseif ($action === 'register') {
             header('Location: /webshop/register?error=session');
+        } elseif ($action === 'place_order' || $action === 'checkout') {
+            header('Location: /webshop/checkout?error=session');
         } else {
             header('Location: /webshop/');
         }
