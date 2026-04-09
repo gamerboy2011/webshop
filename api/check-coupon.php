@@ -16,9 +16,8 @@
 
 header('Content-Type: application/json; charset=utf-8');
 
-// Session és config betöltés
-session_start();
-require_once __DIR__ . '/../app/config/database.php';
+// Bootstrap betöltés (session, adatbázis, autoload)
+require_once __DIR__ . '/../app/bootstrap.php';
 
 // Csak POST kérés
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -37,7 +36,7 @@ $userId = $_SESSION['user_id'];
 
 // JSON bemenet
 $input = json_decode(file_get_contents('php://input'), true);
-$code = trim($input['code'] ?? '');
+$code = strtoupper(trim($input['code'] ?? ''));
 $cartTypeIds = $input['cart_type_ids'] ?? [];
 $cartSubtypeIds = $input['cart_subtype_ids'] ?? [];
 
@@ -47,7 +46,7 @@ if (empty($code)) {
 }
 
 try {
-    // Kupon keresése kód alapján
+    // Kupon keresése kód alapján (case-insensitive)
     $stmt = $pdo->prepare("
         SELECT c.*, 
                pt.name as product_type_name,
@@ -55,7 +54,7 @@ try {
         FROM coupons c
         LEFT JOIN product_type pt ON c.product_type_id = pt.product_type_id
         LEFT JOIN product_subtype ps ON c.product_subtype_id = ps.product_subtype_id
-        WHERE c.coupon_pass = ? 
+        WHERE UPPER(c.coupon_pass) = ? 
           AND c.is_active = 1
           AND c.start_date <= CURDATE()
           AND c.end_date >= CURDATE()
@@ -64,6 +63,7 @@ try {
     $coupon = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$coupon) {
+        error_log("Coupon not found for code: $code, user: $userId");
         echo json_encode(['success' => false, 'message' => 'Érvénytelen vagy lejárt kuponkód!']);
         exit;
     }
