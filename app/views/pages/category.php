@@ -225,8 +225,9 @@ $colorCodes = [
                                        <?= $isActive ? 'checked' : '' ?>
                                        onchange="document.getElementById('filterForm').submit()"
                                        class="sr-only peer">
-                                <span class="block w-8 h-8 rounded-full border-2 transition
-                                             <?= $isActive ? 'border-black ring-2 ring-black ring-offset-2' : 'border-gray-300 hover:border-gray-500' ?>"
+                                <?php $isWhite = ($color['name'] === 'Fehér' || $colorStyle === '#FFFFFF'); ?>
+                                <span class="block w-8 h-8 rounded-full transition
+                                             <?= $isActive ? 'border-2 border-black ring-2 ring-black ring-offset-2' : ($isWhite ? 'border border-gray-400' : 'border-2 border-gray-300 hover:border-gray-500') ?>"
                                       style="background: <?= $colorStyle ?>">
                                 </span>
                             </label>
@@ -421,12 +422,16 @@ $colorCodes = [
                     <summary class="font-medium mb-3 cursor-pointer">Szín</summary>
                     <div class="flex flex-wrap gap-2">
                         <?php foreach ($filterOptions['colors'] as $color): ?>
+                            <?php 
+                            $mobileColorStyle = $colorCodes[$color['name']] ?? '#ccc';
+                            $isWhiteMobile = ($color['name'] === 'Fehér' || $mobileColorStyle === '#FFFFFF');
+                            ?>
                             <label class="cursor-pointer" title="<?= htmlspecialchars($color['name']) ?>">
                                 <input type="checkbox" name="colors[]" value="<?= htmlspecialchars($color['name']) ?>"
                                        <?= in_array($color['name'], $activeFilters['colors']) ? 'checked' : '' ?>
                                        class="sr-only peer">
-                                <span class="block w-8 h-8 rounded-full border-2 peer-checked:ring-2 peer-checked:ring-black peer-checked:ring-offset-2"
-                                      style="background-color: <?= $colorCodes[$color['name']] ?? '#ccc' ?>"></span>
+                                <span class="block w-8 h-8 rounded-full peer-checked:ring-2 peer-checked:ring-black peer-checked:ring-offset-2 <?= $isWhiteMobile ? 'border border-gray-400' : 'border-2 border-gray-300' ?>"
+                                      style="background-color: <?= $mobileColorStyle ?>"></span>
                             </label>
                         <?php endforeach; ?>
                     </div>

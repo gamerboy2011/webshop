@@ -568,8 +568,15 @@ document.querySelectorAll('input[name="size_id"]').forEach(input => {
     input.addEventListener('invalid', function() {
         this.setCustomValidity('Kérlek válassz méretet!');
     });
+});
+
+// Amikor bármelyik méretet kiválasztják, az összes radio gomb custom validity-jét töröljük
+document.querySelectorAll('input[name="size_id"]').forEach(input => {
     input.addEventListener('change', function() {
-        this.setCustomValidity('');
+        // Töröljük az összes radio gomb custom validity-jét
+        document.querySelectorAll('input[name="size_id"]').forEach(radio => {
+            radio.setCustomValidity('');
+        });
     });
 });
 

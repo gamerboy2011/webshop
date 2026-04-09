@@ -140,8 +140,8 @@ try {
 } catch (PDOException $e) {}
 ?>
 
-<div class="max-w-6xl mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-8">
+<div class="max-w-6xl mx-auto px-4 py-6 md:py-8">
+    <h1 class="text-xl md:text-2xl font-bold mb-6 md:mb-8">
         <i class="las la-credit-card mr-2"></i>Pénztár
     </h1>
     
@@ -149,44 +149,55 @@ try {
         <?= csrf_field() ?>
         <input type="hidden" name="action" value="place_order">
         
-        <div class="grid lg:grid-cols-3 gap-8">
+        <!-- MOBIL ÖSSZESÍTŐ (csak mobilon látható) -->
+        <div class="lg:hidden mb-6">
+            <div class="bg-gray-50 rounded-xl p-4">
+                <div class="flex justify-between items-center">
+                    <span class="font-medium">Rendelés összesen:</span>
+                    <span class="text-xl font-bold" id="mobileTotalDisplay"><?= number_format($total, 0, ',', ' ') ?> Ft</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1"><?= count($items) ?> termék a kosárban</p>
+            </div>
+        </div>
+        
+        <div class="grid lg:grid-cols-3 gap-6 lg:gap-8">
             <!-- BAL OLDAL - ŰRLAP -->
-            <div class="lg:col-span-2 space-y-6">
+            <div class="lg:col-span-2 space-y-4 md:space-y-6">
                 
                 <!-- SZÁLLÍTÁSI MÓD -->
-                <div class="bg-white border rounded-xl p-6">
-                    <h2 class="text-lg font-semibold mb-4">
+                <div class="bg-white border rounded-xl p-4 md:p-6">
+                    <h2 class="text-base md:text-lg font-semibold mb-3 md:mb-4">
                         <i class="las la-truck mr-2 text-gray-500"></i>Szállítási mód
                     </h2>
                     
-                    <div class="space-y-3">
-                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-black transition delivery-option" data-type="delivery">
-                            <input type="radio" name="delivery_method_id" value="2" class="w-5 h-5 text-black" required>
-                            <div class="ml-4 flex-1">
-                                <span class="font-medium">Házhoz szállítás</span>
-                                <p class="text-sm text-gray-500">GLS futárszolgálat, 1-3 munkanap</p>
+                    <div class="space-y-2 md:space-y-3">
+                        <label class="flex items-center p-3 md:p-4 border rounded-lg cursor-pointer hover:border-black transition delivery-option" data-type="delivery">
+                            <input type="radio" name="delivery_method_id" value="2" class="w-5 h-5 text-black flex-shrink-0" required>
+                            <div class="ml-3 md:ml-4 flex-1 min-w-0">
+                                <span class="font-medium text-sm md:text-base">Házhoz szállítás</span>
+                                <p class="text-xs md:text-sm text-gray-500">GLS futár, 1-3 munkanap</p>
                             </div>
-                            <span class="font-medium"><?= $subtotal >= 15000 ? 'Ingyenes' : '1 490 Ft' ?></span>
+                            <span class="font-medium text-sm md:text-base ml-2"><?= $subtotal >= 15000 ? 'Ingyenes' : '1 490 Ft' ?></span>
                         </label>
                         
-                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-black transition delivery-option" data-type="foxpost">
-                            <input type="radio" name="delivery_method_id" value="3" class="w-5 h-5 text-black">
-                            <div class="ml-4 flex-1">
-                                <span class="font-medium">FoxPost csomagautomata</span>
-                                <p class="text-sm text-gray-500">Válassz az 1400+ automata közül</p>
+                        <label class="flex items-center p-3 md:p-4 border rounded-lg cursor-pointer hover:border-black transition delivery-option" data-type="foxpost">
+                            <input type="radio" name="delivery_method_id" value="3" class="w-5 h-5 text-black flex-shrink-0">
+                            <div class="ml-3 md:ml-4 flex-1 min-w-0">
+                                <span class="font-medium text-sm md:text-base">FoxPost automata</span>
+                                <p class="text-xs md:text-sm text-gray-500">1400+ automata</p>
                             </div>
-                            <span class="font-medium"><?= $subtotal >= 15000 ? 'Ingyenes' : '990 Ft' ?></span>
+                            <span class="font-medium text-sm md:text-base ml-2"><?= $subtotal >= 15000 ? 'Ingyenes' : '990 Ft' ?></span>
                         </label>
                     </div>
                 </div>
                 
                 <!-- HÁZHOZ SZÁLLÍTÁS ADATOK -->
-                <div id="deliveryFields" class="bg-white border rounded-xl p-6 hidden">
-                    <h2 class="text-lg font-semibold mb-4">
+                <div id="deliveryFields" class="bg-white border rounded-xl p-4 md:p-6 hidden">
+                    <h2 class="text-base md:text-lg font-semibold mb-3 md:mb-4">
                         <i class="las la-map-marker mr-2 text-gray-500"></i>Szállítási cím
                     </h2>
                     
-                    <div class="grid md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Név *</label>
                             <input type="text" name="shipping_name" 
@@ -255,9 +266,9 @@ try {
                 </div>
                 
                 <!-- FOXPOST CSOMAGPONT VÁLASZTÓ -->
-                <div id="foxpostFields" class="bg-white border rounded-xl p-6 hidden">
-                    <h2 class="text-lg font-semibold mb-4">
-                        <i class="las la-box mr-2 text-gray-500"></i>FoxPost csomagautomata
+                <div id="foxpostFields" class="bg-white border rounded-xl p-4 md:p-6 hidden">
+                    <h2 class="text-base md:text-lg font-semibold mb-3 md:mb-4">
+                        <i class="las la-box mr-2 text-gray-500"></i>FoxPost automata
                     </h2>
                     
                     <!-- Kiválasztott pont megjelenítése -->
@@ -286,44 +297,46 @@ try {
                 </div>
                 
                 <!-- FIZETÉSI MÓD -->
-                <div class="bg-white border rounded-xl p-6">
-                    <h2 class="text-lg font-semibold mb-4">
+                <div class="bg-white border rounded-xl p-4 md:p-6">
+                    <h2 class="text-base md:text-lg font-semibold mb-3 md:mb-4">
                         <i class="las la-wallet mr-2 text-gray-500"></i>Fizetési mód
                     </h2>
                     
-                    <div class="space-y-3">
-                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-black transition">
-                            <input type="radio" name="payment_method_id" value="1" class="w-5 h-5 text-black" required>
-                            <div class="ml-4 flex-1">
-                                <span class="font-medium">Bankkártyás fizetés</span>
-                                <p class="text-sm text-gray-500">Visa, Mastercard, American Express</p>
+                    <div class="space-y-2 md:space-y-3">
+                        <label class="flex items-center p-3 md:p-4 border rounded-lg cursor-pointer hover:border-black transition">
+                            <input type="radio" name="payment_method_id" value="1" class="w-5 h-5 text-black flex-shrink-0" required>
+                            <div class="ml-3 md:ml-4 flex-1 min-w-0">
+                                <span class="font-medium text-sm md:text-base">Bankkártyás fizetés</span>
+                                <p class="text-xs md:text-sm text-gray-500">Visa, Mastercard</p>
                             </div>
-                            <i class="lab la-cc-visa text-2xl text-gray-400 mr-2"></i>
-                            <i class="lab la-cc-mastercard text-2xl text-gray-400"></i>
+                            <div class="hidden sm:flex">
+                                <i class="lab la-cc-visa text-xl md:text-2xl text-gray-400 mr-1"></i>
+                                <i class="lab la-cc-mastercard text-xl md:text-2xl text-gray-400"></i>
+                            </div>
                         </label>
                         
-                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-black transition">
-                            <input type="radio" name="payment_method_id" value="2" class="w-5 h-5 text-black">
-                            <div class="ml-4 flex-1">
-                                <span class="font-medium">Utánvét</span>
-                                <p class="text-sm text-gray-500">Fizetés a csomag átvételekor</p>
+                        <label class="flex items-center p-3 md:p-4 border rounded-lg cursor-pointer hover:border-black transition">
+                            <input type="radio" name="payment_method_id" value="2" class="w-5 h-5 text-black flex-shrink-0">
+                            <div class="ml-3 md:ml-4 flex-1 min-w-0">
+                                <span class="font-medium text-sm md:text-base">Utánvét</span>
+                                <p class="text-xs md:text-sm text-gray-500">Fizetés átvételkor</p>
                             </div>
-                            <span class="text-sm text-gray-500">+390 Ft</span>
+                            <span class="text-xs md:text-sm text-gray-500 ml-2">+390 Ft</span>
                         </label>
                         
-                        <label class="flex items-center p-4 border rounded-lg cursor-pointer hover:border-black transition">
-                            <input type="radio" name="payment_method_id" value="3" class="w-5 h-5 text-black">
-                            <div class="ml-4 flex-1">
-                                <span class="font-medium">Banki átutalás</span>
-                                <p class="text-sm text-gray-500">Előre utalás, gyorsabb feldolgozás</p>
+                        <label class="flex items-center p-3 md:p-4 border rounded-lg cursor-pointer hover:border-black transition">
+                            <input type="radio" name="payment_method_id" value="3" class="w-5 h-5 text-black flex-shrink-0">
+                            <div class="ml-3 md:ml-4 flex-1 min-w-0">
+                                <span class="font-medium text-sm md:text-base">Banki átutalás</span>
+                                <p class="text-xs md:text-sm text-gray-500">Előre utalás</p>
                             </div>
                         </label>
                     </div>
                 </div>
                 
                 <!-- KUPONKÓD -->
-                <div class="bg-white border rounded-xl p-6">
-                    <h2 class="text-lg font-semibold mb-4">
+                <div class="bg-white border rounded-xl p-4 md:p-6">
+                    <h2 class="text-base md:text-lg font-semibold mb-3 md:mb-4">
                         <i class="las la-ticket-alt mr-2 text-gray-500"></i>Kuponkód
                     </h2>
                     
@@ -394,18 +407,27 @@ try {
                 </div>
                 
                 <!-- MEGJEGYZÉS -->
-                <div class="bg-white border rounded-xl p-6">
-                    <h2 class="text-lg font-semibold mb-4">
+                <div class="bg-white border rounded-xl p-4 md:p-6">
+                    <h2 class="text-base md:text-lg font-semibold mb-3 md:mb-4">
                         <i class="las la-comment mr-2 text-gray-500"></i>Megjegyzés (opcionális)
                     </h2>
-                    <textarea name="note" rows="3" 
-                              placeholder="Pl.: Kapucsengő kód, kézbesítési instrukciók..."
-                              class="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black resize-none"></textarea>
+                    <textarea name="note" rows="2" 
+                              placeholder="Kapucsengő kód, instrukciók..."
+                              class="w-full border rounded-lg px-3 md:px-4 py-2 md:py-3 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-black resize-none"></textarea>
+                </div>
+                
+                <!-- MOBIL MEGRENDELÉS GOMB -->
+                <div class="lg:hidden mt-4">
+                    <button type="submit" id="mobileSubmitBtn"
+                            class="w-full bg-black text-white py-4 rounded-lg font-medium text-base hover:bg-gray-800 transition flex items-center justify-center gap-2">
+                        <i class="las la-lock"></i>
+                        Megrendelés (<span id="mobileTotal"><?= number_format($total, 0, ',', ' ') ?> Ft</span>)
+                    </button>
                 </div>
             </div>
             
-            <!-- JOBB OLDAL - ÖSSZESÍTŐ -->
-            <div class="lg:col-span-1">
+            <!-- JOBB OLDAL - ÖSSZESÍTŐ (csak desktopon) -->
+            <div class="hidden lg:block lg:col-span-1">
                 <div class="bg-gray-50 rounded-xl p-6 sticky top-4">
                     <h2 class="text-lg font-semibold mb-4">Rendelés összesítő</h2>
                     
@@ -532,8 +554,17 @@ document.querySelectorAll('input[name="payment_method_id"]').forEach(radio => {
 
 function updateTotal() {
     const total = subtotal - currentDiscount + currentShippingCost + currentCodFee;
-    document.getElementById('totalDisplay').textContent = new Intl.NumberFormat('hu-HU').format(total) + ' Ft';
+    const formattedTotal = new Intl.NumberFormat('hu-HU').format(total) + ' Ft';
+    
+    // Desktop összesítő
+    document.getElementById('totalDisplay').textContent = formattedTotal;
     document.getElementById('shippingCostDisplay').textContent = currentShippingCost === 0 ? 'Ingyenes' : new Intl.NumberFormat('hu-HU').format(currentShippingCost) + ' Ft';
+    
+    // Mobil összesítők
+    const mobileTotalDisplay = document.getElementById('mobileTotalDisplay');
+    const mobileTotal = document.getElementById('mobileTotal');
+    if (mobileTotalDisplay) mobileTotalDisplay.textContent = formattedTotal;
+    if (mobileTotal) mobileTotal.textContent = formattedTotal;
     
     // Kedvezmény sor
     const discountRow = document.getElementById('couponDiscountRow');
