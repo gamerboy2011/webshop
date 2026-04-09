@@ -215,7 +215,11 @@ $colorCodes = [
                     </summary>
                     <div class="flex flex-wrap gap-2">
                         <?php foreach ($filterOptions['colors'] as $color): ?>
-                            <?php $isActive = in_array($color['name'], $activeFilters['colors']); ?>
+                            <?php 
+                            $isActive = in_array($color['name'], $activeFilters['colors']); 
+                            $colorStyle = $colorCodes[$color['name']] ?? '#ccc';
+                            $isGradient = strpos($colorStyle, 'gradient') !== false;
+                            ?>
                             <label class="relative cursor-pointer" title="<?= htmlspecialchars($color['name']) ?>">
                                 <input type="checkbox" name="colors[]" value="<?= htmlspecialchars($color['name']) ?>"
                                        <?= $isActive ? 'checked' : '' ?>
@@ -223,7 +227,7 @@ $colorCodes = [
                                        class="sr-only peer">
                                 <span class="block w-8 h-8 rounded-full border-2 transition
                                              <?= $isActive ? 'border-black ring-2 ring-black ring-offset-2' : 'border-gray-300 hover:border-gray-500' ?>"
-                                      style="background-color: <?= $colorCodes[$color['name']] ?? '#ccc' ?>">
+                                      style="background: <?= $colorStyle ?>">
                                 </span>
                             </label>
                         <?php endforeach; ?>

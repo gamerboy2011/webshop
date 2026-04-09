@@ -41,6 +41,9 @@ $sizes = $model->getSizes($productId);
 
 $colorVariants = $model->getColorVariants($productId);
 
+// Lékérdezzük a termék színeit (több szín támogatás)
+$productColors = $model->getProductColors($productId);
+
 
 
 
@@ -181,29 +184,60 @@ if (isset($_SESSION['user_id'])) {
 
                         <!-- Szín és színváltozatok -->
                         <div class="mb-6">
-                            <p class="text-sm font-medium text-gray-700 mb-2">Szín: <span class="font-normal"><?= htmlspecialchars($product['color']) ?></span></p>
+                            <?php
+                            $colorHex = [
+                                'Fekete' => '#000000', 'Fehér' => '#FFFFFF', 'Piros' => '#EF4444',
+                                'Kék' => '#3B82F6', 'Zöld' => '#22C55E', 'Barna' => '#92400E',
+                                'Sárga' => '#EAB308', 'Narancssárga' => '#F97316', 'Szürke' => '#6B7280',
+                                'Rózsaszín' => '#EC4899', 'Lila' => '#A855F7', 'Bézs' => '#D4C4A8',
+                                'Sötétkék' => '#1E3A5F', 'Krém' => '#FFFDD0', 'Drapp' => '#C9B99A',
+                                'Acélszürke' => '#48494B', 'Olívazöld' => '#808000', 'Türkíz' => '#14B8A6',
+                                'Többszínű' => 'linear-gradient(135deg, #EF4444, #EAB308, #22C55E, #3B82F6, #A855F7)',
+                                'Arany' => '#FFD700', 'Ezüst' => '#C0C0C0', 'Bordó' => '#800020', 'Korall' => '#FF7F50', 'Menta' => '#98FF98'
+                            ];
+                            
+                            // Színek megjelenítése
+                            $colorNames = array_column($productColors, 'name');
+                            $colorDisplay = implode(' / ', $colorNames);
+                            ?>
+                            <p class="text-sm font-medium text-gray-700 mb-2">Szín: 
+                                <span class="font-normal"><?= htmlspecialchars($colorDisplay) ?></span>
+                                <?php if (count($productColors) > 1): ?>
+                                    <span class="inline-flex ml-2 -space-x-1">
+                                        <?php foreach ($productColors as $pc): ?>
+                                            <?php $bg = $colorHex[$pc['name']] ?? '#CCCCCC'; ?>
+                                            <span class="w-4 h-4 rounded-full border border-white shadow-sm" 
+                                                  style="background: <?= $bg ?>"
+                                                  title="<?= htmlspecialchars($pc['name']) ?>"></span>
+                                        <?php endforeach; ?>
+                                    </span>
+                                <?php endif; ?>
+                            </p>
                             
                             <?php if (!empty($colorVariants)): ?>
-                                <?php
-                                $colorHex = [
-                                    'Fekete' => '#000000', 'Fehér' => '#FFFFFF', 'Piros' => '#EF4444',
-                                    'Kék' => '#3B82F6', 'Zöld' => '#22C55E', 'Barna' => '#92400E',
-                                    'Sárga' => '#EAB308', 'Narancssárga' => '#F97316', 'Szürke' => '#6B7280',
-                                    'Rózsaszín' => '#EC4899', 'Lila' => '#A855F7', 'Bézs' => '#D4C4A8',
-                                    'Sötétkék' => '#1E3A5F', 'Krém' => '#FFFDD0', 'Drapp' => '#C9B99A',
-                                    'Acélszürke' => '#48494B', 'Olívazöld' => '#808000', 'Türkiz' => '#14B8A6',
-                                    'Többszínű' => 'linear-gradient(135deg, #EF4444, #EAB308, #22C55E, #3B82F6, #A855F7)',
-                                    'Arany' => '#FFD700', 'Ezüst' => '#C0C0C0', 'Bordó' => '#800020', 'Korall' => '#FF7F50', 'Menta' => '#98FF98'
-                                ];
-                                ?>
                                 <div class="flex flex-wrap gap-2 mt-3">
                                     <?php foreach ($colorVariants as $variant): ?>
-                                        <?php $bg = $colorHex[$variant['color']] ?? '#CCCCCC'; ?>
+                                        <?php 
+                                        // Lekérdezzük a változat színeit is
+                                        $variantColors = $model->getProductColors($variant['product_id']);
+                                        ?>
                                         <a href="/webshop/termek/<?= $variant['product_id'] ?>" 
-                                           class="w-8 h-8 rounded-full border-2 transition-all
+                                           class="w-8 h-8 rounded-full border-2 transition-all overflow-hidden
                                                   <?= $variant['product_id'] == $productId ? 'border-black ring-2 ring-black ring-offset-2' : 'border-gray-300 hover:border-gray-500 hover:scale-110' ?>"
-                                           style="background: <?= $bg ?>;"
-                                           title="<?= htmlspecialchars($variant['color']) ?>"></a>
+                                           title="<?= htmlspecialchars(implode(' / ', array_column($variantColors, 'name'))) ?>">
+                                            <?php if (count($variantColors) > 1): ?>
+                                                <!-- Két vagy több szín: megosztott kör -->
+                                                <span class="flex w-full h-full">
+                                                    <?php foreach ($variantColors as $i => $vc): ?>
+                                                        <?php $bg = $colorHex[$vc['name']] ?? '#CCCCCC'; ?>
+                                                        <span class="flex-1 h-full" style="background: <?= $bg ?>"></span>
+                                                    <?php endforeach; ?>
+                                                </span>
+                                            <?php else: ?>
+                                                <?php $bg = $colorHex[$variantColors[0]['name'] ?? $variant['color']] ?? '#CCCCCC'; ?>
+                                                <span class="block w-full h-full" style="background: <?= $bg ?>"></span>
+                                            <?php endif; ?>
+                                        </a>
                                     <?php endforeach; ?>
                                 </div>
                             <?php endif; ?>

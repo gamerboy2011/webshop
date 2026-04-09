@@ -10,54 +10,76 @@ $oldInput = [
     'full_name' => $_POST['full_name'] ?? '',
     'email' => $_POST['email'] ?? ''
 ];
+
+$fieldErrors = [
+    'invalid_name' => 'full_name',
+    'invalid_email' => 'email',
+    'email_exists' => 'email',
+    'password_mismatch' => 'password_confirm',
+    'password_too_short' => 'password',
+    'password_complexity' => 'password',
+];
+$errorField = $error ? ($fieldErrors[$error] ?? null) : null;
+$errorMessages = [
+    'invalid_name' => 'Csak betűk, szóköz, kötőjel és aposztrf (2-50 karakter)',
+    'invalid_email' => 'Helytelen email formátum',
+    'email_exists' => 'Ez az email már regisztrálva van',
+    'password_mismatch' => 'A két jelszó nem egyezik',
+    'password_too_short' => 'Legalább 6 karakter szükséges',
+    'password_complexity' => 'Kis- és nagybetű, valamint szám szükséges',
+    'database' => 'Szerverhiba történt'
+];
 ?>
 
 <div class="max-w-md mx-auto mt-16 p-8 border rounded-lg shadow-md bg-white">
     <h2 class="text-2xl font-semibold mb-6 text-center">Regisztráció</h2>
 
-    <?php if ($error): ?>
-        <div class="mb-4 p-3 bg-red-100 text-red-700 rounded">
-            <?php
-            $messages = [
-                'invalid_name' => 'A név csak betűket, szóközt, kötőjelet és aposztrófot tartalmazhat (2-50 karakter).',
-                'invalid_email' => 'Helytelen email cím formátum.',
-                'email_exists' => 'Ez az email cím már regisztrálva van.',
-                'password_mismatch' => 'A két jelszó nem egyezik.',
-                'password_too_short' => 'A jelszónak legalább 6 karakter hosszúnak kell lennie.',
-                'password_complexity' => 'A jelszónak tartalmaznia kell kis- és nagybetűt, valamint számot.',
-                'database' => 'Szerverhiba történt. Kérjük, próbáld újra később.'
-            ];
-            echo $messages[$error] ?? 'Ismeretlen hiba.';
-            ?>
-        </div>
-    <?php endif; ?>
-
-    <form id="register-form" method="POST" action="">
+    <form id="register-form" method="POST" action="" novalidate>
         <input type="hidden" name="action" value="register">
         <?php echo csrf_field(); ?>
 
         <div class="mb-4">
             <label for="full_name" class="block text-sm font-medium mb-1">Teljes név *</label>
-            <input type="text"
-                   id="full_name"
-                   name="full_name"
-                   placeholder="Kovács János"
-                   minlength="2"
-                   maxlength="50"
-                   class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                   value="<?php echo htmlspecialchars($oldInput['full_name']); ?>"
-                   required>
+            <div class="relative">
+                <input type="text"
+                       id="full_name"
+                       name="full_name"
+                       placeholder="Kovács János"
+                       minlength="2"
+                       maxlength="50"
+                       class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent pr-10 <?= $errorField === 'full_name' ? 'border-red-500' : '' ?>"
+                       value="<?php echo htmlspecialchars($oldInput['full_name']); ?>"
+                       required>
+                <?php if ($errorField === 'full_name'): ?>
+                    <div class="absolute inset-y-0 right-3 flex items-center group">
+                        <i class="las la-exclamation-circle text-red-500 text-xl cursor-help"></i>
+                        <div class="absolute right-8 top-1/2 -translate-y-1/2 bg-red-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                            <?= $errorMessages[$error] ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
 
         <div class="mb-4">
             <label for="email" class="block text-sm font-medium mb-1">Email cím *</label>
-            <input type="email"
-                   id="email"
-                   name="email"
-                   placeholder="pelda@email.hu"
-                   class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
-                   value="<?php echo htmlspecialchars($oldInput['email']); ?>"
-                   required>
+            <div class="relative">
+                <input type="email"
+                       id="email"
+                       name="email"
+                       placeholder="pelda@email.hu"
+                       class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent pr-10 <?= $errorField === 'email' ? 'border-red-500' : '' ?>"
+                       value="<?php echo htmlspecialchars($oldInput['email']); ?>"
+                       required>
+                <?php if ($errorField === 'email'): ?>
+                    <div class="absolute inset-y-0 right-3 flex items-center group">
+                        <i class="las la-exclamation-circle text-red-500 text-xl cursor-help"></i>
+                        <div class="absolute right-8 top-1/2 -translate-y-1/2 bg-red-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                            <?= $errorMessages[$error] ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
 
         <!-- Jelszó -->
@@ -68,29 +90,25 @@ $oldInput = [
                 <input type="password"
                        id="reg_password"
                        name="password"
-placeholder="Legalább 6 karakter, kis- és nagybetű, szám"
+                       placeholder="Legalább 6 karakter, kis- és nagybetű, szám"
                        minlength="6"
-                       class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                       class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent pr-16 <?= $errorField === 'password' ? 'border-red-500' : '' ?>"
                        required>
+
+                <?php if ($errorField === 'password'): ?>
+                    <div class="absolute inset-y-0 right-10 flex items-center group">
+                        <i class="las la-exclamation-circle text-red-500 text-xl cursor-help"></i>
+                        <div class="absolute right-8 top-1/2 -translate-y-1/2 bg-red-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                            <?= $errorMessages[$error] ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
 
                 <button type="button"
                         onclick="togglePassword('reg_password', this)"
                         class="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700">
-                    <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'
-                         stroke-width='1.5' stroke='currentColor'
-                         class='w-5 h-5 eye-icon'>
-                        <path stroke-linecap='round' stroke-linejoin='round'
-                              d='M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z'/>
-                        <path stroke-linecap='round' stroke-linejoin='round'
-                              d='M15 12a3 3 0 11-6 0 3 3 0 016 0z'/>
-                    </svg>
-
-                    <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'
-                         stroke-width='1.5' stroke='currentColor'
-                         class='w-5 h-5 hidden eye-off-icon'>
-                        <path stroke-linecap='round' stroke-linejoin='round'
-                              d='M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c1.676 0 3.27-.33 4.712-.928M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.5a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228L21 21'/>
-                    </svg>
+                    <i class="las la-eye text-lg eye-icon"></i>
+                    <i class="las la-eye-slash text-lg hidden eye-off-icon"></i>
                 </button>
             </div>
         </div>
@@ -104,27 +122,23 @@ placeholder="Legalább 6 karakter, kis- és nagybetű, szám"
                        id="reg_password_confirm"
                        name="password_confirm"
                        placeholder="Ismételd meg a jelszót"
-                       class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                       class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent pr-16 <?= $errorField === 'password_confirm' ? 'border-red-500' : '' ?>"
                        required>
+
+                <?php if ($errorField === 'password_confirm'): ?>
+                    <div class="absolute inset-y-0 right-10 flex items-center group">
+                        <i class="las la-exclamation-circle text-red-500 text-xl cursor-help"></i>
+                        <div class="absolute right-8 top-1/2 -translate-y-1/2 bg-red-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                            <?= $errorMessages[$error] ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
 
                 <button type="button"
                         onclick="togglePassword('reg_password_confirm', this)"
                         class="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700">
-                    <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'
-                         stroke-width='1.5' stroke='currentColor'
-                         class='w-5 h-5 eye-icon'>
-                        <path stroke-linecap='round' stroke-linejoin='round'
-                              d='M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z'/>
-                        <path stroke-linecap='round' stroke-linejoin='round'
-                              d='M15 12a3 3 0 11-6 0 3 3 0 016 0z'/>
-                    </svg>
-
-                    <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'
-                         stroke-width='1.5' stroke='currentColor'
-                         class='w-5 h-5 hidden eye-off-icon'>
-                        <path stroke-linecap='round' stroke-linejoin='round'
-                              d='M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c1.676 0 3.27-.33 4.712-.928M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.5a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228L21 21'/>
-                    </svg>
+                    <i class="las la-eye text-lg eye-icon"></i>
+                    <i class="las la-eye-slash text-lg hidden eye-off-icon"></i>
                 </button>
             </div>
         </div>

@@ -133,6 +133,36 @@ class ProductModel
         return (bool)$stmt->fetch();
     }
 
+    /**
+     * Get all colors for a product (supports multi-color products)
+     */
+    public function getProductColors(int $productId): array
+    {
+        $stmt = $this->pdo->prepare("
+            SELECT c.color_id, c.name
+            FROM product_colors pc
+            JOIN color c ON pc.color_id = c.color_id
+            WHERE pc.product_id = :id
+            ORDER BY pc.id
+        ");
+        $stmt->execute(['id' => $productId]);
+        $colors = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Ha nincs a product_colors táblában, próbáljuk a régi color_id-t
+        if (empty($colors)) {
+            $stmt = $this->pdo->prepare("
+                SELECT c.color_id, c.name
+                FROM product p
+                JOIN color c ON p.color_id = c.color_id
+                WHERE p.product_id = :id
+            ");
+            $stmt->execute(['id' => $productId]);
+            $colors = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+        
+        return $colors;
+    }
+
     
 
 

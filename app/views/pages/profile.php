@@ -131,6 +131,8 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
             $error = "Az új jelszónak legalább 6 karakter hosszúnak kell lennie!";
         } elseif (!preg_match('/[a-z]/', $newPassword) || !preg_match('/[A-Z]/', $newPassword) || !preg_match('/[0-9]/', $newPassword)) {
             $error = "A jelszónak tartalmaznia kell kis- és nagybetűt, valamint számot!";
+        } elseif (password_verify($newPassword, $userData['password_hash'])) {
+            $error = "Az új jelszó nem egyezhet a jelenlegi jelszóval!";
         } elseif ($newPassword !== $confirmPassword) {
             $error = "A két jelszó nem egyezik!";
         } else {
@@ -1027,23 +1029,41 @@ function closePasswordModal() {
             
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-2">Jelenlegi jelszó</label>
-                <input type="password" name="current_password" required
-                       class="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none"
-                       placeholder="••••••••">
+                <div class="relative">
+                    <input type="password" name="current_password" id="current_password" required
+                           class="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none pr-10"
+                           placeholder="••••••••">
+                    <button type="button" onclick="togglePasswordVisibility('current_password', this)"
+                            class="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700">
+                        <i class="las la-eye text-lg"></i>
+                    </button>
+                </div>
             </div>
             
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-2">Új jelszó</label>
-        <input type="password" name="new_password" required minlength="6"
-                       class="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none"
-placeholder="Legalább 6 karakter, kis- és nagybetű, szám"
+                <div class="relative">
+                    <input type="password" name="new_password" id="new_password" required minlength="6"
+                           class="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none pr-10"
+                           placeholder="Legalább 6 karakter, kis- és nagybetű, szám">
+                    <button type="button" onclick="togglePasswordVisibility('new_password', this)"
+                            class="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700">
+                        <i class="las la-eye text-lg"></i>
+                    </button>
+                </div>
             </div>
             
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-2">Új jelszó megerősítése</label>
-                <input type="password" name="confirm_password" required minlength="6"
-                       class="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none"
-                       placeholder="Írd be újra">
+                <div class="relative">
+                    <input type="password" name="confirm_password" id="confirm_password" required minlength="6"
+                           class="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none pr-10"
+                           placeholder="Írd be újra">
+                    <button type="button" onclick="togglePasswordVisibility('confirm_password', this)"
+                            class="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700">
+                        <i class="las la-eye text-lg"></i>
+                    </button>
+                </div>
             </div>
             
             <div class="flex gap-3">
@@ -1059,4 +1079,20 @@ placeholder="Legalább 6 karakter, kis- és nagybetű, szám"
         </form>
     </div>
 </div>
+
+<script>
+function togglePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('la-eye');
+        icon.classList.add('la-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('la-eye-slash');
+        icon.classList.add('la-eye');
+    }
+}
+</script>
 
