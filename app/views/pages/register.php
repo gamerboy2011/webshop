@@ -24,7 +24,6 @@ $oldInput = [
                 'email_exists' => 'Ez az email cím már regisztrálva van.',
                 'password_mismatch' => 'A két jelszó nem egyezik.',
                 'password_too_short' => 'A jelszónak legalább 6 karakter hosszúnak kell lennie.',
-                'password_too_long' => 'A jelszó túl hosszú (max 13 karakter).',
                 'password_complexity' => 'A jelszónak tartalmaznia kell kis- és nagybetűt, valamint számot.',
                 'database' => 'Szerverhiba történt. Kérjük, próbáld újra később.'
             ];
@@ -69,9 +68,8 @@ $oldInput = [
                 <input type="password"
                        id="reg_password"
                        name="password"
-                       placeholder="6–13 karakter, kis- és nagybetű, szám"
+placeholder="Legalább 6 karakter, kis- és nagybetű, szám"
                        minlength="6"
-                       maxlength="13"
                        class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                        required>
 

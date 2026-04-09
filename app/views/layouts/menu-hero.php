@@ -18,7 +18,6 @@ $menuCategories = [
         'subtypes' => [
             ['name' => 'Pólók', 'slug' => 'polo'],
             ['name' => 'Pulóverek', 'slug' => 'pulover'],
-            ['name' => 'Kabátok', 'slug' => 'kabat'],
             ['name' => 'Nadrágok', 'slug' => 'nadrag'],
             ['name' => 'Rövidnadrágok', 'slug' => 'rovidnadrag'],
             ['name' => 'Egyberuhák', 'slug' => 'egyberuha', 'female_only' => true],

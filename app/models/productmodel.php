@@ -498,7 +498,7 @@ class ProductModel
         if (!empty($category)) {
             $slugMap = [
                 'ruhazat' => 'Ruházat', 'cipok' => 'Cipők', 'kiegeszitok' => 'Kiegészítők',
-                'polo' => 'póló', 'pulover' => 'pulóver', 'kabat' => 'kabát', 'nadrag' => 'nadrág',
+                'polo' => 'póló', 'pulover' => 'pulóver', 'nadrag' => 'nadrág',
                 'rovidnadrag' => 'rövidnadrág', 'melegito' => 'melegítő', 'egyberuha' => 'egyberuha',
                 'cipo' => 'cipő', 'papucs' => 'papucs',
                 'sapka' => 'sapka', 'zokni' => 'zokni', 'taska' => 'táska', 'hatizsak' => 'hátizsák', 'figura' => 'figura',
@@ -614,7 +614,6 @@ class ProductModel
                 
                 'polo' => 'póló',
                 'pulover' => 'pulóver',
-                'kabat' => 'kabát',
                 'nadrag' => 'nadrág',
                 'rovidnadrag' => 'rövidnadrág',
                 'melegito' => 'melegítő',

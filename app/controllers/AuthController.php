@@ -92,10 +92,6 @@ class AuthController
             redirect('/register?error=password_too_short');
         }
 
-        if (strlen($password) > 13) {
-            redirect('/register?error=password_too_long');
-        }
-
         if (
             !preg_match('/[a-z]/', $password) ||
             !preg_match('/[A-Z]/', $password) ||

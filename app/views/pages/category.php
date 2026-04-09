@@ -70,7 +70,7 @@ if ($activeFilters['min_price'] || $activeFilters['max_price']) $activeFilterCou
 
 $categoryNames = [
     'ruhazat' => 'Ruházat', 'cipok' => 'Cipők', 'kiegeszitok' => 'Kiegészítők',
-    'polo' => 'Pólók', 'pulover' => 'Pulóverek', 'kabat' => 'Kabátok', 'nadrag' => 'Nadrágok',
+    'polo' => 'Pólók', 'pulover' => 'Pulóverek', 'nadrag' => 'Nadrágok',
     'rovidnadrag' => 'Rövidnadrágok', 'melegito' => 'Melegítők', 'egyberuha' => 'Egyberuhák',
     'cipo' => 'Cipők', 'papucs' => 'Papucsok',
     'sapka' => 'Sapkák', 'zokni' => 'Zoknik', 'taska' => 'Táskák', 'hatizsak' => 'Hátizsákok', 'figura' => 'Figurák',

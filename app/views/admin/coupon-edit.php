@@ -21,12 +21,10 @@ $subtypeNames = [
     'cap' => 'Sapka',
     'hat' => 'Kalap',
     'hoodie' => 'Kapucnis pulcsi',
-    'jacket' => 'Dzseki',
     'jeans' => 'Farmer',
     'leggings' => 'Leggings',
     'sweater' => 'Pulóver',
     't-shirt' => 'Póló',
-    'winter coat' => 'Télikabát',
     'sandals' => 'Szandál',
     'shoes' => 'Cipő'
 ];

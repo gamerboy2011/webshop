@@ -129,6 +129,8 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
             $error = "A jelenlegi jelszó helytelen!";
         } elseif (strlen($newPassword) < 6) {
             $error = "Az új jelszónak legalább 6 karakter hosszúnak kell lennie!";
+        } elseif (!preg_match('/[a-z]/', $newPassword) || !preg_match('/[A-Z]/', $newPassword) || !preg_match('/[0-9]/', $newPassword)) {
+            $error = "A jelszónak tartalmaznia kell kis- és nagybetűt, valamint számot!";
         } elseif ($newPassword !== $confirmPassword) {
             $error = "A két jelszó nem egyezik!";
         } else {
@@ -1032,9 +1034,9 @@ function closePasswordModal() {
             
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-2">Új jelszó</label>
-                <input type="password" name="new_password" required minlength="6"
+        <input type="password" name="new_password" required minlength="6"
                        class="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-black focus:outline-none"
-                       placeholder="Min. 6 karakter">
+placeholder="Legalább 6 karakter, kis- és nagybetű, szám"
             </div>
             
             <div class="mb-4">
