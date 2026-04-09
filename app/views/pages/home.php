@@ -1,10 +1,5 @@
 <?php
 
-
-
-
-
-
 if (!isset($products) || !is_array($products)) {
     $products = [];
 }
