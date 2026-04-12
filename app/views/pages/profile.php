@@ -85,6 +85,38 @@ if ($section === 'returns') {
     $returns = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+// Kuponok lekérdezése
+$userCoupons = [];
+$availableCoupons = [];
+if ($section === 'coupons') {
+    // Felhasználó aktivált kuponjai
+    $stmt = $pdo->prepare("
+        SELECT uc.*, c.name, c.description, c.amount, c.coupon_pass, c.start_date, c.end_date,
+               CASE WHEN uc.used_at IS NOT NULL THEN 'used' 
+                    WHEN c.end_date < CURDATE() THEN 'expired'
+                    ELSE 'active' END as status
+        FROM user_coupons uc
+        JOIN coupons c ON uc.coupon_id = c.id
+        WHERE uc.user_id = ?
+        ORDER BY uc.activated_at DESC
+    ");
+    $stmt->execute([$userId]);
+    $userCoupons = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Aktiválható kuponok (amiket még nem aktivált)
+    $stmt = $pdo->prepare("
+        SELECT c.*
+        FROM coupons c
+        WHERE c.is_active = 1 
+          AND c.start_date <= CURDATE() 
+          AND c.end_date >= CURDATE()
+          AND c.id NOT IN (SELECT coupon_id FROM user_coupons WHERE user_id = ?)
+        ORDER BY c.end_date ASC
+    ");
+    $stmt->execute([$userId]);
+    $availableCoupons = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 $success = "";
 $error   = "";
 
@@ -272,6 +304,11 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                       <?= $section === 'orders' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700' ?>">
                 <i class="las la-shopping-bag mr-1"></i>Rendeléseim
             </a>
+            <a href="/webshop/profil/kuponjaim"
+               class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
+                      <?= $section === 'coupons' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700' ?>">
+                <i class="las la-ticket-alt mr-1"></i>Kuponjaim
+            </a>
             <a href="/webshop/profil/biztonsag"
                class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
                       <?= $section === 'security' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700' ?>">
@@ -299,6 +336,11 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                     class="block px-4 py-2 rounded-lg font-medium 
                    <?= $section === 'orders' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
                     Rendeléseim
+                </a>
+                <a href="/webshop/profil/kuponjaim"
+                    class="block px-4 py-2 rounded-lg font-medium 
+                   <?= $section === 'coupons' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
+                    Kuponjaim
                 </a>
                 <a href="/webshop/profil/biztonsag"
                     class="block px-4 py-2 rounded-lg font-medium 
@@ -574,6 +616,116 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                 <span class="px-3 py-1 rounded-full text-xs font-medium <?= $returnStatusColors[$return['status']] ?>">
                                     <?= $returnStatusTexts[$return['status']] ?>
                                 </span>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+
+        <?php elseif ($section === 'coupons'): ?>
+
+            <h2 class="text-2xl font-semibold mb-6">
+                <i class="las la-ticket-alt mr-2"></i>
+                Kuponjaim
+            </h2>
+
+            <!-- KUPON AKTIVÁLÁS -->
+            <div class="mb-8">
+                <form id="activateCouponForm" class="flex gap-2">
+                    <input type="text" name="coupon_code" id="couponCodeInput"
+                           placeholder="Kuponkód megadása..."
+                           class="flex-1 border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black">
+                    <button type="submit" class="bg-black text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition">
+                        <i class="las la-plus mr-1"></i>Aktiválás
+                    </button>
+                </form>
+                <p id="couponMessage" class="text-sm mt-2 hidden"></p>
+            </div>
+
+            <!-- AKTIVÁLHATÓ KUPONOK -->
+            <?php if (!empty($availableCoupons)): ?>
+            <div class="mb-8">
+                <h3 class="text-lg font-medium mb-4 text-green-600">
+                    <i class="las la-gift mr-1"></i>Elérhető kuponok
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <?php foreach ($availableCoupons as $coupon): ?>
+                        <div class="border-2 border-dashed border-green-300 rounded-lg p-4 bg-green-50">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-bold text-lg text-green-700"><?= htmlspecialchars($coupon['name']) ?></p>
+                                    <p class="text-sm text-gray-600 mt-1"><?= htmlspecialchars($coupon['description']) ?></p>
+                                    <p class="text-2xl font-bold text-green-600 mt-2">-<?= number_format($coupon['amount'], 0, ',', ' ') ?>%</p>
+                                    <p class="text-xs text-gray-500 mt-2">
+                                        Érvényes: <?= date('Y.m.d', strtotime($coupon['end_date'])) ?>-ig
+                                    </p>
+                                </div>
+                                <button onclick="activateCoupon('<?= htmlspecialchars($coupon['coupon_pass']) ?>')" 
+                                        class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition">
+                                    <i class="las la-check mr-1"></i>Aktiválás
+                                </button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <!-- AKTIVÁLT KUPONOK -->
+            <h3 class="text-lg font-medium mb-4">
+                <i class="las la-tags mr-1"></i>Aktivált kuponjaim
+            </h3>
+
+            <?php if (empty($userCoupons)): ?>
+                <div class="text-center py-12">
+                    <i class="las la-ticket-alt text-gray-300 text-6xl mb-4"></i>
+                    <p class="text-gray-500 text-lg mb-2">Még nincs aktivált kuponod</p>
+                    <p class="text-gray-400 text-sm">Add meg a kuponkódot fent, vagy aktiváld az elérhető kuponokat!</p>
+                </div>
+            <?php else: ?>
+                <div class="space-y-4">
+                    <?php foreach ($userCoupons as $coupon): ?>
+                        <?php
+                        $statusClasses = [
+                            'active' => 'border-green-300 bg-green-50',
+                            'used' => 'border-gray-300 bg-gray-50 opacity-60',
+                            'expired' => 'border-red-300 bg-red-50 opacity-60'
+                        ];
+                        $statusTexts = [
+                            'active' => '<span class="text-green-600 font-medium"><i class="las la-check-circle mr-1"></i>Aktív</span>',
+                            'used' => '<span class="text-gray-500"><i class="las la-shopping-cart mr-1"></i>Felhasználva</span>',
+                            'expired' => '<span class="text-red-500"><i class="las la-clock mr-1"></i>Lejárt</span>'
+                        ];
+                        ?>
+                        <div class="border-2 border-dashed <?= $statusClasses[$coupon['status']] ?> rounded-lg p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-bold text-lg"><?= htmlspecialchars($coupon['name']) ?></p>
+                                    <p class="text-sm text-gray-600 mt-1"><?= htmlspecialchars($coupon['description']) ?></p>
+                                    <p class="text-2xl font-bold mt-2 <?= $coupon['status'] === 'active' ? 'text-green-600' : 'text-gray-400' ?>">
+                                        -<?= number_format($coupon['amount'], 0, ',', ' ') ?>%
+                                    </p>
+                                    <div class="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                                        <span><i class="las la-calendar-plus mr-1"></i>Aktiválva: <?= date('Y.m.d', strtotime($coupon['activated_at'])) ?></span>
+                                        <span><i class="las la-calendar-times mr-1"></i>Lejárat: <?= date('Y.m.d', strtotime($coupon['end_date'])) ?></span>
+                                    </div>
+                                    <?php if ($coupon['status'] === 'active'): ?>
+                                        <p class="mt-3 text-sm">
+                                            <span class="bg-gray-100 px-3 py-1 rounded font-mono text-gray-700">
+                                                <?= htmlspecialchars($coupon['coupon_pass']) ?>
+                                            </span>
+                                            <span class="text-gray-400 ml-2">- Használd a pénztárnál</span>
+                                        </p>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="text-right">
+                                    <?= $statusTexts[$coupon['status']] ?>
+                                    <?php if ($coupon['used_at']): ?>
+                                        <p class="text-xs text-gray-400 mt-1">
+                                            <?= date('Y.m.d', strtotime($coupon['used_at'])) ?>
+                                        </p>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </div>
                     <?php endforeach; ?>

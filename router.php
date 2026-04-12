@@ -98,7 +98,8 @@ if (!empty($parts[0])) {
                 'kivansaglista' => 'favorites',
                 'rendelesek' => 'orders',
                 'biztonsag' => 'security',
-                'visszakuldott' => 'returns'
+                'visszakuldott' => 'returns',
+                'kuponjaim' => 'coupons'
             ];
             if (!empty($parts[1]) && isset($sectionMap[$parts[1]])) {
                 $_GET['section'] = $sectionMap[$parts[1]];
