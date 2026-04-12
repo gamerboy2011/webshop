@@ -86,10 +86,12 @@ try {
     
     
     $stmt = $pdo->prepare("
-        SELECT email, username,
-               billing_postcode, billing_city, billing_street_name, 
-               billing_street_type, billing_house_number, billing_floor_door
-        FROM users WHERE user_id = ?
+        SELECT u.email, u.username,
+               u.billing_postcode, u.billing_city, u.billing_street_name, 
+               st.name as billing_street_type, u.billing_house_number, u.billing_floor_door
+        FROM users u
+        LEFT JOIN street_type st ON u.billing_street_type_id = st.street_type_id
+        WHERE u.user_id = ?
     ");
     $stmt->execute([$userId]);
     $user = $stmt->fetch();

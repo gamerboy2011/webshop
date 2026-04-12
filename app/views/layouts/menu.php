@@ -140,11 +140,11 @@ $menuCategories = [
 
                         <?php if (empty($_SESSION['logged_in'])): ?>
 
-                            <a href="/webshop/login" class="block px-4 py-3 hover:bg-gray-50 transition">
+                            <a href="/webshop/login" class="block px-4 py-3 hover:bg-gray-50 transition rounded-t-lg">
                                 <i class="las la-sign-in-alt mr-2"></i> Bejelentkezés
                             </a>
 
-                            <a href="/webshop/register" class="block px-4 py-3 hover:bg-gray-50 transition">
+                            <a href="/webshop/register" class="block px-4 py-3 hover:bg-gray-50 transition rounded-b-lg">
                                 <i class="las la-user-plus mr-2"></i> Regisztráció
                             </a>
 
@@ -162,7 +162,7 @@ $menuCategories = [
                             <form method="POST" action="/webshop/logout" class="border-t">
                                 <?= csrf_field(); ?>
                                 <input type="hidden" name="action" value="logout">
-                                <button type="submit" class="w-full text-left px-4 py-3 text-red-600 hover:bg-gray-50 transition">
+                                <button type="submit" class="w-full text-left px-4 py-3 text-red-600 hover:bg-gray-50 transition rounded-b-lg">
                                     <i class="las la-sign-out-alt mr-2"></i> Kijelentkezés
                                 </button>
                             </form>

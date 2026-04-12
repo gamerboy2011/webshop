@@ -240,12 +240,12 @@ try {
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Közterület típusa *</label>
-                            <select name="shipping_street_type" id="shipping_street_type"
+                            <select name="shipping_street_type_id" id="shipping_street_type_id"
                                     class="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black bg-white">
                                 <option value="">Válassz...</option>
                                 <?php foreach ($streetTypes as $type): ?>
-                                    <option value="<?= htmlspecialchars($type['name']) ?>"
-                                        <?= ($user['shipping_street_type'] ?? '') === $type['name'] ? 'selected' : '' ?>>
+                                    <option value="<?= $type['street_type_id'] ?>"
+                                        <?= ($user['shipping_street_type_id'] ?? '') == $type['street_type_id'] ? 'selected' : '' ?>>
                                         <?= htmlspecialchars($type['name']) ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -668,12 +668,13 @@ if (postcodeInput) {
 // Cím összeállítása a hidden mezőbe
 function buildFullAddress() {
     const streetName = document.getElementById('shipping_street_name')?.value || '';
-    const streetType = document.getElementById('shipping_street_type')?.value || '';
+    const streetTypeSelect = document.getElementById('shipping_street_type_id');
+    const streetType = streetTypeSelect?.selectedOptions[0]?.text || '';
     const houseNumber = document.getElementById('shipping_house_number')?.value || '';
     const floorDoor = document.getElementById('shipping_floor_door')?.value || '';
     
     let address = streetName;
-    if (streetType) address += ' ' + streetType;
+    if (streetType && streetType !== 'Válassz...') address += ' ' + streetType;
     if (houseNumber) address += ' ' + houseNumber;
     if (floorDoor) address += ' ' + floorDoor;
     
@@ -684,7 +685,7 @@ function buildFullAddress() {
 }
 
 // Cím mezők változásakor frissítsük a hidden mezőt
-['shipping_street_name', 'shipping_street_type', 'shipping_house_number', 'shipping_floor_door'].forEach(id => {
+['shipping_street_name', 'shipping_street_type_id', 'shipping_house_number', 'shipping_floor_door'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', buildFullAddress);
     if (el) el.addEventListener('change', buildFullAddress);
@@ -842,7 +843,7 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         const postcode = document.getElementById('shipping_postcode')?.value;
         const city = document.getElementById('shipping_city')?.value;
         const streetName = document.getElementById('shipping_street_name')?.value;
-        const streetType = document.getElementById('shipping_street_type')?.value;
+        const streetTypeId = document.getElementById('shipping_street_type_id')?.value;
         const houseNumber = document.getElementById('shipping_house_number')?.value;
         
         if (!postcode || postcode.length !== 4) {
@@ -860,7 +861,7 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
             alert('Kérlek add meg a közterület nevét!');
             return;
         }
-        if (!streetType) {
+        if (!streetTypeId) {
             e.preventDefault();
             alert('Kérlek válaszd ki a közterület típusát!');
             return;

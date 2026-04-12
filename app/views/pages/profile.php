@@ -182,30 +182,45 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
     
     else {
         
-        $shipping_postcode      = trim($_POST['shipping_postcode'] ?? '');
-        $shipping_city          = trim($_POST['shipping_city'] ?? '');
-        $shipping_street_name   = trim($_POST['shipping_street_name'] ?? '');
-        $shipping_street_type   = trim($_POST['shipping_street_type'] ?? '');
-        $shipping_house_number  = trim($_POST['shipping_house_number'] ?? '');
-        $shipping_floor_door    = trim($_POST['shipping_floor_door'] ?? '');
+        $shipping_postcode         = trim($_POST['shipping_postcode'] ?? '');
+        $shipping_city             = trim($_POST['shipping_city'] ?? '');
+        $shipping_street_name      = trim($_POST['shipping_street_name'] ?? '');
+        $shipping_street_type_id   = !empty($_POST['shipping_street_type_id']) ? (int)$_POST['shipping_street_type_id'] : null;
+        $shipping_house_number     = trim($_POST['shipping_house_number'] ?? '');
+        $shipping_floor_door       = trim($_POST['shipping_floor_door'] ?? '');
 
-        
+        // City ID keresése postcode alapján
+        $shipping_city_id = null;
+        if ($shipping_postcode) {
+            $stmt = $pdo->prepare("SELECT city_id FROM city WHERE postcode = ?");
+            $stmt->execute([(int)$shipping_postcode]);
+            $shipping_city_id = $stmt->fetchColumn() ?: null;
+        }
+
         $sameBilling = isset($_POST['sameBilling']);
 
         if ($sameBilling) {
-            $billing_postcode      = $shipping_postcode;
-            $billing_city          = $shipping_city;
-            $billing_street_name   = $shipping_street_name;
-            $billing_street_type   = $shipping_street_type;
-            $billing_house_number  = $shipping_house_number;
-            $billing_floor_door    = $shipping_floor_door;
+            $billing_postcode         = $shipping_postcode;
+            $billing_city             = $shipping_city;
+            $billing_city_id          = $shipping_city_id;
+            $billing_street_name      = $shipping_street_name;
+            $billing_street_type_id   = $shipping_street_type_id;
+            $billing_house_number     = $shipping_house_number;
+            $billing_floor_door       = $shipping_floor_door;
         } else {
-            $billing_postcode      = trim($_POST['billing_postcode'] ?? '');
-            $billing_city          = trim($_POST['billing_city'] ?? '');
-            $billing_street_name   = trim($_POST['billing_street_name'] ?? '');
-            $billing_street_type   = trim($_POST['billing_street_type'] ?? '');
-            $billing_house_number  = trim($_POST['billing_house_number'] ?? '');
-            $billing_floor_door    = trim($_POST['billing_floor_door'] ?? '');
+            $billing_postcode         = trim($_POST['billing_postcode'] ?? '');
+            $billing_city             = trim($_POST['billing_city'] ?? '');
+            $billing_street_name      = trim($_POST['billing_street_name'] ?? '');
+            $billing_street_type_id   = !empty($_POST['billing_street_type_id']) ? (int)$_POST['billing_street_type_id'] : null;
+            $billing_house_number     = trim($_POST['billing_house_number'] ?? '');
+            $billing_floor_door       = trim($_POST['billing_floor_door'] ?? '');
+            
+            $billing_city_id = null;
+            if ($billing_postcode) {
+                $stmt = $pdo->prepare("SELECT city_id FROM city WHERE postcode = ?");
+                $stmt->execute([(int)$billing_postcode]);
+                $billing_city_id = $stmt->fetchColumn() ?: null;
+            }
         }
 
         $phone = trim($_POST['phone'] ?? '');
@@ -214,15 +229,17 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
             UPDATE users SET
                 shipping_postcode = ?,
                 shipping_city = ?,
+                shipping_city_id = ?,
                 shipping_street_name = ?,
-                shipping_street_type = ?,
+                shipping_street_type_id = ?,
                 shipping_house_number = ?,
                 shipping_floor_door = ?,
 
                 billing_postcode = ?,
                 billing_city = ?,
+                billing_city_id = ?,
                 billing_street_name = ?,
-                billing_street_type = ?,
+                billing_street_type_id = ?,
                 billing_house_number = ?,
                 billing_floor_door = ?,
 
@@ -233,15 +250,17 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt->execute([
             $shipping_postcode,
             $shipping_city,
+            $shipping_city_id,
             $shipping_street_name,
-            $shipping_street_type,
+            $shipping_street_type_id,
             $shipping_house_number,
             $shipping_floor_door,
 
             $billing_postcode,
             $billing_city,
+            $billing_city_id,
             $billing_street_name,
-            $billing_street_type,
+            $billing_street_type_id,
             $billing_house_number,
             $billing_floor_door,
 
@@ -261,15 +280,17 @@ $stmt = $pdo->prepare("
 
         shipping_postcode,
         shipping_city,
+        shipping_city_id,
         shipping_street_name,
-        shipping_street_type,
+        shipping_street_type_id,
         shipping_house_number,
         shipping_floor_door,
 
         billing_postcode,
         billing_city,
+        billing_city_id,
         billing_street_name,
-        billing_street_type,
+        billing_street_type_id,
         billing_house_number,
         billing_floor_door,
 
@@ -812,12 +833,12 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                             value="<?= htmlspecialchars($user['shipping_street_name'] ?? '') ?>">
 
                         <select class="border p-2 rounded bg-white"
-                            name="shipping_street_type"
-                            id="shipping_street_type">
+                            name="shipping_street_type_id"
+                            id="shipping_street_type_id">
                             <option value="">Közterület típusa...</option>
                             <?php foreach ($streetTypes as $type): ?>
-                                <option value="<?= htmlspecialchars($type['name']) ?>"
-                                    <?= ($user['shipping_street_type'] ?? '') === $type['name'] ? 'selected' : '' ?>>
+                                <option value="<?= $type['street_type_id'] ?>"
+                                    <?= ($user['shipping_street_type_id'] ?? '') == $type['street_type_id'] ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($type['name']) ?>
                                 </option>
                             <?php endforeach; ?>
@@ -867,12 +888,12 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                             value="<?= htmlspecialchars($user['billing_street_name'] ?? '') ?>">
 
                         <select class="border p-2 rounded bg-white"
-                            name="billing_street_type"
-                            id="billing_street_type">
+                            name="billing_street_type_id"
+                            id="billing_street_type_id">
                             <option value="">Közterület típusa...</option>
                             <?php foreach ($streetTypes as $type): ?>
-                                <option value="<?= htmlspecialchars($type['name']) ?>"
-                                    <?= ($user['billing_street_type'] ?? '') === $type['name'] ? 'selected' : '' ?>>
+                                <option value="<?= $type['street_type_id'] ?>"
+                                    <?= ($user['billing_street_type_id'] ?? '') == $type['street_type_id'] ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($type['name']) ?>
                                 </option>
                             <?php endforeach; ?>

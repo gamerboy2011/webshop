@@ -36,6 +36,7 @@ class OrderController
         $shippingPostcode = trim($_POST['shipping_postcode'] ?? '');
         $shippingCity = trim($_POST['shipping_city'] ?? '');
         $shippingAddress = trim($_POST['shipping_address'] ?? '');
+        $shippingStreetTypeId = !empty($_POST['shipping_street_type_id']) ? (int)$_POST['shipping_street_type_id'] : null;
         
         
         $foxpostPointId = trim($_POST['foxpost_point_id'] ?? '');
@@ -59,6 +60,7 @@ class OrderController
                 'shipping_postcode' => $shippingPostcode,
                 'shipping_city' => $shippingCity,
                 'shipping_address' => $shippingAddress,
+                'shipping_street_type_id' => $shippingStreetTypeId,
                 'foxpost_point_id' => $foxpostPointId,
                 'foxpost_point_name' => $foxpostPointName,
                 'foxpost_point_address' => $foxpostPointAddress,
@@ -167,18 +169,28 @@ class OrderController
             
             
             if ($deliveryMethodId == 2 && $shippingPostcode && $shippingCity) {
+                // City ID keresése
+                $shippingCityId = null;
+                $stmt = $this->pdo->prepare("SELECT city_id FROM city WHERE postcode = ?");
+                $stmt->execute([(int)$shippingPostcode]);
+                $shippingCityId = $stmt->fetchColumn() ?: null;
+                
                 $stmt = $this->pdo->prepare("
                     UPDATE users SET 
                         shipping_postcode = ?,
                         shipping_city = ?,
+                        shipping_city_id = ?,
                         shipping_street_name = ?,
+                        shipping_street_type_id = ?,
                         phone = COALESCE(NULLIF(phone, ''), ?)
                     WHERE user_id = ?
                 ");
                 $stmt->execute([
                     $shippingPostcode,
                     $shippingCity,
+                    $shippingCityId,
                     $shippingAddress,
+                    $shippingStreetTypeId,
                     $shippingPhone,
                     $userId
                 ]);
@@ -199,10 +211,12 @@ class OrderController
             
             
             $stmt = $this->pdo->prepare("
-                SELECT email, username,
-                       billing_postcode, billing_city, billing_street_name, 
-                       billing_street_type, billing_house_number, billing_floor_door
-                FROM users WHERE user_id = ?
+                SELECT u.email, u.username,
+                       u.billing_postcode, u.billing_city, u.billing_street_name, 
+                       st.name as billing_street_type, u.billing_house_number, u.billing_floor_door
+                FROM users u
+                LEFT JOIN street_type st ON u.billing_street_type_id = st.street_type_id
+                WHERE u.user_id = ?
             ");
             $stmt->execute([$userId]);
             $user = $stmt->fetch();
