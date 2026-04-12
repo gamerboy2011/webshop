@@ -113,14 +113,14 @@ const API = {
     // ============ FAVORITES ============
     favorites: {
         /**
-         * Kedvencek listázása
+         * Kívánságlista lekérése
          */
         async list() {
             return API.request('/favorites');
         },
         
         /**
-         * Kedvencekhez adás
+         * Kívánságlistához adás
          */
         async add(productId) {
             return API.request('/favorites', {
@@ -130,7 +130,7 @@ const API = {
         },
         
         /**
-         * Kedvencekből törlés
+         * Kívánságlistáról törlés
          */
         async remove(productId) {
             return API.request('/favorites/' + productId, {

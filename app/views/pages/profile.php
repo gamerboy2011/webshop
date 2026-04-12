@@ -251,25 +251,33 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 <div class="max-w-6xl mx-auto mt-6 md:mt-12 px-4 md:px-0">
 
+    <!-- Profil fejléc -->
+    <div class="mb-6">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-900">
+            <i class="las la-user-circle mr-2"></i>Profilom
+        </h1>
+        <p class="text-gray-500 mt-1">Üdvözlünk, <span class="font-medium text-gray-700"><?= htmlspecialchars($user['username']) ?></span>!</p>
+    </div>
+
     <!-- MOBIL: Horizontális menü -->
     <div class="md:hidden mb-4 -mx-4 px-4">
         <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            <a href="profil?section=favorites"
+            <a href="/webshop/profil/kivansaglista"
                class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
                       <?= $section === 'favorites' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700' ?>">
-                <i class="lar la-heart mr-1"></i>Kedvencek
+                <i class="lar la-heart mr-1"></i>Kívánságlistám
             </a>
-            <a href="profil?section=orders"
+            <a href="/webshop/profil/rendelesek"
                class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
                       <?= $section === 'orders' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700' ?>">
-                <i class="las la-shopping-bag mr-1"></i>Rendelések
+                <i class="las la-shopping-bag mr-1"></i>Rendeléseim
             </a>
-            <a href="profil?section=security"
+            <a href="/webshop/profil/biztonsag"
                class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
                       <?= $section === 'security' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700' ?>">
                 <i class="las la-user-shield mr-1"></i>Profil
             </a>
-            <a href="profil?section=returns"
+            <a href="/webshop/profil/visszakuldott"
                class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
                       <?= $section === 'returns' ? 'bg-black text-white' : 'bg-gray-100 text-gray-700' ?>">
                 <i class="las la-undo-alt mr-1"></i>Visszaküldések
@@ -282,22 +290,22 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
         <!-- DESKTOP: Sidebar -->
         <aside class="hidden md:block bg-white p-6 rounded-xl shadow-md h-fit">
             <nav class="space-y-3 text-sm">
-                <a href="profil?section=favorites"
+                <a href="/webshop/profil/kivansaglista"
                     class="block px-4 py-2 rounded-lg font-medium 
                    <?= $section === 'favorites' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
-                    Kedvencek
+                    Kívánságlistám
                 </a>
-                <a href="profil?section=orders"
+                <a href="/webshop/profil/rendelesek"
                     class="block px-4 py-2 rounded-lg font-medium 
                    <?= $section === 'orders' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
-                    Rendeléseid
+                    Rendeléseim
                 </a>
-                <a href="profil?section=security"
+                <a href="/webshop/profil/biztonsag"
                     class="block px-4 py-2 rounded-lg font-medium 
                    <?= $section === 'security' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
                     Profil &amp; Biztonság
                 </a>
-                <a href="profil?section=returns"
+                <a href="/webshop/profil/visszakuldott"
                     class="block px-4 py-2 rounded-lg font-medium 
                    <?= $section === 'returns' ? 'bg-black text-white' : 'hover:bg-gray-100' ?>">
                     Visszaküldött termékek
@@ -311,13 +319,13 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             <h2 class="text-2xl font-semibold mb-6">
                 <i class="lar la-heart text-red-500 mr-2"></i>
-                Kedvenceim
+                Kívánságlistám
             </h2>
 
             <?php if (empty($favorites)): ?>
                 <div class="text-center py-12">
                     <i class="lar la-heart text-gray-300 text-6xl mb-4"></i>
-                    <p class="text-gray-500 text-lg mb-2">Még nincs kedvenc terméked</p>
+                    <p class="text-gray-500 text-lg mb-2">A kívánságlistád még üres</p>
                     <p class="text-gray-400 text-sm mb-6">Böngészd a termékeket és kattints a szív ikonra!</p>
                     <a href="/webshop/" class="inline-block bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition">
                         Termékek böngészése
@@ -382,7 +390,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                 </div>
                 
                 <p class="text-center text-gray-400 text-sm mt-6">
-                    <?= count($favorites) ?> termék a kedvenceid között
+                    <?= count($favorites) ?> termék a kívánságlistádon
                 </p>
             <?php endif; ?>
 

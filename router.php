@@ -93,6 +93,16 @@ if (!empty($parts[0])) {
 
         case 'profil':
             $page = 'profile';
+            // Profil szekciók kezelése
+            $sectionMap = [
+                'kivansaglista' => 'favorites',
+                'rendelesek' => 'orders',
+                'biztonsag' => 'security',
+                'visszakuldott' => 'returns'
+            ];
+            if (!empty($parts[1]) && isset($sectionMap[$parts[1]])) {
+                $_GET['section'] = $sectionMap[$parts[1]];
+            }
             break;
 
         

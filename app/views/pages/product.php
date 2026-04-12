@@ -161,7 +161,7 @@ if (isset($_SESSION['user_id'])) {
                            <?= $isFavorite ? 'text-red-500 border-red-400' : 'text-gray-400 hover:text-gray-600' ?>"
                     data-product="<?= $productId ?>"
                     data-logged="<?= isset($_SESSION['user_id']) ? '1' : '0' ?>"
-                    aria-label="Kedvencekhez adás">
+                    aria-label="Kívánságlistához adás">
                     ♥
                 </button>
             </div>
@@ -324,7 +324,7 @@ if (isset($_SESSION['user_id'])) {
                                        transition-colors flex items-center justify-center gap-2
                                        <?= $isFavorite ? 'border-red-400 text-red-500 bg-red-50' : 'border-gray-200 text-gray-700 hover:border-gray-400' ?>">
                             <i class="<?= $isFavorite ? 'las' : 'lar' ?> la-heart text-xl"></i>
-                            <span><?= $isFavorite ? 'Eltávolítás a kedvencekből' : 'Kívánságlistára' ?></span>
+                            <span><?= $isFavorite ? 'Eltávolítás a kívánságlistáról' : 'Kívánságlistára' ?></span>
                         </button>
 
                         <!-- Termékleírás -->
@@ -487,7 +487,7 @@ function toggleWishlist(productId) {
                 btn.classList.add('border-red-400', 'text-red-500', 'bg-red-50');
                 icon.classList.remove('lar');
                 icon.classList.add('las');
-                text.textContent = 'Eltávolítás a kedvencekből';
+                text.textContent = 'Eltávolítás a kívánságlistáról';
                 if (heartBtn) {
                     heartBtn.classList.remove('text-gray-400');
                     heartBtn.classList.add('text-red-500', 'border-red-400');

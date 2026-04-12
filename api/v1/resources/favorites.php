@@ -16,7 +16,7 @@ $resourceId = $segments[1] ?? null;
 $userId = $_SESSION['user_id'] ?? null;
 
 if (!$userId) {
-    ApiResponse::unauthorized('Bejelentkezés szükséges a kedvencek kezeléséhez');
+    ApiResponse::unauthorized('Bejelentkezés szükséges a kívánságlista kezeléséhez');
 }
 
 switch ($method) {
@@ -40,7 +40,7 @@ switch ($method) {
         
         
         if ($favoriteModel->isFavorite($userId, $productId)) {
-            ApiResponse::badRequest('A termék már a kedvencek között van');
+            ApiResponse::badRequest('A termék már a kívánságlistán van');
         }
         
         
@@ -48,9 +48,9 @@ switch ($method) {
         $result = $stmt->execute([$userId, $productId]);
         
         if ($result) {
-            ApiResponse::created(['message' => 'Termék hozzáadva a kedvencekhez']);
+            ApiResponse::created(['message' => 'Termék hozzáadva a kívánságlistához']);
         } else {
-            ApiResponse::serverError('Nem sikerült hozzáadni a kedvencekhez');
+            ApiResponse::serverError('Nem sikerült hozzáadni a kívánságlistához');
         }
         break;
         
@@ -65,7 +65,7 @@ switch ($method) {
         if ($result) {
             ApiResponse::noContent();
         } else {
-            ApiResponse::notFound('A termék nem található a kedvencek között');
+            ApiResponse::notFound('A termék nem található a kívánságlistán');
         }
         break;
         

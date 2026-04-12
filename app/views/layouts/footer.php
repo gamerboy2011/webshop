@@ -10,7 +10,7 @@
             
             <h3 class="text-xl font-bold text-gray-900 mb-2">Hoppá!</h3>
             <p class="text-gray-500 mb-6">
-                A kedvencek használatához be kell jelentkezned.
+                A kívánságlista használatához be kell jelentkezned.
             </p>
             
             <div class="flex flex-col gap-3">
