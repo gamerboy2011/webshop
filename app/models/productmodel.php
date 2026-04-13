@@ -71,11 +71,8 @@ class ProductModel
                 st.quantity
             FROM stock st
             JOIN size sz ON st.size_id = sz.size_id
-            JOIN product p ON st.product_id = p.product_id
-            JOIN product_subtype ps ON p.subtype_id = ps.product_subtype_id
             WHERE st.product_id = :id
               AND st.quantity > 0
-              AND sz.product_type_id = ps.product_type_id
             ORDER BY sz.size_id
         ");
         $stmt->execute(['id' => $productId]);

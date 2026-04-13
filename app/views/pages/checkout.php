@@ -15,8 +15,8 @@ if (empty($cart)) {
 
 $stmt = $pdo->prepare("
     SELECT u.*, 
-           sc.name as shipping_city_name,
-           bc.name as billing_city_name
+           sc.city_name as shipping_city_name,
+           bc.city_name as billing_city_name
     FROM users u
     LEFT JOIN city sc ON u.shipping_city_id = sc.city_id
     LEFT JOIN city bc ON u.billing_city_id = bc.city_id

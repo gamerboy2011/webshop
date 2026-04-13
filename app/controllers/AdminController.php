@@ -77,7 +77,7 @@ class AdminController
                    o.created_at AS order_date,
                    o.shipping_name, o.shipping_phone, 
                    COALESCE(NULLIF(o.shipping_postcode, ''), u.shipping_postcode) AS shipping_postcode,
-                   COALESCE(NULLIF(o.shipping_city, ''), u.shipping_city, c.name) AS shipping_city,
+                   COALESCE(NULLIF(o.shipping_city, ''), u.shipping_city, c.city_name) AS shipping_city,
                    o.shipping_address,
                    o.foxpost_point_id, o.foxpost_point_name, o.foxpost_point_address,
                    o.status,

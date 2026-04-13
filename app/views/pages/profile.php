@@ -279,7 +279,7 @@ $stmt = $pdo->prepare("
         u.email,
 
         u.shipping_postcode,
-        COALESCE(u.shipping_city, sc.name) as shipping_city,
+        COALESCE(u.shipping_city, sc.city_name) as shipping_city,
         u.shipping_city_id,
         u.shipping_street_name,
         u.shipping_street_type_id,
@@ -287,7 +287,7 @@ $stmt = $pdo->prepare("
         u.shipping_floor_door,
 
         u.billing_postcode,
-        COALESCE(u.billing_city, bc.name) as billing_city,
+        COALESCE(u.billing_city, bc.city_name) as billing_city,
         u.billing_city_id,
         u.billing_street_name,
         u.billing_street_type_id,
