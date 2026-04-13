@@ -1,11 +1,6 @@
 <?php
 $orderId = $_SESSION['order_success'] ?? null;
 unset($_SESSION['order_success']);
-
-if (!$orderId) {
-    header('Location: /webshop/');
-    exit;
-}
 ?>
 
 <div class="max-w-2xl mx-auto px-4 py-16 text-center">

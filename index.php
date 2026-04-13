@@ -20,6 +20,12 @@ if (in_array($currentPage, ['login', 'register', 'cart', 'checkout', 'profile', 
     $hideHero = true;
 }
 
+// Order success ellenőrzés - ha nincs order_success session, redirect
+if ($currentPage === 'order-success' && empty($_SESSION['order_success'])) {
+    header('Location: /webshop/');
+    exit;
+}
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     

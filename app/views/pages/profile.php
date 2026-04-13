@@ -1117,7 +1117,46 @@ async function removeFavorite(productId, btn) {
     }
 }
 
-/* ===== VISSZAKÜLDÉS MODAL ===== */
+/* ===== KUPON AKTIVÁLÁS ===== */
+async function activateCoupon(code) {
+    const messageEl = document.getElementById('couponMessage');
+    
+    try {
+        const response = await fetch('/webshop/api/v1/coupons', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: code })
+        });
+        
+        const data = await response.json();
+        
+        messageEl.classList.remove('hidden', 'text-green-600', 'text-red-600');
+        
+        if (response.ok && data.success) {
+            messageEl.classList.add('text-green-600');
+            messageEl.innerHTML = '<i class="las la-check-circle mr-1"></i>' + data.data.message;
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            messageEl.classList.add('text-red-600');
+            messageEl.innerHTML = '<i class="las la-times-circle mr-1"></i>' + (data.message || 'Hiba történt');
+        }
+    } catch (err) {
+        messageEl.classList.remove('hidden');
+        messageEl.classList.add('text-red-600');
+        messageEl.innerHTML = '<i class="las la-times-circle mr-1"></i>Hiba történt a kupon aktiválásakor.';
+    }
+}
+
+// Kupon form kezelése
+document.getElementById('activateCouponForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const code = document.getElementById('couponCodeInput').value.trim();
+    if (code) {
+        activateCoupon(code);
+    }
+});
+
+/* ===== VISSZAÜLDÉS MODAL ===== */
 function openReturnModal(orderId) {
     document.getElementById('returnOrderId').value = orderId;
     document.getElementById('returnModal').classList.remove('hidden');

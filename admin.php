@@ -24,7 +24,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     
     if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
-        die('CSRF token érvénytelen');
+        // Új token generálása és redirect
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        $_SESSION['admin_error'] = 'A munkamenet lejárt. Kérjük, próbáld újra.';
+        $referer = $_SERVER['HTTP_REFERER'] ?? '/webshop/yw-admin';
+        header('Location: ' . $referer);
+        exit;
     }
     
     $postAction = $_POST['action'] ?? '';
@@ -337,20 +342,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $qrCodePath = null;
             if ($couponPass) {
-                // Hotspot IP cím a QR kódhoz
-                $qrUrl = "http://172.20.10.2/webshop/kuponok/$couponPass";
-                
+                // QR kód URL - a domén vagy locális cím
+                $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+                $qrUrl = "http://{$host}/webshop/kuponok/$couponPass";
                 
                 $qrApiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($qrUrl);
                 
                 $qrDir = __DIR__ . '/storage/uploads/qrcodes';
                 if (!is_dir($qrDir)) {
-                    mkdir($qrDir, 0755, true);
+                    mkdir($qrDir, 0777, true);
+                }
+                
+                // Biztosítsuk, hogy írható a könyvtár
+                if (!is_writable($qrDir)) {
+                    chmod($qrDir, 0777);
                 }
                 
                 $qrFileName = 'qr_' . $couponPass . '_' . time() . '.png';
                 $qrFilePath = $qrDir . '/' . $qrFileName;
-                
                 
                 $ch = curl_init($qrApiUrl);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -359,11 +368,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                 $qrImage = curl_exec($ch);
                 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $curlError = curl_error($ch);
                 curl_close($ch);
                 
                 if ($qrImage !== false && $httpCode === 200 && strlen($qrImage) > 100) {
-                    file_put_contents($qrFilePath, $qrImage);
-                    $qrCodePath = 'storage/uploads/qrcodes/' . $qrFileName;
+                    if (@file_put_contents($qrFilePath, $qrImage)) {
+                        $qrCodePath = 'storage/uploads/qrcodes/' . $qrFileName;
+                    } else {
+                        error_log("QR kód mentési hiba: " . $qrFilePath);
+                    }
+                } else {
+                    error_log("QR kód letöltési hiba: HTTP $httpCode, curl: $curlError");
                 }
             }
             

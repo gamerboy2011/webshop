@@ -121,6 +121,22 @@
             
             <!-- PAGE CONTENT -->
             <div class="p-8">
+                <?php if (!empty($_SESSION['admin_error'])): ?>
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+                        <i class="las la-exclamation-circle mr-2"></i>
+                        <?= htmlspecialchars($_SESSION['admin_error']) ?>
+                    </div>
+                    <?php unset($_SESSION['admin_error']); ?>
+                <?php endif; ?>
+                
+                <?php if (!empty($_SESSION['admin_success'])): ?>
+                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
+                        <i class="las la-check-circle mr-2"></i>
+                        <?= htmlspecialchars($_SESSION['admin_success']) ?>
+                    </div>
+                    <?php unset($_SESSION['admin_success']); ?>
+                <?php endif; ?>
+                
                 <?php require $viewFile; ?>
             </div>
             

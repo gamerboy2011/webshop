@@ -68,6 +68,62 @@ switch ($method) {
         ]);
         break;
         
+    case 'POST':
+        // Kupon aktiválása
+        if (!$userId) {
+            ApiResponse::unauthorized('Jelentkezz be a kupon aktiválásához');
+        }
+        
+        $input = json_decode(file_get_contents('php://input'), true);
+        $code = $input['code'] ?? $couponCode ?? null;
+        
+        if (!$code) {
+            ApiResponse::badRequest('Hiányzó kuponkód');
+        }
+        
+        // Kupon keresése
+        $stmt = $pdo->prepare("
+            SELECT * FROM coupons 
+            WHERE coupon_pass = ? AND is_active = 1
+            LIMIT 1
+        ");
+        $stmt->execute([$code]);
+        $coupon = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$coupon) {
+            ApiResponse::notFound('Érvénytelen kuponkód');
+        }
+        
+        // Ellenőrzés - érvényesség
+        $today = date('Y-m-d');
+        if ($today < $coupon['start_date']) {
+            ApiResponse::badRequest('A kupon még nem aktív');
+        }
+        if ($today > $coupon['end_date']) {
+            ApiResponse::badRequest('A kupon lejárt');
+        }
+        
+        // Ellenőrzés - már aktiválta-e
+        $stmt = $pdo->prepare("SELECT id FROM user_coupons WHERE user_id = ? AND coupon_id = ?");
+        $stmt->execute([$userId, $coupon['id']]);
+        if ($stmt->fetch()) {
+            ApiResponse::badRequest('Már aktiváltad ezt a kupont');
+        }
+        
+        // Aktiválás
+        $stmt = $pdo->prepare("INSERT INTO user_coupons (user_id, coupon_id, activated_at) VALUES (?, ?, NOW())");
+        $stmt->execute([$userId, $coupon['id']]);
+        
+        ApiResponse::success([
+            'message' => 'Kupon sikeresen aktiválva!',
+            'coupon' => [
+                'name' => $coupon['name'],
+                'amount' => $coupon['amount'],
+                'end_date' => $coupon['end_date']
+            ]
+        ], 201);
+        break;
+        
     default:
-        ApiResponse::methodNotAllowed(['GET']);
+        ApiResponse::methodNotAllowed(['GET', 'POST']);
 }

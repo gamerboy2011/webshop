@@ -221,10 +221,16 @@ $subtypeNames = [
                             
                             <!-- Használat -->
                             <td class="px-4 py-3 text-sm">
-                                <span class="text-gray-600"><?= (int)$c['used_count'] ?></span>
-                                <span class="text-gray-400">/</span>
-                                <span class="text-gray-500"><?= (int)$c['activated_count'] ?></span>
-                                <span class="text-xs text-gray-400">aktiv.</span>
+                                <div class="flex flex-col">
+                                    <span class="text-gray-700">
+                                        <i class="las la-shopping-cart text-green-500"></i>
+                                        <?= (int)$c['used_count'] ?> felhasználva
+                                    </span>
+                                    <span class="text-gray-500 text-xs">
+                                        <i class="las la-user-check"></i>
+                                        <?= (int)$c['activated_count'] ?> aktiválta
+                                    </span>
+                                </div>
                             </td>
                             
                             <!-- Műveletek -->
