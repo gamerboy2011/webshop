@@ -13,9 +13,24 @@ if (empty($cart)) {
 }
 
 
-$stmt = $pdo->prepare("SELECT * FROM users WHERE user_id = ?");
+$stmt = $pdo->prepare("
+    SELECT u.*, 
+           sc.name as shipping_city_name,
+           bc.name as billing_city_name
+    FROM users u
+    LEFT JOIN city sc ON u.shipping_city_id = sc.city_id
+    LEFT JOIN city bc ON u.billing_city_id = bc.city_id
+    WHERE u.user_id = ?
+");
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
+// Város nevek beállítása (ID-ből lekérdezett nevekkel)
+if (!empty($user['shipping_city_name'])) {
+    $user['shipping_city'] = $user['shipping_city_name'];
+}
+if (!empty($user['billing_city_name'])) {
+    $user['billing_city'] = $user['billing_city_name'];
+}
 
 
 $items = [];

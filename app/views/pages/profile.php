@@ -275,28 +275,30 @@ if ($section === 'security' && $_SERVER["REQUEST_METHOD"] === "POST") {
 
 $stmt = $pdo->prepare("
     SELECT
-        username,
-        email,
+        u.username,
+        u.email,
 
-        shipping_postcode,
-        shipping_city,
-        shipping_city_id,
-        shipping_street_name,
-        shipping_street_type_id,
-        shipping_house_number,
-        shipping_floor_door,
+        u.shipping_postcode,
+        COALESCE(u.shipping_city, sc.name) as shipping_city,
+        u.shipping_city_id,
+        u.shipping_street_name,
+        u.shipping_street_type_id,
+        u.shipping_house_number,
+        u.shipping_floor_door,
 
-        billing_postcode,
-        billing_city,
-        billing_city_id,
-        billing_street_name,
-        billing_street_type_id,
-        billing_house_number,
-        billing_floor_door,
+        u.billing_postcode,
+        COALESCE(u.billing_city, bc.name) as billing_city,
+        u.billing_city_id,
+        u.billing_street_name,
+        u.billing_street_type_id,
+        u.billing_house_number,
+        u.billing_floor_door,
 
-        phone
-    FROM users
-    WHERE user_id = ?
+        u.phone
+    FROM users u
+    LEFT JOIN city sc ON u.shipping_city_id = sc.city_id
+    LEFT JOIN city bc ON u.billing_city_id = bc.city_id
+    WHERE u.user_id = ?
 ");
 $stmt->execute([$userId]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -944,6 +946,10 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
         <h3 class="text-xl font-semibold mb-4">
             <i class="las la-undo-alt mr-2"></i>Visszaküldés kérése
         </h3>
+        
+        <!-- Üzenet megjelenítő -->
+        <div id="returnMessage" class="hidden mb-4 p-4 rounded-lg text-sm"></div>
+        
         <form id="returnForm" method="POST" action="/webshop/api/return-request.php">
             <input type="hidden" name="order_id" id="returnOrderId">
             
@@ -1166,6 +1172,15 @@ function openReturnModal(orderId) {
     document.getElementById('returnOrderId').value = orderId;
     document.getElementById('returnModal').classList.remove('hidden');
     document.getElementById('returnModal').classList.add('flex');
+    // Modal állapot reset
+    const form = document.getElementById('returnForm');
+    const messageEl = document.getElementById('returnMessage');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    form.classList.remove('hidden');
+    form.reset();
+    messageEl.classList.add('hidden');
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="las la-paper-plane mr-1"></i> Kérelem beküldése';
 }
 
 function closeReturnModal() {
@@ -1176,6 +1191,15 @@ function closeReturnModal() {
 document.getElementById('returnForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
     const formData = new FormData(this);
+    const messageEl = document.getElementById('returnMessage');
+    const submitBtn = this.querySelector('button[type="submit"]');
+    
+    // Gomb letiltása dupla küldés ellen
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="las la-spinner la-spin mr-1"></i> Küldés...';
+    
+    // Üzenet elrejtése
+    messageEl.classList.add('hidden');
     
     try {
         const response = await fetch('/webshop/api/v1/returns', {
@@ -1190,15 +1214,29 @@ document.getElementById('returnForm')?.addEventListener('submit', async function
         
         const data = await response.json();
         
+        messageEl.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+        
         if (response.ok && data.success) {
-            alert('Visszaküldési kérelem sikeresen beküldve!');
-            location.reload();
+            messageEl.classList.add('bg-green-100', 'text-green-700');
+            messageEl.innerHTML = '<i class="las la-check-circle mr-2"></i>Visszaküldési kérelem sikeresen beküldve!';
+            // Form elrejtése és 2 mp múlva oldal újratöltés
+            this.classList.add('hidden');
+            setTimeout(() => location.reload(), 2000);
         } else {
-            alert('Hiba: ' + (data.message || 'Ismeretlen hiba'));
+            messageEl.classList.add('bg-red-100', 'text-red-700');
+            messageEl.innerHTML = '<i class="las la-exclamation-circle mr-2"></i>' + (data.message || 'Ismeretlen hiba történt.');
+            // Gomb visszaállítása
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="las la-paper-plane mr-1"></i> Kérelem beküldése';
         }
     } catch (err) {
         console.error('Hiba:', err);
-        alert('Hiba történt a kérelem beküldésekor.');
+        messageEl.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+        messageEl.classList.add('bg-red-100', 'text-red-700');
+        messageEl.innerHTML = '<i class="las la-exclamation-circle mr-2"></i>Hiba történt a kérelem beküldésekor.';
+        // Gomb visszaállítása
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="las la-paper-plane mr-1"></i> Kérelem beküldése';
     }
 });
 

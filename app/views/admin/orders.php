@@ -54,9 +54,12 @@
                             <span class="inline-flex items-center gap-1">
                                 <i class="las la-truck"></i> Házhoz
                             </span>
-                            <span class="block text-xs text-gray-400">
-                                <?= htmlspecialchars(($o['shipping_postcode'] ?? '') . ' ' . ($o['shipping_city'] ?? '')) ?>
-                            </span>
+                            <div class="text-xs text-gray-500 mt-1">
+                                <span class="block font-medium"><?= htmlspecialchars(trim(($o['shipping_postcode'] ?? '') . ' ' . ($o['shipping_city'] ?? '')) ?: '-') ?></span>
+                                <?php if (!empty($o['shipping_address'])): ?>
+                                    <span class="block text-gray-400"><?= htmlspecialchars($o['shipping_address']) ?></span>
+                                <?php endif; ?>
+                            </div>
                         <?php endif; ?>
                     </td>
                     <td class="px-4 py-4">

@@ -75,8 +75,10 @@ class AdminController
         $stmt = $this->pdo->prepare("
             SELECT o.*, u.username, u.email,
                    o.created_at AS order_date,
-                   o.shipping_name, o.shipping_phone, o.shipping_postcode, 
-                   o.shipping_city, o.shipping_address,
+                   o.shipping_name, o.shipping_phone, 
+                   COALESCE(NULLIF(o.shipping_postcode, ''), u.shipping_postcode) AS shipping_postcode,
+                   COALESCE(NULLIF(o.shipping_city, ''), u.shipping_city, c.name) AS shipping_city,
+                   o.shipping_address,
                    o.foxpost_point_id, o.foxpost_point_name, o.foxpost_point_address,
                    o.status,
                    (
@@ -88,6 +90,7 @@ class AdminController
                    ) AS total_price
             FROM orders o
             LEFT JOIN users u ON o.user_id = u.user_id
+            LEFT JOIN city c ON u.shipping_city_id = c.city_id
             ORDER BY o.created_at DESC
             LIMIT ?
         ");
