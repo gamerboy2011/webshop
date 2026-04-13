@@ -677,6 +677,11 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                                     <p class="font-bold text-lg text-green-700"><?= htmlspecialchars($coupon['name']) ?></p>
                                     <p class="text-sm text-gray-600 mt-1"><?= htmlspecialchars($coupon['description']) ?></p>
                                     <p class="text-2xl font-bold text-green-600 mt-2">-<?= number_format($coupon['amount'], 0, ',', ' ') ?>%</p>
+                                    <p class="mt-2">
+                                        <span class="bg-white px-3 py-1 rounded font-mono text-sm text-green-700 border border-green-300">
+                                            <?= htmlspecialchars($coupon['coupon_pass']) ?>
+                                        </span>
+                                    </p>
                                     <p class="text-xs text-gray-500 mt-2">
                                         Érvényes: <?= date('Y.m.d', strtotime($coupon['end_date'])) ?>-ig
                                     </p>
