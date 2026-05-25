@@ -1,10 +1,5 @@
 <?php
 
-if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
-    header("Location: /webshop/");
-    exit;
-}
-
 $error = $_GET['error'] ?? null;
 $success = $_GET['success'] ?? null;
 ?>

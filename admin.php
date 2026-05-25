@@ -82,8 +82,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         case 'delete_user':
             $admin->requireAdmin();
-            $admin->deleteUser((int)$_POST['user_id']);
-            header('Location: /webshop/yw-admin/users?deleted=1');
+            $result = $admin->deleteUser((int)$_POST['user_id']);
+            header('Location: /webshop/yw-admin/users?' . $result . '=1');
             exit;
 
         case 'activate_user':
@@ -339,6 +339,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $endDate = $_POST['end_date'] ?? date('Y-m-d', strtotime('+30 days'));
             $isActive = isset($_POST['is_active']) ? 1 : 0;
             
+            // Lejárt kupon ellenőrzése
+            if ($endDate < date('Y-m-d')) {
+                header('Location: /webshop/yw-admin/coupon-edit?error=expired');
+                exit;
+            }
+            
+            // Duplikált kuponkód ellenőrzése új kupon létrehozásakor
+            if ($couponId == 0 && $couponPass) {
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM coupons WHERE coupon_pass = ?");
+                $stmt->execute([$couponPass]);
+                if ($stmt->fetchColumn() > 0) {
+                    header('Location: /webshop/yw-admin/coupon-edit?error=duplicate');
+                    exit;
+                }
+            }
             
             $qrCodePath = null;
             if ($couponPass) {

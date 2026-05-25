@@ -343,14 +343,6 @@ try {
                             </div>
                             <span class="text-xs md:text-sm text-gray-500 ml-2">+390 Ft</span>
                         </label>
-                        
-                        <label class="flex items-center p-3 md:p-4 border rounded-lg cursor-pointer hover:border-black transition">
-                            <input type="radio" name="payment_method_id" value="3" class="w-5 h-5 text-black flex-shrink-0">
-                            <div class="ml-3 md:ml-4 flex-1 min-w-0">
-                                <span class="font-medium text-sm md:text-base">Banki átutalás</span>
-                                <p class="text-xs md:text-sm text-gray-500">Előre utalás</p>
-                            </div>
-                        </label>
                     </div>
                 </div>
                 

@@ -31,6 +31,17 @@ $subtypeNames = [
 ?>
 
 <div class="max-w-2xl">
+    <?php if (isset($_GET['error'])): ?>
+        <div class="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <i class="las la-exclamation-circle mr-2"></i>
+            <?php if ($_GET['error'] === 'duplicate'): ?>
+                Ez a kuponkód már létezik! Válassz másik kódot.
+            <?php elseif ($_GET['error'] === 'expired'): ?>
+                A befejező dátum nem lehet a múlban! Állíts be jövőbeli dátumot.
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+    
     <form method="post" action="/webshop/yw-admin" class="bg-white rounded-lg shadow-sm">
         <?= csrf_field() ?>
         <input type="hidden" name="action" value="save_coupon">

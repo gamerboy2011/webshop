@@ -62,17 +62,13 @@
                                 </form>
                             <?php endif; ?>
                             
-                            <?php if ($u['user_id'] != $_SESSION['user_id']): ?>
+                            <?php if ($u['user_id'] != $_SESSION['user_id'] && $u['is_active']): ?>
                                 <button type="button" 
                                         onclick="confirmDeleteUser(<?= $u['user_id'] ?>, '<?= htmlspecialchars($u['username']) ?>')"
                                         class="text-red-500 hover:text-red-700 transition" 
                                         title="Törlés">
                                     <i class="las la-trash text-lg"></i>
                                 </button>
-                            <?php else: ?>
-                                <span class="text-gray-300" title="Nem törölheted önmagad">
-                                    <i class="las la-trash text-lg"></i>
-                                </span>
                             <?php endif; ?>
                         </div>
                     </td>
@@ -92,6 +88,12 @@
 <?php if (isset($_GET['deleted'])): ?>
     <div class="mt-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
         <i class="las la-check-circle mr-2"></i> Felhasználó sikeresen törölve!
+    </div>
+<?php endif; ?>
+
+<?php if (isset($_GET['deactivated'])): ?>
+    <div class="mt-6 bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
+        <i class="las la-user-slash mr-2"></i> Felhasználó sikeresen deaktiválva! (A rendelések megőrzése miatt nem törölhető.)
     </div>
 <?php endif; ?>
 

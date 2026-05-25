@@ -188,6 +188,22 @@ document.getElementById('paymentForm').addEventListener('submit', function(e) {
         return;
     }
     
+    // Lejárt kártya ellenőrzés
+    const [expMonth, expYear] = cardExpiry.split('/').map(Number);
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear() % 100; // 2 számjegyes év
+    
+    if (expMonth < 1 || expMonth > 12) {
+        showError('Érvénytelen hónap (01-12)');
+        return;
+    }
+    
+    if (expYear < currentYear || (expYear === currentYear && expMonth < currentMonth)) {
+        showError('A kártya lejárt. Kérjük, adj meg egy érvényes kártyát.');
+        return;
+    }
+    
     if (cardCvv.length !== 3) {
         showError('Érvénytelen CVV kód (3 számjegy)');
         return;

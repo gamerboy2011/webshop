@@ -279,20 +279,35 @@ class AdminController
     
 
 
-    public function deleteUser(int $userId): bool
+    public function deleteUser(int $userId): string
     {
-        
+        // Saját magát nem törölheti
         if ($userId == $_SESSION['user_id']) {
-            return false;
+            return 'error';
         }
         
-        
-        $stmt = $this->pdo->prepare("DELETE FROM favorites WHERE user_id = ?");
+        // Ellenőrizzük, van-e rendelése
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM orders WHERE user_id = ?");
         $stmt->execute([$userId]);
+        $hasOrders = $stmt->fetchColumn() > 0;
         
-        
-        $stmt = $this->pdo->prepare("DELETE FROM users WHERE user_id = ?");
-        return $stmt->execute([$userId]);
+        if ($hasOrders) {
+            // Soft delete - deaktiválás, mert vannak rendelései
+            $stmt = $this->pdo->prepare("UPDATE users SET is_active = 0 WHERE user_id = ?");
+            $stmt->execute([$userId]);
+            return 'deactivated';
+        } else {
+            // Hard delete - nincs rendelése, törölhetjük
+            $stmt = $this->pdo->prepare("DELETE FROM favorites WHERE user_id = ?");
+            $stmt->execute([$userId]);
+            
+            $stmt = $this->pdo->prepare("DELETE FROM user_coupons WHERE user_id = ?");
+            $stmt->execute([$userId]);
+            
+            $stmt = $this->pdo->prepare("DELETE FROM users WHERE user_id = ?");
+            $stmt->execute([$userId]);
+            return 'deleted';
+        }
     }
     
     

@@ -397,7 +397,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                     </a>
                 </div>
             <?php else: ?>
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div id="favoritesGrid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <?php foreach ($favorites as $product): ?>
                         <div class="group relative bg-white border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
                             
@@ -454,7 +454,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
                     <?php endforeach; ?>
                 </div>
                 
-                <p class="text-center text-gray-400 text-sm mt-6">
+                <p id="favoritesCount" class="text-center text-gray-400 text-sm mt-6">
                     <?= count($favorites) ?> termék a kívánságlistádon
                 </p>
             <?php endif; ?>
@@ -1117,8 +1117,14 @@ async function removeFavorite(productId, btn) {
             card.style.transform = 'scale(0.9)';
             setTimeout(() => {
                 card.remove();
-                const remaining = document.querySelectorAll('.group.relative');
-                if (remaining.length === 0) {
+                // Számláló frissítése - csak a favoritesGrid-en belüli elemeket számoljuk
+                const grid = document.getElementById('favoritesGrid');
+                const remaining = grid ? grid.children.length : 0;
+                const countEl = document.getElementById('favoritesCount');
+                if (countEl) {
+                    countEl.textContent = remaining + ' termék a kívánságlistádon';
+                }
+                if (remaining === 0) {
                     location.reload();
                 }
             }, 300);

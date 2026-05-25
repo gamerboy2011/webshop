@@ -26,6 +26,12 @@ if ($currentPage === 'order-success' && empty($_SESSION['order_success'])) {
     exit;
 }
 
+// Bejelentkezett felhasználó átirányítása login/register oldalról
+if (in_array($currentPage, ['login', 'register']) && !empty($_SESSION['logged_in'])) {
+    header('Location: /webshop/');
+    exit;
+}
+
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
